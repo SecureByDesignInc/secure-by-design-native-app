@@ -2,11 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'catalog.dart';
+import 'analytics.dart';
 import 'models.dart';
 
 /// Device-local prototype state. No accounts, server, or cloud synchronization.
 class LearningStore extends ChangeNotifier {
-  LearningStore._(this._preferences) {
+  LearningStore._(this._preferences, {AnalyticsTransport? transport})
+      : analytics = LearningAnalytics(_preferences, transport: transport) {
     final lessonIds =
         learningPaths.expand((p) => p.lessons).map((l) => l.id).toSet();
     final resourceIds = resources.map((r) => r.id).toSet();
@@ -20,8 +22,9 @@ class LearningStore extends ChangeNotifier {
     _lastPath = learningPaths.any((p) => p.id == last) ? last : null;
   }
 
-  static Future<LearningStore> load() async =>
-      LearningStore._(await SharedPreferences.getInstance());
+  static Future<LearningStore> load({AnalyticsTransport? transport}) async =>
+      LearningStore._(await SharedPreferences.getInstance(), transport: transport);
+  final LearningAnalytics analytics;
   final SharedPreferences _preferences;
   late Set<String> _completed;
   late Set<String> _saved;
@@ -80,6 +83,7 @@ class LearningStore extends ChangeNotifier {
           throw StateError('Could not save lesson progress.');
         }
         _completed = next;
+        analytics.lessonCompleted(id);
         notifyListeners();
       });
 
@@ -93,6 +97,12 @@ class LearningStore extends ChangeNotifier {
           throw StateError('Could not save the resource.');
         }
         _saved = next;
+        if (next.contains(id)) analytics.resourceSaved(id);
         notifyListeners();
       });
+  @override
+  void dispose() {
+    analytics.dispose();
+    super.dispose();
+  }
 }

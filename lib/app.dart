@@ -4,6 +4,7 @@ import 'data/learning_store.dart';
 import 'screens/main_screens.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
+import 'widgets/app_support.dart';
 
 class SecureByDesignApp extends StatelessWidget {
   const SecureByDesignApp({super.key, required this.store});
@@ -25,6 +26,12 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    widget.store.analytics.appOpened();
+  }
+
   int _tab = 0;
   static const labels = ['Home', 'Learn', 'Resources', 'Progress'];
   static const icons = [
@@ -80,6 +87,10 @@ class _AppShellState extends State<AppShell> {
                     height: 1.7,
                   ),
                 ),
+                const SizedBox(height: 24),
+                FeedbackPanel(store: widget.store),
+                const SizedBox(height: 24),
+                AnalyticsSetting(analytics: widget.store.analytics),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -240,3 +251,4 @@ class _AppShellState extends State<AppShell> {
         },
       );
 }
+
