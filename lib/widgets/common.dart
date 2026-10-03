@@ -98,20 +98,24 @@ class Panel extends StatelessWidget {
     required this.child,
     this.gradient = false,
     this.padding = const EdgeInsets.all(22),
+    this.onTap,
   });
   final Widget child;
   final bool gradient;
   final EdgeInsetsGeometry padding;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          color: gradient ? null : SbdColors.surfaceLow,
-          gradient: gradient ? SbdColors.gradient : null,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: SbdColors.border),
+        decoration: softSurface(featured: gradient),
+        child: Material(
+          type: MaterialType.transparency,
+          borderRadius: BorderRadius.circular(28),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(padding: padding, child: child),
+          ),
         ),
-        child: child,
       );
 }
 
@@ -124,9 +128,24 @@ class TopicBadge extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: SbdColors.cyan.withValues(alpha: 0.09),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: SbdColors.cyan.withValues(alpha: 0.14)),
+          gradient: RadialGradient(
+            center: const Alignment(-0.7, -0.8),
+            radius: 1.4,
+            colors: [
+              SbdColors.cyan.withValues(alpha: 0.38),
+              SbdColors.blue.withValues(alpha: 0.18),
+              SbdColors.surface,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(size * 0.36),
+          border: Border.all(color: SbdColors.cyan.withValues(alpha: 0.18)),
+          boxShadow: [
+            BoxShadow(
+              color: SbdColors.blue.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         child: Icon(topicIcon(icon), color: SbdColors.cyan, size: size * 0.48),
       );
@@ -137,7 +156,9 @@ class PageContent extends StatelessWidget {
   final List<Widget> children;
   final double maxWidth;
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(gradient: SbdColors.canvasGradient),
+    child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           MediaQuery.sizeOf(context).width < 600 ? 22 : 36,
           24,
@@ -153,7 +174,8 @@ class PageContent extends StatelessWidget {
             ),
           ),
         ),
-      );
+      ),
+    );
 }
 
 class PageTitle extends StatelessWidget {
