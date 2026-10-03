@@ -112,9 +112,6 @@ class _AppShellState extends State<AppShell> {
                   horizontal: wide ? 36 : 22,
                   vertical: 15,
                 ),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: SbdColors.border)),
-                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -214,11 +211,17 @@ class _AppShellState extends State<AppShell> {
             ),
             bottomNavigationBar: wide
                 ? null
-                : DecoratedBox(
-                    decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: SbdColors.border)),
-                    ),
-                    child: NavigationBar(
+                  : SafeArea(
+                    top: false,
+                    minimum: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                    child: DecoratedBox(
+                      decoration: softSurface(radius: 30),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: MediaQuery.removePadding(
+                          context: context,
+                          removeBottom: true,
+                          child: NavigationBar(
                       selectedIndex: _tab,
                       onDestinationSelected: _select,
                       destinations: List.generate(
@@ -226,6 +229,9 @@ class _AppShellState extends State<AppShell> {
                         (i) => NavigationDestination(
                           icon: Icon(icons[i]),
                           label: labels[i],
+                        ),
+                      ),
+                          ),
                         ),
                       ),
                     ),
