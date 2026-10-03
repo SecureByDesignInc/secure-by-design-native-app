@@ -46,8 +46,6 @@ workflows:
         script: flutter analyze
       - name: Run tests
         script: flutter test
-      - name: Render design previews
-        script: flutter test tool/render_previews.dart
       - name: Apply Apple signing profiles
         script: xcode-project use-profiles
       - name: Build signed IPA
@@ -57,7 +55,7 @@ workflows:
           --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
-      - build/previews/*.png
+      - previews/*.png
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
