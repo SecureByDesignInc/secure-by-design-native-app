@@ -8,14 +8,48 @@ abstract final class SbdColors {
   static const muted = Color(0xffaebdd0);
   static const cyan = Color(0xFF83DCFA);
   static const blue = Color(0xFF378EFA);
-  static const border = Color(0xFF2B3D53);
+  static const border = Color(0xFF23374B);
   static const success = Color(0xFF88E0B1);
   static const gradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF163D61), Color(0xFF102237), Color(0xFF0B1828)],
+    colors: [Color(0xFF284F70), Color(0xFF17344F), Color(0xFF102237)],
+    stops: [0, 0.48, 1],
+  );
+  static const cardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF172D43), Color(0xFF102237), Color(0xFF0E1D30)],
+  );
+  static const canvasGradient = RadialGradient(
+    center: Alignment(0.9, -1),
+    radius: 1.35,
+    colors: [Color(0xFF183752), Color(0xFF0C1C2E), background],
+    stops: [0, 0.44, 1],
+  );
+  static const buttonGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFB5EAFC), cyan, Color(0xFF76B8FA)],
   );
 }
+
+// Shared by cards and navigation so the whole app has the same soft depth.
+BoxDecoration softSurface({bool featured = false, double radius = 28}) =>
+    BoxDecoration(
+      gradient: featured ? SbdColors.gradient : SbdColors.cardGradient,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: SbdColors.cyan.withValues(alpha: featured ? 0.18 : 0.08),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: SbdColors.background.withValues(alpha: 0.28),
+          blurRadius: 28,
+          offset: const Offset(0, 12),
+        ),
+      ],
+    );
 
 ThemeData buildTheme() => ThemeData(
       useMaterial3: true,
@@ -34,19 +68,19 @@ ThemeData buildTheme() => ThemeData(
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 34,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           letterSpacing: -1.2,
           height: 1.12,
         ),
         headlineMedium: TextStyle(
           fontSize: 28,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           letterSpacing: -0.8,
           height: 1.2,
         ),
         titleLarge: TextStyle(
           fontSize: 23,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           letterSpacing: -0.6,
           height: 1.25,
         ),
@@ -75,10 +109,18 @@ ThemeData buildTheme() => ThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: SbdColors.cyan,
           foregroundColor: SbdColors.background,
-          minimumSize: const Size(48, 50),
+          minimumSize: const Size(48, 54),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: const StadiumBorder(),
+          backgroundBuilder: (context, states, child) => Ink(
+            decoration: BoxDecoration(
+              gradient: states.contains(WidgetState.disabled)
+                  ? null
+                  : SbdColors.buttonGradient,
+              borderRadius: BorderRadius.circular(40),
+            ),
+            child: child,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -87,14 +129,14 @@ ThemeData buildTheme() => ThemeData(
           minimumSize: const Size(48, 48),
           side: const BorderSide(color: SbdColors.border),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: SbdColors.background,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         indicatorColor: SbdColors.cyan.withValues(alpha: 0.13),
-        height: 76,
+        height: 72,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             fontFamily: 'Geist',
@@ -113,6 +155,10 @@ ThemeData buildTheme() => ThemeData(
                 : SbdColors.muted,
           ),
         ),
+      ),
+      chipTheme: ChipThemeData(
+        shape: const StadiumBorder(),
+        side: BorderSide(color: SbdColors.cyan.withValues(alpha: 0.12)),
       ),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
