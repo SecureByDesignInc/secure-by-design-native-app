@@ -1,0 +1,417 @@
+import 'package:flutter/material.dart';
+
+import '../data/models.dart';
+import '../data/learning_store.dart';
+import '../theme.dart';
+import '../widgets/common.dart';
+
+Future<void> openLearningPath(
+  BuildContext context,
+  LearningStore store,
+  LearningPath path,
+) async {
+  try {
+    await store.openPath(path.id);
+  } catch (_) {
+    if (context.mounted) {
+      showNotice(context, 'Your place could not be saved on this device.');
+    }
+  }
+  if (context.mounted) {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PathScreen(store: store, path: path),
+      ),
+    );
+  }
+}
+
+class PathScreen extends StatelessWidget {
+  const PathScreen({super.key, required this.store, required this.path});
+  final LearningStore store;
+  final LearningPath path;
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: store,
+        builder: (context, _) {
+          final next = store.nextLesson(path);
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(path.category, style: const TextStyle(fontSize: 16)),
+            ),
+            body: PageContent(
+              maxWidth: 760,
+              children: [
+                TopicBadge(path.icon, size: 60),
+                const SizedBox(height: 24),
+                Text(path.title,
+                    style: Theme.of(context).textTheme.headlineLarge),
+                const SizedBox(height: 14),
+                Text(
+                  path.description,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 8,
+                  children: [
+                    Text(
+                      '${path.lessons.length} short lessons',
+                      style: const TextStyle(color: SbdColors.ink),
+                    ),
+                    Text(
+                      'About ${path.minutes} min',
+                      style: const TextStyle(color: SbdColors.muted),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 26),
+                Panel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Your progress',
+                              style: TextStyle(color: SbdColors.ink),
+                            ),
+                          ),
+                          Text(
+                            '${store.completedIn(path)} / ${path.lessons.length}',
+                            style: const TextStyle(color: SbdColors.cyan),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      ProgressLine(value: store.progressIn(path)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (next != null) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => LessonScreen(
+                              store: store, lesson: next, path: path),
+                        ),
+                      ),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: Text(
+                        store.completedIn(path) == 0
+                            ? 'Start the first lesson'
+                            : 'Continue learning',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                ] else ...[
+                  const Row(
+                    children: [
+                      Icon(Icons.check_circle_outline,
+                          color: SbdColors.success),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'You completed this path. Revisit any lesson below.',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                ],
+                const Kicker('Inside this path'),
+                const SizedBox(height: 14),
+                for (var i = 0; i < path.lessons.length; i++) ...[
+                  _LessonRow(
+                    index: i,
+                    lesson: path.lessons[i],
+                    completed: store.isCompleted(path.lessons[i].id),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => LessonScreen(
+                          store: store,
+                          lesson: path.lessons[i],
+                          path: path,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 16),
+                const Text(
+                  'Sample learning path · Original explanations with links to official references.',
+                  style: TextStyle(
+                    color: SbdColors.muted,
+                    fontSize: 13,
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+}
+
+class _LessonRow extends StatelessWidget {
+  const _LessonRow({
+    required this.index,
+    required this.lesson,
+    required this.completed,
+    required this.onTap,
+  });
+  final int index;
+  final Lesson lesson;
+  final bool completed;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Material(
+        color: SbdColors.surfaceLow,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              border: Border.all(color: SbdColors.border),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: SbdColors.surface,
+                  ),
+                  child: Center(
+                    child: completed
+                        ? const Icon(
+                            Icons.check,
+                            color: SbdColors.success,
+                            size: 21,
+                          )
+                        : Text(
+                            '${index + 1}'.padLeft(2, '0'),
+                            style: const TextStyle(color: SbdColors.cyan),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        lesson.title,
+                        style: const TextStyle(
+                          color: SbdColors.ink,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        completed
+                            ? 'Completed · ${lesson.minutes} min'
+                            : '${lesson.minutes} min · Read & reflect',
+                        style: const TextStyle(
+                          color: SbdColors.muted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Icon(Icons.chevron_right,
+                    color: SbdColors.muted, size: 20),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+class LessonScreen extends StatefulWidget {
+  const LessonScreen({
+    super.key,
+    required this.store,
+    required this.lesson,
+    required this.path,
+  });
+  final LearningStore store;
+  final Lesson lesson;
+  final LearningPath path;
+  @override
+  State<LessonScreen> createState() => _LessonScreenState();
+}
+
+class _LessonScreenState extends State<LessonScreen> {
+  int? _answer;
+  bool _saving = false;
+  bool get _correct => _answer == widget.lesson.correctAnswer;
+
+  Future<void> _complete() async {
+    setState(() => _saving = true);
+    try {
+      await widget.store.completeLesson(widget.lesson.id);
+      if (mounted) {
+        showNotice(context, 'Lesson completed. Keep following your curiosity.');
+        Navigator.of(context).pop();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        showNotice(context, 'Progress could not be saved. Please try again.');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lesson = widget.lesson;
+    final completed = widget.store.isCompleted(lesson.id);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Your lesson', style: TextStyle(fontSize: 16)),
+      ),
+      body: PageContent(
+        maxWidth: 760,
+        children: [
+          Kicker(
+            'Lesson ${widget.path.lessons.indexOf(lesson) + 1} of ${widget.path.lessons.length} · ${lesson.minutes} min',
+          ),
+          const SizedBox(height: 16),
+          Text(lesson.title, style: Theme.of(context).textTheme.headlineLarge),
+          const SizedBox(height: 14),
+          Text(lesson.summary, style: Theme.of(context).textTheme.bodyLarge),
+          const SizedBox(height: 32),
+          for (final section in lesson.sections) ...[
+            Text(
+              section.heading,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            Text(section.body, style: Theme.of(context).textTheme.bodyLarge),
+            const SizedBox(height: 28),
+          ],
+          Panel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Kicker('Pause & reflect'),
+                const SizedBox(height: 14),
+                Text(
+                  lesson.question,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 20),
+                for (var i = 0; i < lesson.answers.length; i++) ...[
+                  Semantics(
+                    selected: _answer == i,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => setState(() => _answer = i),
+                        style: OutlinedButton.styleFrom(
+                          alignment: Alignment.centerLeft,
+                          side: BorderSide(
+                            color: _answer == i
+                                ? SbdColors.cyan
+                                : SbdColors.border,
+                          ),
+                          backgroundColor: _answer == i
+                              ? SbdColors.cyan.withValues(alpha: 0.08)
+                              : Colors.transparent,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _answer == i
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                              size: 19,
+                              color: _answer == i
+                                  ? SbdColors.cyan
+                                  : SbdColors.muted,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(lesson.answers[i])),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                if (_answer != null)
+                  Semantics(
+                    liveRegion: true,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        _correct
+                            ? lesson.explanation
+                            : 'Try again. Revisit the explanation above and choose another answer.',
+                        style: TextStyle(
+                          color: _correct ? SbdColors.success : SbdColors.muted,
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: !completed && _correct && !_saving ? _complete : null,
+              icon: Icon(
+                completed ? Icons.check_circle_outline : Icons.check_rounded,
+              ),
+              label: Text(
+                completed
+                    ? 'Lesson completed'
+                    : _saving
+                        ? 'Saving progress…'
+                        : 'Complete lesson',
+              ),
+            ),
+          ),
+          if (!completed && !_correct)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text(
+                'Choose the correct answer to complete this lesson.',
+                style: TextStyle(color: SbdColors.muted, fontSize: 13),
+              ),
+            ),
+          const SizedBox(height: 26),
+          const Divider(color: SbdColors.border),
+          const SizedBox(height: 12),
+          const Text(
+            'Go deeper',
+            style: TextStyle(color: SbdColors.ink, fontSize: 14),
+          ),
+          TextButton.icon(
+            onPressed: () => openResource(context, lesson.sourceUrl),
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: Text(lesson.sourceLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}

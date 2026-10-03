@@ -1,0 +1,61 @@
+workflows:
+  ios-cloud-check:
+    name: Secure By Design - iOS Cloud Check
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      flutter: 3.47.6
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+    scripts:
+      - name: Restore Flutter packages
+        script: flutter pub get
+      - name: Analyze source
+        script: flutter analyze
+      - name: Run tests
+        script: flutter test
+      - name: Compile unsigned iOS application
+        script: flutter build ios --release --no-codesign
+    artifacts:
+      - build/ios/iphoneos/*.app
+      - /tmp/xcodebuild_logs/*.log
+
+  ios-testflight:
+    name: Secure By Design - TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: secure_by_design_apple
+    environment:
+      flutter: 3.47.6
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.securebydesigninc.secureByDesignApp
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+    scripts:
+      - name: Restore Flutter packages
+        script: flutter pub get
+      - name: Analyze source
+        script: flutter analyze
+      - name: Run tests
+        script: flutter test
+      - name: Apply Apple signing profiles
+        script: xcode-project use-profiles
+      - name: Build signed IPA
+        script: >-
+          flutter build ipa --release
+          --build-number=$PROJECT_BUILD_NUMBER
+          --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
