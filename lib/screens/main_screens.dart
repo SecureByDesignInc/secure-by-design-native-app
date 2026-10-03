@@ -183,15 +183,10 @@ class HomeScreen extends StatelessWidget {
               .toList(),
         ),
         const SizedBox(height: 28),
-        Material(
-          color: SbdColors.surfaceLow,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: () => onTab(2),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
+        Panel(
+          onTap: () => onTab(2),
+          padding: const EdgeInsets.all(20),
+          child: Row(
                 children: [
                   const Icon(
                     Icons.bookmark_border_rounded,
@@ -222,8 +217,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const Icon(Icons.chevron_right, color: SbdColors.muted),
                 ],
-              ),
-            ),
           ),
         ),
         const SizedBox(height: 25),
@@ -248,19 +241,9 @@ class PathCard extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
         button: true,
         label: '${path.title}, ${path.lessons.length} lessons',
-        child: Material(
-          color: SbdColors.surfaceLow,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            onTap: () => openLearningPath(context, store, path),
-            borderRadius: BorderRadius.circular(18),
-            child: Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                border: Border.all(color: SbdColors.border),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
+        child: Panel(
+          onTap: () => openLearningPath(context, store, path),
+          child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -293,8 +276,6 @@ class PathCard extends StatelessWidget {
                     ProgressLine(value: store.progressIn(path)),
                   ],
                 ],
-              ),
-            ),
           ),
         ),
       );
@@ -595,15 +576,10 @@ class ProgressScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           for (final path in learningPaths) ...[
-            Material(
-              color: SbdColors.surfaceLow,
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                onTap: () => openLearningPath(context, store, path),
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+            Panel(
+              onTap: () => openLearningPath(context, store, path),
+              padding: const EdgeInsets.all(20),
+              child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -639,8 +615,6 @@ class ProgressScreen extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ),
-                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -666,3 +640,4 @@ class ProgressScreen extends StatelessWidget {
         ],
       );
 }
+

@@ -55,6 +55,7 @@ workflows:
           --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
+      - previews/*.png
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
