@@ -172,19 +172,10 @@ class _LessonRow extends StatelessWidget {
   final bool completed;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => Material(
-        color: SbdColors.surfaceLow,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              border: Border.all(color: SbdColors.border),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
+  Widget build(BuildContext context) => Panel(
+        padding: const EdgeInsets.all(18),
+        onTap: onTap,
+        child: Row(
               children: [
                 Container(
                   width: 38,
@@ -236,8 +227,6 @@ class _LessonRow extends StatelessWidget {
                 const Icon(Icons.chevron_right,
                     color: SbdColors.muted, size: 20),
               ],
-            ),
-          ),
         ),
       );
 }
@@ -415,3 +404,4 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 }
+
