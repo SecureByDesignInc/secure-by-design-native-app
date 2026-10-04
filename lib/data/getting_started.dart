@@ -44,7 +44,9 @@ class GettingStartedStore extends ChangeNotifier {
         GettingStartedMessage.feedback => 7,
       };
       if (!_dismissed.contains(message.name) &&
-          (days == 0 || age >= Duration(days: days))) return message;
+          (days == 0 || age >= Duration(days: days))) {
+        return message;
+      }
     }
     return null;
   }

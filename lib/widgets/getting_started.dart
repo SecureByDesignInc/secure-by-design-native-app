@@ -39,9 +39,10 @@ class GettingStartedCard extends StatelessWidget {
             try {
               await guidance.dismiss(message);
             } catch (_) {
-              if (context.mounted)
+              if (context.mounted) {
                 showNotice(
                     context, 'Could not save this change. Please try again.');
+              }
             }
           }
 
@@ -73,11 +74,12 @@ class GettingStartedCard extends StatelessWidget {
                                   });
                                 } else {
                                   await dismiss();
-                                  if (context.mounted)
+                                  if (context.mounted) {
                                     onTab(
                                         message == GettingStartedMessage.welcome
                                             ? 1
                                             : 2);
+                                  }
                                 }
                               },
                         child: Text(action),
@@ -112,9 +114,10 @@ class GettingStartedSetting extends StatelessWidget {
                   try {
                     await store.setEnabled(value);
                   } catch (_) {
-                    if (context.mounted)
+                    if (context.mounted) {
                       showNotice(context,
                           'Could not save this preference. Please try again.');
+                    }
                   }
                 },
         ),
