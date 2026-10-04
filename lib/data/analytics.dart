@@ -70,7 +70,10 @@ class LearningAnalytics extends ChangeNotifier {
   bool get changing => _changing;
 
   Future<void> setEnabled(bool value) async {
-    if (_changing || value == _enabled) return;
+    if (_changing || (value && _enabled)) return;
+    if (!value && !_enabled &&
+        _preferences.getBool(consentKey) != true &&
+        _preferences.getString(idKey) == null) return;
     _changing = true;
     // Stop outgoing work immediately when consent is withdrawn.
     if (!value) {
