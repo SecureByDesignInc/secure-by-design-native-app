@@ -6,11 +6,13 @@ const json=(body,status=200)=>Response.json(body,{status,headers:{'cache-control
  * Never bind it to request JSON, email input, PostHog IDs, or unsigned claims.
  * The current adapter is for the existing same-origin cookie account service.
  */
-export function createEnrollmentHandler({authenticate,db,sendEvent,enabled=false,origin='https://securebydesigninc.com'}) {
+export function createEnrollmentHandler({authenticate,db,sendEvent,enabled=false,origin='https://securebydesigninc.com',transport='browser'}) {
   return async function enroll(request) {
     try {
       if(!['GET','POST'].includes(request.method))return json({error:'Method not allowed.'},405);
-      if(request.method==='POST' && (request.headers.get('origin')!==origin || new URL(request.url).origin!==origin || request.headers.get('sec-fetch-site')==='cross-site'))return json({error:'Please reload and try again.'},403);
+      if(transport==='native') {
+        if(request.headers.has('origin')||request.headers.has('sec-fetch-site')||request.headers.get('x-sbd-client')!=='native-v1')return json({error:'Use the Secure By Design app for this request.'},403);
+      } else if(transport!=='browser' || (request.method==='POST' && (request.headers.get('origin')!==origin || new URL(request.url).origin!==origin || request.headers.get('sec-fetch-site')==='cross-site')))return json({error:'Please reload and try again.'},403);
       const account=await authenticate(request);
       if(!account?.id || account.emailVerified!==true)return json({error:'Sign in with a verified account first.'},401);
       if(!enabled)return json({error:'Getting-started emails are not available yet.'},503);
