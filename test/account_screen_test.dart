@@ -1,0 +1,45 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:secure_by_design_app/data/account.dart';
+import 'package:secure_by_design_app/screens/account_screen.dart';
+import 'package:secure_by_design_app/theme.dart';
+import 'account_test.dart' show FakeAccountTransport;
+
+void main() {
+  testWidgets('account screen has no marketing enrollment on large text',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final transport = FakeAccountTransport();
+    final account = AccountStore(transport: transport);
+    await account.signIn('reader@example.invalid', 'password');
+    await tester.pumpWidget(MaterialApp(
+        theme: buildTheme(), home: AccountScreen(account: account)));
+    await tester.pumpAndSettle();
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.text('Send me the series'), findsNothing);
+    expect(transport.calls.length, 1);
+    expect(tester.takeException(), null);
+    await tester.pumpWidget(const SizedBox());
+    account.dispose();
+  });
+
+  testWidgets('sign-in form is optional and validates without network requests',
+      (tester) async {
+    final transport = FakeAccountTransport();
+    final account = AccountStore(transport: transport);
+    await tester.pumpWidget(MaterialApp(
+        theme: buildTheme(), home: AccountScreen(account: account)));
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter your email address.'), findsOneWidget);
+    expect(find.text('Enter your password.'), findsOneWidget);
+    expect(transport.calls, isEmpty);
+    await tester.pumpWidget(const SizedBox());
+    account.dispose();
+  });
+}

@@ -1,0 +1,160 @@
+{
+  "name": "Secure By Design — App getting started",
+  "status": "disabled",
+  "steps": [
+    {
+      "key": "start",
+      "type": "trigger",
+      "config": {
+        "event_name": "sbd.app.onboarding.v1"
+      }
+    },
+    {
+      "key": "consent_welcome",
+      "type": "condition",
+      "config": {
+        "type": "rule",
+        "field": "contact.unsubscribed",
+        "operator": "eq",
+        "value": false
+      }
+    },
+    {
+      "key": "welcome",
+      "type": "send_email",
+      "config": {
+        "template": {
+          "id": "sbd-app-welcome-v1"
+        },
+        "reply_to": "support@securebydesigninc.com"
+      }
+    },
+    {
+      "key": "end_welcome",
+      "type": "delay",
+      "config": {
+        "duration": "1 second"
+      }
+    },
+    {
+      "key": "wait_tip",
+      "type": "delay",
+      "config": {
+        "duration": "3 days"
+      }
+    },
+    {
+      "key": "consent_tip",
+      "type": "condition",
+      "config": {
+        "type": "rule",
+        "field": "contact.unsubscribed",
+        "operator": "eq",
+        "value": false
+      }
+    },
+    {
+      "key": "tip",
+      "type": "send_email",
+      "config": {
+        "template": {
+          "id": "sbd-app-learning-tip-v1"
+        },
+        "reply_to": "support@securebydesigninc.com"
+      }
+    },
+    {
+      "key": "end_tip",
+      "type": "delay",
+      "config": {
+        "duration": "1 second"
+      }
+    },
+    {
+      "key": "wait_feedback",
+      "type": "delay",
+      "config": {
+        "duration": "4 days"
+      }
+    },
+    {
+      "key": "consent_feedback",
+      "type": "condition",
+      "config": {
+        "type": "rule",
+        "field": "contact.unsubscribed",
+        "operator": "eq",
+        "value": false
+      }
+    },
+    {
+      "key": "feedback",
+      "type": "send_email",
+      "config": {
+        "template": {
+          "id": "sbd-app-feedback-v1"
+        },
+        "reply_to": "support@securebydesigninc.com"
+      }
+    },
+    {
+      "key": "end_feedback",
+      "type": "delay",
+      "config": {
+        "duration": "1 second"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": "start",
+      "to": "consent_welcome"
+    },
+    {
+      "from": "consent_welcome",
+      "to": "welcome",
+      "type": "condition_met"
+    },
+    {
+      "from": "consent_welcome",
+      "to": "end_welcome",
+      "type": "condition_not_met"
+    },
+    {
+      "from": "welcome",
+      "to": "wait_tip"
+    },
+    {
+      "from": "wait_tip",
+      "to": "consent_tip"
+    },
+    {
+      "from": "consent_tip",
+      "to": "tip",
+      "type": "condition_met"
+    },
+    {
+      "from": "consent_tip",
+      "to": "end_tip",
+      "type": "condition_not_met"
+    },
+    {
+      "from": "tip",
+      "to": "wait_feedback"
+    },
+    {
+      "from": "wait_feedback",
+      "to": "consent_feedback"
+    },
+    {
+      "from": "consent_feedback",
+      "to": "feedback",
+      "type": "condition_met"
+    },
+    {
+      "from": "consent_feedback",
+      "to": "end_feedback",
+      "type": "condition_not_met"
+    }
+  ]
+}

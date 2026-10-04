@@ -6,6 +6,7 @@ import '../data/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/app_support.dart';
+import '../widgets/getting_started.dart';
 import 'path_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -40,6 +41,7 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(color: SbdColors.muted, fontSize: 16, height: 1.65),
         ),
         const SizedBox(height: 28),
+        GettingStartedCard(store: store, onTab: onTab),
         Panel(
           gradient: true,
           child: Column(
@@ -188,36 +190,36 @@ class HomeScreen extends StatelessWidget {
           onTap: () => onTab(2),
           padding: const EdgeInsets.all(20),
           child: Row(
-                children: [
-                  const Icon(
-                    Icons.bookmark_border_rounded,
-                    color: SbdColors.cyan,
-                  ),
-                  const SizedBox(width: 15),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Keep something useful',
-                          style: TextStyle(
-                            color: SbdColors.ink,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Official guides. Your next question.',
-                          style: TextStyle(
-                            color: SbdColors.muted,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+            children: [
+              const Icon(
+                Icons.bookmark_border_rounded,
+                color: SbdColors.cyan,
+              ),
+              const SizedBox(width: 15),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Keep something useful',
+                      style: TextStyle(
+                        color: SbdColors.ink,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const Icon(Icons.chevron_right, color: SbdColors.muted),
-                ],
+                    SizedBox(height: 4),
+                    Text(
+                      'Official guides. Your next question.',
+                      style: TextStyle(
+                        color: SbdColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: SbdColors.muted),
+            ],
           ),
         ),
         const SizedBox(height: 25),
@@ -245,38 +247,36 @@ class PathCard extends StatelessWidget {
         child: Panel(
           onTap: () => openLearningPath(context, store, path),
           child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      TopicBadge(path.icon),
-                      const Spacer(),
-                      const Icon(Icons.chevron_right, color: SbdColors.muted),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Kicker(path.category),
-                  const SizedBox(height: 10),
-                  Text(path.title,
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 10),
-                  Text(
-                    path.description,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(color: SbdColors.border, height: 1),
-                  const SizedBox(height: 15),
-                  Text(
-                    '${path.lessons.length} lessons · About ${path.minutes} min',
-                    style:
-                        const TextStyle(color: SbdColors.muted, fontSize: 13),
-                  ),
-                  if (store.completedIn(path) > 0) ...[
-                    const SizedBox(height: 12),
-                    ProgressLine(value: store.progressIn(path)),
-                  ],
+                  TopicBadge(path.icon),
+                  const Spacer(),
+                  const Icon(Icons.chevron_right, color: SbdColors.muted),
                 ],
+              ),
+              const SizedBox(height: 20),
+              Kicker(path.category),
+              const SizedBox(height: 10),
+              Text(path.title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 10),
+              Text(
+                path.description,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 20),
+              const Divider(color: SbdColors.border, height: 1),
+              const SizedBox(height: 15),
+              Text(
+                '${path.lessons.length} lessons · About ${path.minutes} min',
+                style: const TextStyle(color: SbdColors.muted, fontSize: 13),
+              ),
+              if (store.completedIn(path) > 0) ...[
+                const SizedBox(height: 12),
+                ProgressLine(value: store.progressIn(path)),
+              ],
+            ],
           ),
         ),
       );
@@ -584,41 +584,41 @@ class ProgressScreen extends StatelessWidget {
               onTap: () => openLearningPath(context, store, path),
               padding: const EdgeInsets.all(20),
               child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          TopicBadge(path.icon, size: 42),
-                          const SizedBox(width: 13),
-                          Expanded(
-                            child: Text(
-                              path.title,
-                              style: const TextStyle(
-                                color: SbdColors.ink,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                      TopicBadge(path.icon, size: 42),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Text(
+                          path.title,
+                          style: const TextStyle(
+                            color: SbdColors.ink,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
-                          const SizedBox(width: 10),
-                          const Icon(
-                            Icons.chevron_right,
-                            color: SbdColors.muted,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      ProgressLine(value: store.progressIn(path)),
-                      const SizedBox(height: 10),
-                      Text(
-                        '${store.completedIn(path)} of ${path.lessons.length} lessons completed',
-                        style: const TextStyle(
-                          color: SbdColors.muted,
-                          fontSize: 13,
                         ),
                       ),
+                      const SizedBox(width: 10),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: SbdColors.muted,
+                        size: 20,
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 20),
+                  ProgressLine(value: store.progressIn(path)),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${store.completedIn(path)} of ${path.lessons.length} lessons completed',
+                    style: const TextStyle(
+                      color: SbdColors.muted,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 14),
@@ -631,7 +631,7 @@ class ProgressScreen extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Your progress is saved on this device. Accounts and syncing across devices are planned for a later version.',
+                  'Your progress is saved on this device. Optional account sign-in does not sync progress across devices yet.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 13,
@@ -644,5 +644,3 @@ class ProgressScreen extends StatelessWidget {
         ],
       );
 }
-
-

@@ -4,11 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'catalog.dart';
 import 'analytics.dart';
 import 'models.dart';
+import 'getting_started.dart';
 
 /// Device-local prototype state. No accounts, server, or cloud synchronization.
 class LearningStore extends ChangeNotifier {
   LearningStore._(this._preferences, {AnalyticsTransport? transport})
-      : analytics = LearningAnalytics(_preferences, transport: transport) {
+      : analytics = LearningAnalytics(_preferences, transport: transport),
+        gettingStarted = GettingStartedStore(_preferences) {
+    gettingStarted.addListener(notifyListeners);
     final lessonIds =
         learningPaths.expand((p) => p.lessons).map((l) => l.id).toSet();
     final resourceIds = resources.map((r) => r.id).toSet();
@@ -22,9 +25,15 @@ class LearningStore extends ChangeNotifier {
     _lastPath = learningPaths.any((p) => p.id == last) ? last : null;
   }
 
-  static Future<LearningStore> load({AnalyticsTransport? transport}) async =>
-      LearningStore._(await SharedPreferences.getInstance(), transport: transport);
+  static Future<LearningStore> load({AnalyticsTransport? transport}) async {
+    final store = LearningStore._(await SharedPreferences.getInstance(),
+        transport: transport);
+    await store.gettingStarted.initialize();
+    return store;
+  }
+
   final LearningAnalytics analytics;
+  final GettingStartedStore gettingStarted;
   final SharedPreferences _preferences;
   late Set<String> _completed;
   late Set<String> _saved;
@@ -102,6 +111,8 @@ class LearningStore extends ChangeNotifier {
       });
   @override
   void dispose() {
+    gettingStarted.removeListener(notifyListeners);
+    gettingStarted.dispose();
     analytics.dispose();
     super.dispose();
   }

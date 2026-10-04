@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'data/learning_store.dart';
+import 'data/account.dart';
+import 'screens/account_screen.dart';
 import 'screens/main_screens.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/app_support.dart';
+import 'widgets/getting_started.dart';
 
 class SecureByDesignApp extends StatelessWidget {
   const SecureByDesignApp({super.key, required this.store});
@@ -25,11 +28,25 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
+  final _account = AccountStore();
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _account.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.store.analytics.appOpened();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) setState(() {});
   }
 
   int _tab = 0;
@@ -80,13 +97,28 @@ class _AppShellState extends State<AppShell> {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Accounts, cloud syncing, and live lab connections are future additions.',
+                  'Sign-in is optional. Getting-started prompts stay in the app. Cloud syncing and live lab connections are future additions.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 14,
                     height: 1.7,
                   ),
                 ),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.person_outline),
+                  label: const Text('Your account'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.of(this.context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AccountScreen(account: _account),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                GettingStartedSetting(store: widget.store.gettingStarted),
                 const SizedBox(height: 24),
                 FeedbackPanel(store: widget.store),
                 const SizedBox(height: 24),
@@ -222,7 +254,7 @@ class _AppShellState extends State<AppShell> {
             ),
             bottomNavigationBar: wide
                 ? null
-                  : SafeArea(
+                : SafeArea(
                     top: false,
                     minimum: const EdgeInsets.fromLTRB(14, 8, 14, 12),
                     child: DecoratedBox(
@@ -233,15 +265,15 @@ class _AppShellState extends State<AppShell> {
                           context: context,
                           removeBottom: true,
                           child: NavigationBar(
-                      selectedIndex: _tab,
-                      onDestinationSelected: _select,
-                      destinations: List.generate(
-                        labels.length,
-                        (i) => NavigationDestination(
-                          icon: Icon(icons[i]),
-                          label: labels[i],
-                        ),
-                      ),
+                            selectedIndex: _tab,
+                            onDestinationSelected: _select,
+                            destinations: List.generate(
+                              labels.length,
+                              (i) => NavigationDestination(
+                                icon: Icon(icons[i]),
+                                label: labels[i],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -251,4 +283,3 @@ class _AppShellState extends State<AppShell> {
         },
       );
 }
-
