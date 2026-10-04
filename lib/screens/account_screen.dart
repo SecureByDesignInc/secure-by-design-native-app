@@ -15,7 +15,6 @@ class _AccountScreenState extends State<AccountScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
-  bool _consent = false;
   bool _hidePassword = true;
 
   @override
@@ -27,7 +26,6 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _signIn() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _consent = false);
     FocusScope.of(context).unfocus();
     await widget.account.signIn(_email.text, _password.text);
     if (mounted) _password.clear();
@@ -142,69 +140,10 @@ class _AccountScreenState extends State<AccountScreen> {
                           style: const TextStyle(color: SbdColors.cyan),
                         ),
                         const SizedBox(height: 24),
-                        Panel(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'A little encouragement by email.',
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 12),
-                              if (!account.emailAvailable) ...[
-                                const Text(
-                                  'Getting-started emails are not available yet. You can keep learning in the app.',
-                                ),
-                                TextButton(
-                                  onPressed: account.busy
-                                      ? null
-                                      : account.refreshEmailStatus,
-                                  child: const Text('Check availability'),
-                                ),
-                              ] else if (account.enrollment ==
-                                  'not_enrolled') ...[
-                                Text(account.consentText!,
-                                    style: const TextStyle(height: 1.6)),
-                                const SizedBox(height: 12),
-                                CheckboxListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  value: _consent,
-                                  controlAffinity:
-                                      ListTileControlAffinity.leading,
-                                  onChanged: account.busy
-                                      ? null
-                                      : (value) => setState(
-                                            () => _consent = value ?? false,
-                                          ),
-                                  title: const Text('Yes, send me the series'),
-                                ),
-                                const SizedBox(height: 12),
-                                FilledButton(
-                                  onPressed: account.busy || !_consent
-                                      ? null
-                                      : () => account.optIn(consent: _consent),
-                                  child: Text(
-                                    account.busy
-                                        ? 'Saving…'
-                                        : 'Send me the series',
-                                  ),
-                                ),
-                              ] else if (account.enrollment == 'accepted')
-                                const Text(
-                                  'Your getting-started series has been requested. Signing in again will not restart it. Use the unsubscribe link in any email to stop follow-ups.',
-                                )
-                              else ...[
-                                const Text(
-                                  'Your earlier email request is being checked. It will not be submitted again automatically.',
-                                ),
-                                TextButton(
-                                  onPressed: account.busy
-                                      ? null
-                                      : account.refreshEmailStatus,
-                                  child: const Text('Check request'),
-                                ),
-                              ],
-                            ],
+                        const Panel(
+                          child: Text(
+                            'Welcome messages, learning tips, and feedback prompts appear inside the app. Email is reserved for account verification and password resets. Manage getting-started prompts in About this preview.',
+                            style: TextStyle(height: 1.6),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -213,7 +152,6 @@ class _AccountScreenState extends State<AccountScreen> {
                               ? null
                               : () async {
                                   await account.signOut();
-                                  if (mounted) setState(() => _consent = false);
                                 },
                           child: const Text('Sign out'),
                         ),

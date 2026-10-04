@@ -6,7 +6,7 @@ import 'package:secure_by_design_app/theme.dart';
 import 'account_test.dart' show FakeAccountTransport;
 
 void main() {
-  testWidgets('email consent starts unchecked on a narrow large-text screen',
+  testWidgets('account screen has no marketing enrollment on large text',
       (tester) async {
     tester.view.physicalSize = const Size(320, 740);
     tester.view.devicePixelRatio = 1;
@@ -20,27 +20,9 @@ void main() {
     await tester.pumpWidget(MaterialApp(
         theme: buildTheme(), home: AccountScreen(account: account)));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.byType(Checkbox), 250);
-    await tester.ensureVisible(find.byType(Checkbox));
-    await tester.pumpAndSettle();
-    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile)).value,
-        false);
-    final button = find.widgetWithText(FilledButton, 'Send me the series');
-    expect(tester.widget<FilledButton>(button).onPressed, null);
-    await tester.tap(find.byType(Checkbox));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(button);
-    await tester.pumpAndSettle();
-    await tester.tap(button);
-    await tester.pumpAndSettle();
-    expect(account.enrollment, 'accepted');
-    expect(
-        transport.calls
-            .where((call) =>
-                call['path'] == '/api/native-onboarding' &&
-                call['method'] == 'POST')
-            .length,
-        1);
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.text('Send me the series'), findsNothing);
+    expect(transport.calls.length, 1);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
     account.dispose();

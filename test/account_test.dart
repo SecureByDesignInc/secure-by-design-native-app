@@ -5,7 +5,6 @@ class FakeAccountTransport implements AccountTransport {
   final calls = <Map<String, Object?>>[];
   bool failSignIn = false;
   bool failSignOut = false;
-  int emailStatus = 200;
   @override
   Future<Map<String, dynamic>> request(
     String method,
@@ -34,40 +33,20 @@ class FakeAccountTransport implements AccountTransport {
       if (failSignOut) throw const AccountFailure('Offline');
       return {'signedOut': true};
     }
-    if (emailStatus != 200) {
-      throw AccountFailure('Email unavailable', status: emailStatus);
-    }
-    return {
-      'enrollment': method == 'GET' ? 'not_enrolled' : 'accepted',
-      'consentText':
-          'Email me three getting-started messages. I can unsubscribe at any time.',
-      'consentVersion': 'app-onboarding-v1',
-    };
+    throw StateError('Unexpected account request: $path');
   }
 }
 
 void main() {
-  test(
-    'sign-in alone never subscribes; opt-in sends no supplied identity',
-    () async {
-      final transport = FakeAccountTransport();
-      final account = AccountStore(transport: transport);
-      addTearDown(account.dispose);
-      await account.signIn('reader@example.invalid', 'test password');
-      expect(account.signedIn, true);
-      expect(account.enrollment, 'not_enrolled');
-      await account.optIn(consent: false);
-      expect(transport.calls.length, 2);
-      await account.optIn(consent: true);
-      expect(account.enrollment, 'accepted');
-      expect(transport.calls.last['body'], {
-        'consent': true,
-        'consentVersion': 'app-onboarding-v1',
-      });
-      await account.optIn(consent: true);
-      expect(transport.calls.length, 3);
-    },
-  );
+  test('sign-in never contacts the marketing enrollment service', () async {
+    final transport = FakeAccountTransport();
+    final account = AccountStore(transport: transport);
+    addTearDown(account.dispose);
+    await account.signIn('reader@example.invalid', 'test password');
+    expect(account.signedIn, true);
+    expect(transport.calls.length, 1);
+    expect(transport.calls.single['path'], '/api/native-auth/signin');
+  });
   test('wrong password leaves the app signed out', () async {
     final transport = FakeAccountTransport()..failSignIn = true;
     final account = AccountStore(transport: transport);
@@ -76,42 +55,6 @@ void main() {
     expect(account.signedIn, false);
     expect(account.error, contains('did not match'));
     expect(transport.calls.length, 1);
-  });
-  test(
-    'email service failure cannot invalidate a successful sign-in',
-    () async {
-      final transport = FakeAccountTransport()..emailStatus = 503;
-      final account = AccountStore(transport: transport);
-      addTearDown(account.dispose);
-      await account.signIn('reader@example.invalid', 'password');
-      expect(account.signedIn, true);
-      expect(account.emailAvailable, false);
-      await account.optIn(consent: true);
-      expect(transport.calls.length, 2);
-    },
-  );
-  test('session revocation clears the identity and email form', () async {
-    final transport = FakeAccountTransport();
-    final account = AccountStore(transport: transport);
-    addTearDown(account.dispose);
-    await account.signIn('reader@example.invalid', 'password');
-    transport.emailStatus = 401;
-    await account.refreshEmailStatus();
-    expect(account.signedIn, false);
-    expect(account.email, null);
-    expect(account.emailAvailable, false);
-  });
-  test('failed opt-in is marked for review rather than auto-retried', () async {
-    final transport = FakeAccountTransport();
-    final account = AccountStore(transport: transport);
-    addTearDown(account.dispose);
-    await account.signIn('reader@example.invalid', 'password');
-    transport.emailStatus = 502;
-    await account.optIn(consent: true);
-    expect(account.enrollment, 'review_required');
-    final count = transport.calls.length;
-    await account.optIn(consent: true);
-    expect(transport.calls.length, count);
   });
   test(
     'offline sign-out clears memory and reports remote revocation failure',

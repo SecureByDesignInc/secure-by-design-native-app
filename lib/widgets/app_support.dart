@@ -28,7 +28,8 @@ class FeedbackPanel extends StatelessWidget {
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => openResource(
-                context, 'https://securebydesign.userjot.com/',
+                context,
+                'https://securebydesign.userjot.com/',
                 onOpened: store.analytics.feedbackOpened,
               ),
               icon: const Icon(Icons.open_in_new, size: 18),
@@ -50,20 +51,23 @@ class AnalyticsSetting extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SwitchListTile.adaptive(
+              key: const ValueKey('analytics-setting'),
               contentPadding: EdgeInsets.zero,
               title: const Text('Share learning analytics'),
               subtitle: const Text('Optional · off by default'),
               value: analytics.enabled,
-              onChanged: analytics.changing ? null : (value) async {
-                try {
-                  await analytics.setEnabled(value);
-                } catch (_) {
-                  if (context.mounted) {
-                    showNotice(context,
-                        'Could not save this preference. Please try again before closing the app.');
-                  }
-                }
-              },
+              onChanged: analytics.changing
+                  ? null
+                  : (value) async {
+                      try {
+                        await analytics.setEnabled(value);
+                      } catch (_) {
+                        if (context.mounted) {
+                          showNotice(context,
+                              'Could not save this preference. Please try again before closing the app.');
+                        }
+                      }
+                    },
             ),
             const Text(
               'Help us improve lessons by sending app opens, lesson and resource '
@@ -74,7 +78,8 @@ class AnalyticsSetting extends StatelessWidget {
               'Turn this off anytime to stop future events and remove the ID from '
               'this device. Previously sent events remain in PostHog. '
               'Lessons and saved progress work with this setting off.',
-              style: TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.6),
+              style:
+                  TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.6),
             ),
           ],
         ),

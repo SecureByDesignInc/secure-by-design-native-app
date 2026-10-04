@@ -32,6 +32,7 @@ void main() {
       final store = await LearningStore.load();
       await tester.pumpWidget(SecureByDesignApp(store: store));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Start learning'));
       await tester.tap(find.text('Start learning'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Start the first lesson'));
@@ -121,7 +122,8 @@ void main() {
     }
   }
 
-  testWidgets('feedback and analytics settings fit narrow large-text screens', (tester) async {
+  testWidgets('feedback and analytics settings fit narrow large-text screens',
+      (tester) async {
     tester.view.physicalSize = const Size(320, 740);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -134,13 +136,22 @@ void main() {
     await tester.tap(find.byTooltip('About this preview'));
     await tester.pumpAndSettle();
     expect(find.text('Share an idea'), findsOneWidget);
-    await tester.ensureVisible(find.byType(SwitchListTile));
+    await tester.ensureVisible(find.byKey(const ValueKey('analytics-setting')));
     await tester.pumpAndSettle();
-    expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value, false);
-    await tester.tap(find.byType(Switch));
+    expect(
+        tester
+            .widget<SwitchListTile>(
+                find.byKey(const ValueKey('analytics-setting')))
+            .value,
+        false);
+    await tester.tap(find.descendant(
+        of: find.byKey(const ValueKey('analytics-setting')),
+        matching: find.byType(Switch)));
     await tester.pumpAndSettle();
     expect(store.analytics.enabled, true);
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.descendant(
+        of: find.byKey(const ValueKey('analytics-setting')),
+        matching: find.byType(Switch)));
     await tester.pumpAndSettle();
     expect(store.analytics.enabled, false);
     expect(tester.takeException(), isNull);
@@ -182,4 +193,3 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
-

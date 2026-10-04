@@ -90,11 +90,7 @@ class AccountStore extends ChangeNotifier {
   final AccountTransport _transport;
   String? _token;
   String? email;
-  String? enrollment;
-  String? consentText;
-  String? consentVersion;
   String? error;
-  bool emailAvailable = false;
   bool busy = false;
   bool _disposed = false;
   Timer? _expiry;
@@ -108,10 +104,6 @@ class AccountStore extends ChangeNotifier {
     _expiry?.cancel();
     _token = null;
     email = null;
-    enrollment = null;
-    consentText = null;
-    consentVersion = null;
-    emailAvailable = false;
   }
 
   Future<void> signIn(String emailAddress, String password) async {
@@ -147,94 +139,10 @@ class AccountStore extends ChangeNotifier {
         error = 'Your session ended. Sign in again when you are ready.';
         _notify();
       });
-      await _loadEmailStatus();
     } on AccountFailure catch (failure) {
       error = failure.message;
     } catch (_) {
       error = 'Sign-in is temporarily unavailable. Try again.';
-    } finally {
-      busy = false;
-      _notify();
-    }
-  }
-
-  Future<void> _loadEmailStatus() async {
-    final token = _token;
-    if (token == null) return;
-    try {
-      final data = await _transport.request(
-        'GET',
-        '/api/native-onboarding',
-        token: token,
-      );
-      if (_disposed || _token != token) return;
-      enrollment = data['enrollment'] as String?;
-      consentText = data['consentText'] as String?;
-      consentVersion = data['consentVersion'] as String?;
-      emailAvailable = consentText != null && consentVersion != null;
-    } on AccountFailure catch (failure) {
-      if (_disposed || _token != token) return;
-      if (failure.status == 401) {
-        _clear();
-        error = 'Sign in again to continue.';
-      } else if (failure.status == 503) {
-        emailAvailable = false;
-      } else {
-        error = 'Could not load email preferences. Try again.';
-      }
-    }
-  }
-
-  Future<void> refreshEmailStatus() async {
-    if (busy || !signedIn || _disposed) return;
-    busy = true;
-    error = null;
-    _notify();
-    try {
-      await _loadEmailStatus();
-    } catch (_) {
-      error = 'Could not load email preferences. Try again.';
-    } finally {
-      busy = false;
-      _notify();
-    }
-  }
-
-  Future<void> optIn({required bool consent}) async {
-    if (!consent ||
-        busy ||
-        !signedIn ||
-        !emailAvailable ||
-        enrollment != 'not_enrolled' ||
-        consentVersion == null ||
-        _disposed) {
-      return;
-    }
-    busy = true;
-    error = null;
-    _notify();
-    final token = _token!;
-    try {
-      final data = await _transport.request(
-        'POST',
-        '/api/native-onboarding',
-        token: token,
-        body: {'consent': true, 'consentVersion': consentVersion!},
-      );
-      if (!_disposed && _token == token) {
-        enrollment = data['enrollment'] as String?;
-      }
-    } on AccountFailure catch (failure) {
-      if (!_disposed && _token == token) {
-        if (failure.status == 401) _clear();
-        if (failure.status == 409 || failure.status == 502) {
-          enrollment = 'review_required';
-        }
-        error = failure.message;
-      }
-    } catch (_) {
-      error =
-          'Could not confirm the email request. Refresh before trying again.';
     } finally {
       busy = false;
       _notify();
