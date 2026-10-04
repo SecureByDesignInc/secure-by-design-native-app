@@ -1,6 +1,6 @@
 # App getting-started email sequence
 
-Status: optional native sign-in and consent UI are implemented in this branch. The shared account backend was deployed as website version 97 on October 4, 2026 (commit 3161302f355ff1f6ac281bbb8aeeb7abd1009891). Email sending remains disabled; no recipients have been enrolled and no messages sent. Resend dashboard access is awaiting sign-in, provider configuration, and a live delivery/unsubscribe check. This branch is not yet released in TestFlight.
+Status: optional native sign-in and consent UI are implemented in this branch. The shared account backend was deployed as website version 98 on October 4, 2026 (commit cb59832f12749ec040f15d8cae521dab91f4899a). All three templates are published in Resend and the disabled automation draft is saved. The iOS cloud check passed for implementation commit 9e22cc2de16860edfbaa9db25870bab867235d08, including analysis, all 29 Flutter tests, and unsigned iOS compilation. Email sending remains disabled; no recipients have been enrolled and no messages sent. This branch is not yet released in TestFlight.
 
 ## Behavior
 
@@ -19,11 +19,23 @@ The website's `server/reader-auth.js` already verifies email and password and ex
 2. Completed: `/api/native-auth/signin`, `/session`, and `/signout` use distinct native bearer sessions. The app uses the existing verified email/password accounts. A 256-bit token is hashed at rest on the server, expires after 12 hours, and is held only in app memory. Website password reset revokes all sessions. Native and browser credentials are not interchangeable, and both clients share the same brute-force limits.
 3. Completed: `/api/native-onboarding` authenticates the native bearer token and stores explicit versioned consent before dispatch. `APP_ONBOARDING_EMAIL_ENABLED` remains unset/off. The app displays availability honestly and never sends an event merely because someone signs in.
 4. Completed: the optional account screen is accessible from the app information sheet. Account creation and password recovery use the existing website. Guest/offline learning remains available. Progress synchronization is still future work and is not claimed by the account screen. The consent control is unchecked, separate from PostHog, and submits only consent plus its version.
-5. Import/publish the three templates and create the disabled automation generated below. Use the verified notification sender already configured for the website and `support@securebydesigninc.com` for replies. Add the approved business mailing address to each footer before production activation. Do not copy a private billing address from chat receipts.
-6. Verify Resend entitlement, template aliases, event definition `sbd.app.onboarding.v1`, live contact condition behavior, unsubscribe behavior, hard-bounce/complaint suppression, and sender status in the actual account. No new paid subscription is approved. The contact email is automatically created by Resend when an event starts a run; existing subscription preferences must be preserved.
+5. Completed: publish the three templates and save the disabled automation draft. Sender is `Jon at Secure By Design <support@notify.securebydesigninc.com>` on the verified notification domain; replies go to `support@securebydesigninc.com`. Add the approved business mailing address to each footer before production activation. Do not copy a private billing address from chat receipts.
+6. Pending: create a separate, user-approved Resend full-access key for contact/events/automation operations, stored only as the secret backend environment variable `RESEND_AUTOMATIONS_API_KEY`. The existing sending-only `RESEND_API_KEY` remains dedicated to website transactional messages. Native enrollment requires both the new secret and `APP_ONBOARDING_EMAIL_ENABLED=true`; neither is configured yet. Reconcile the provider draft with `generated/automation.json` before activation: the UI currently displays condition values as the string `"false"`, so confirm/correct the API type to boolean `false`, and replace each empty false-branch placeholder with the generated explicit terminal delay. Verify template aliases, event definition `sbd.app.onboarding.v1`, live contact conditions, unsubscribe behavior, hard-bounce/complaint suppression, and account entitlement. No new paid subscription is approved. Resend automatically creates the contact when an event starts a run; existing subscription preferences must be preserved.
 7. Activate only after a recipient-authorized end-to-end test: opt in once; sign in again; verify one run; unsubscribe before the next send; confirm the remaining sends are skipped. Use an isolated shorter-delay test automation, not edits to a running production sequence. Server ownership, token isolation, sign-out, expiry, reset revocation, shared rate limits, and native email enrollment are covered by 22 focused server tests plus a real Workers runtime test. Flutter analysis passes; all existing app tests and the new account logic tests pass, and the two new screen tests pass after small-screen verification. Complete a device-to-production sign-in check before release.
 
 For a later in-app opt-out UI, update the provider subscription first and verify it; do not merely flip a device-local setting while the provider still holds an active run. Provider unsubscribe is global to its marketing contact; explain that scope in the email preference UI.
+
+## Saved provider configuration
+
+Automation: `01a104be-8361-72cd-b0b9-6b2cc7e78565`, **Secure By Design — App getting started**. The draft uses the custom event `sbd.app.onboarding.v1`, the welcome message, a 3-day delay, the learning tip, a 4-day delay, and the feedback message. It is not active; the condition/terminal-branch checks above are still required.
+
+| Published template | Provider ID |
+| --- | --- |
+| `sbd-app-welcome-v1` | `8976e05e-9be0-4355-b4d4-a668cf8f1bb0` |
+| `sbd-app-learning-tip-v1` | `7cc8b4db-1136-486f-9a93-533298a94796` |
+| `sbd-app-feedback-v1` | `8e161ab7-50a7-48a4-b7ba-5fa5374cfe59` |
+
+The published previews retain the navy/cyan design and hosted unsubscribe links. No live delivery, unsubscribe, or device-to-production test has been completed. Codemagic `ios-cloud-check` build `6ac1b9fc7394575b200add3c` passed; TestFlight remains at build 0.1.0 (7).
 
 ## Local verification and review
 
