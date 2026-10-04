@@ -18,13 +18,15 @@ void showNotice(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
-Future<void> openResource(BuildContext context, String url) async {
+Future<void> openResource(BuildContext context, String url,
+    {VoidCallback? onOpened}) async {
   try {
     final uri = Uri.parse(url);
     if (uri.scheme != 'https') {
       throw ArgumentError('Only secure resource links are supported.');
     }
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (opened) onOpened?.call();
     if (!opened && context.mounted) {
       showNotice(context, 'This link could not be opened. Please try again.');
     }
@@ -236,3 +238,4 @@ class ResponsiveCards extends StatelessWidget {
         },
       );
 }
+

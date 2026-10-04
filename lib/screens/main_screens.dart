@@ -5,6 +5,7 @@ import '../data/learning_store.dart';
 import '../data/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/app_support.dart';
 import 'path_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -428,6 +429,8 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
           'Saved links stay on this device. External resources open in your browser and need an internet connection.',
           style: TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.6),
         ),
+        const SizedBox(height: 24),
+        FeedbackPanel(store: widget.store),
       ],
     );
   }
@@ -484,7 +487,8 @@ class _ResourceCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           OutlinedButton.icon(
-            onPressed: () => openResource(context, resource.url),
+            onPressed: () => openResource(context, resource.url,
+                onOpened: () => store.analytics.resourceOpened(resource.id)),
             icon: const Icon(Icons.open_in_new, size: 17),
             label: const Text('Open resource'),
           ),
@@ -640,4 +644,5 @@ class ProgressScreen extends StatelessWidget {
         ],
       );
 }
+
 

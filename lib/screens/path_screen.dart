@@ -18,6 +18,7 @@ Future<void> openLearningPath(
     }
   }
   if (context.mounted) {
+    store.analytics.pathOpened(path.id);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PathScreen(store: store, path: path),
@@ -246,6 +247,12 @@ class LessonScreen extends StatefulWidget {
 }
 
 class _LessonScreenState extends State<LessonScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.store.analytics.lessonOpened(widget.lesson.id);
+  }
+
   int? _answer;
   bool _saving = false;
   bool get _correct => _answer == widget.lesson.correctAnswer;
@@ -311,7 +318,12 @@ class _LessonScreenState extends State<LessonScreen> {
                     child: SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () => setState(() => _answer = i),
+                        onPressed: () {
+                          setState(() => _answer = i);
+                          widget.store.analytics.knowledgeCheckSubmitted(
+                            lesson.id, i == lesson.correctAnswer,
+                          );
+                        },
                         style: OutlinedButton.styleFrom(
                           alignment: Alignment.centerLeft,
                           side: BorderSide(
@@ -404,4 +416,5 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 }
+
 
