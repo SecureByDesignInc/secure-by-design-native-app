@@ -73,7 +73,9 @@ class LearningAnalytics extends ChangeNotifier {
     if (_changing || (value && _enabled)) return;
     if (!value && !_enabled &&
         _preferences.getBool(consentKey) != true &&
-        _preferences.getString(idKey) == null) return;
+        _preferences.getString(idKey) == null) {
+      return;
+    }
     _changing = true;
     // Stop outgoing work immediately when consent is withdrawn.
     if (!value) {
