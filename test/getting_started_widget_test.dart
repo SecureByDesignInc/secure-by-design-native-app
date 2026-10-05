@@ -6,7 +6,7 @@ import 'package:secure_by_design_app/theme.dart';
 import 'package:secure_by_design_app/widgets/getting_started.dart';
 
 void main() {
-  testWidgets('welcome action navigates once and dismissal survives restart',
+  testWidgets('returning learner can reopen welcome and dismiss the invitation',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = await LearningStore.load();
@@ -18,11 +18,16 @@ void main() {
               child: GettingStartedCard(
                   store: store, onTab: (tab) => selectedTab = tab)),
         )));
-    expect(find.text('A small first step.'), findsOneWidget);
-    await tester.tap(find.text('Explore learning paths'));
+    expect(find.text('A plan that starts with you.'), findsOneWidget);
+    await tester.tap(find.text('Find my starting point'));
     await tester.pumpAndSettle();
-    expect(selectedTab, 1);
-    expect(find.text('A small first step.'), findsNothing);
+    expect(find.text('Step 1 of 5'), findsOneWidget);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(selectedTab, isNull);
+    expect(find.text('A plan that starts with you.'), findsNothing);
     final reloaded = await LearningStore.load();
     expect(reloaded.gettingStarted.next, null);
     await tester.pumpWidget(const SizedBox());
@@ -55,7 +60,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(store.gettingStarted.enabled, false);
     expect(store.analytics.enabled, false);
-    expect(find.text('A small first step.'), findsNothing);
+    expect(find.text('A plan that starts with you.'), findsNothing);
     expect(tester.takeException(), null);
     await tester.pumpWidget(const SizedBox());
     store.dispose();

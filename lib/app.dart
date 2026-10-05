@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'data/learning_store.dart';
 import 'data/account.dart';
 import 'screens/account_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/training_screens.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -44,6 +45,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     widget.store.analytics.appOpened();
     _account.addListener(_accountChanged);
+    if (widget.store.gettingStarted.shouldPresentWelcome) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) openOnboarding(context, widget.store, firstRun: true);
+      });
+    }
   }
 
   @override
@@ -120,6 +126,17 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                     fontSize: 14,
                     height: 1.7,
                   ),
+                ),
+                const SizedBox(height: 24),
+                const CreatorNote(),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.route_outlined),
+                  label: const Text('Personalize my learning'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    openOnboarding(this.context, widget.store);
+                  },
                 ),
                 const SizedBox(height: 24),
                 OutlinedButton.icon(

@@ -63,8 +63,11 @@ class LearningStore extends ChangeNotifier {
       .expand((p) => p.lessons)
       .where((l) => isCompleted(l.id))
       .fold(0, (n, l) => n + l.minutes);
-  LearningPath get currentPath => learningPaths
-      .firstWhere((p) => p.id == _lastPath, orElse: () => learningPaths.first);
+  LearningPath get currentPath => learningPaths.firstWhere(
+      (p) => p.id == _lastPath,
+      orElse: () => learningPaths.firstWhere(
+          (p) => p.id == gettingStarted.profile?.pathIds.first,
+          orElse: () => learningPaths.first));
   Lesson? nextLesson(LearningPath path) {
     for (final lesson in path.lessons) {
       if (!isCompleted(lesson.id)) return lesson;

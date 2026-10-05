@@ -11,7 +11,8 @@ import 'package:secure_by_design_app/data/learning_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(() => SharedPreferences.setMockInitialValues(
+      {'sbd.guidance.started.v1': DateTime.now().toUtc().toIso8601String()}));
 
   setUpAll(() async {
     final font = FontLoader('Geist')

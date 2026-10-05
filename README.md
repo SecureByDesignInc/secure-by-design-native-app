@@ -1,6 +1,6 @@
 # Secure By Design — native app proof of concept
 
-Version 0.2.1 · October 5, 2026
+Version 0.3.0 · October 5, 2026
 
 A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux. Native apps come first. The web app is deferred.
 
@@ -14,10 +14,18 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 - Saved materials and native homepage sharing: Learn it. Share it. Pay it forward.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
-- Getting-started prompts, optional anonymous analytics, and existing feedback flow.
+- A skippable first-run welcome: goals, starting level, real lesson recommendations, and a personal note from Jon. The Home checklist follows actual lesson and bookmark progress.
+- Returning learners keep their place. Reopen the welcome through the info button → Personalize my learning; the creator note is also available there.
+- Device-only onboarding choices, getting-started prompts, optional anonymous analytics, and existing feedback flow.
 - Optional haptic feedback on supported iOS and Android devices: selection taps, saved bookmark confirmations, and successful lesson completion. Use the info button → Haptic feedback to turn it off; the preference stays on this device across account changes and app restarts. Background synchronization and unsupported platforms remain silent.
 
 Course text and the network reference work offline. 3D, downloads, external resources, and account synchronization require a connection. Account sessions stay in memory and expire within 12 hours. Lab access remains request-based. This release does not add public store listings or recordings.
+
+## Onboarding design
+
+The welcome adapts the outcome-first presentation, useful personalization, founder note, and continuing checklist described in [Mobbin’s onboarding video](https://www.youtube.com/watch?v=Qsq-Sj_rojU), with [Tiimo’s flow](https://mobbin.com/explore/flows/817f5bfd-1701-4756-bcbc-dcdfc3597723) as a reference. Goals and starting level select existing lessons, with their real durations. Recommendations never claim a guaranteed result or completion date. The note is original Secure By Design copy. Sharing is voluntary; lesson access and optional sign-in keep their existing behavior.
+
+The new profile is stored under `sbd.onboarding.v1`, separate from account progress and analytics. Existing install markers prevent an intrusive first-run replay after upgrading. Finishing or skipping suppresses the old welcome card while retaining the existing learning-tip schedule. Disabling getting-started prompts hides the Home checklist.
 
 ## Start here
 
