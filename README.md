@@ -1,6 +1,6 @@
 # Secure By Design — native app proof of concept
 
-Version 0.2.0 · October 5, 2026
+Version 0.2.1 · October 5, 2026
 
 A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux. Native apps come first. The web app is deferred.
 
@@ -15,6 +15,7 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
 - Getting-started prompts, optional anonymous analytics, and existing feedback flow.
+- Optional haptic feedback on supported iOS and Android devices: selection taps, saved bookmark confirmations, and successful lesson completion. Use the info button → Haptic feedback to turn it off; the preference stays on this device across account changes and app restarts. Background synchronization and unsupported platforms remain silent.
 
 Course text and the network reference work offline. 3D, downloads, external resources, and account synchronization require a connection. Account sessions stay in memory and expire within 12 hours. Lab access remains request-based. This release does not add public store listings or recordings.
 

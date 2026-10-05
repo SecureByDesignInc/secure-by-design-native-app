@@ -2,8 +2,40 @@ import 'package:flutter/material.dart';
 
 import '../data/analytics.dart';
 import '../data/learning_store.dart';
+import '../data/haptics.dart';
 import '../theme.dart';
 import 'common.dart';
+
+class HapticsSetting extends StatelessWidget {
+  const HapticsSetting({super.key, required this.haptics});
+  final AppHaptics haptics;
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: haptics,
+        builder: (context, _) => SwitchListTile.adaptive(
+          key: const ValueKey('haptics-setting'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Haptic feedback'),
+          subtitle: const Text(
+              'Feel a subtle tap when you navigate, save, or complete a lesson.'),
+          value: haptics.enabled,
+          onChanged: haptics.changing
+              ? null
+              : (value) async {
+                  try {
+                    await haptics.setEnabled(value);
+                    if (value && context.mounted) haptics.selectionChanged();
+                  } catch (_) {
+                    if (context.mounted) {
+                      showNotice(context,
+                          'Could not save this preference. Please try again.');
+                    }
+                  }
+                },
+        ),
+      );
+}
 
 class FeedbackPanel extends StatelessWidget {
   const FeedbackPanel({super.key, required this.store});

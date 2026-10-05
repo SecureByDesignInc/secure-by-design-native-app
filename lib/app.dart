@@ -70,7 +70,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     Icons.explore_outlined,
     Icons.donut_large_outlined,
   ];
-  void _select(int index) => setState(() => _tab = index);
+  void _select(int index) {
+    if (index == _tab) return;
+    widget.store.haptics.selectionChanged();
+    setState(() => _tab = index);
+  }
 
   void _about() => showModalBottomSheet<void>(
         context: context,
@@ -131,6 +135,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                   },
                 ),
                 const SizedBox(height: 24),
+                if (widget.store.haptics.supported) ...[
+                  HapticsSetting(haptics: widget.store.haptics),
+                  const SizedBox(height: 24),
+                ],
                 GettingStartedSetting(store: widget.store.gettingStarted),
                 const SizedBox(height: 24),
                 FeedbackPanel(store: widget.store),

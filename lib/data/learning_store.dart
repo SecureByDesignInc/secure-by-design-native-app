@@ -7,10 +7,12 @@ import 'analytics.dart';
 import 'models.dart';
 import 'getting_started.dart';
 import 'account.dart';
+import 'haptics.dart';
 
 class LearningStore extends ChangeNotifier {
   LearningStore._(this._preferences, {AnalyticsTransport? transport})
       : analytics = LearningAnalytics(_preferences, transport: transport),
+        haptics = AppHaptics(_preferences),
         gettingStarted = GettingStartedStore(_preferences) {
     gettingStarted.addListener(notifyListeners);
     _readLocal();
@@ -24,6 +26,7 @@ class LearningStore extends ChangeNotifier {
 
   final SharedPreferences _preferences;
   final LearningAnalytics analytics;
+  final AppHaptics haptics;
   final GettingStartedStore gettingStarted;
   Set<String> _completed = {}, _saved = {}, _started = {};
   Map<String, String> _pendingRecords = {};
@@ -368,6 +371,7 @@ class LearningStore extends ChangeNotifier {
     gettingStarted.removeListener(notifyListeners);
     gettingStarted.dispose();
     analytics.dispose();
+    haptics.dispose();
     super.dispose();
   }
 }
