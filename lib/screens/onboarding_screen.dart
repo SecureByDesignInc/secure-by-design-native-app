@@ -40,24 +40,23 @@ class CreatorNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Panel(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Kicker('A note from the creator'),
+          const Kicker('A note from SecureByDesign Team'),
           const SizedBox(height: 20),
-          Text('Hi, I’m Jon.',
+          Text('Hi, we’re the SecureByDesign Team.',
               style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 18),
           Text(
-              'I built Secure By Design to help you connect what you learn to the systems you build and protect.\n\n'
+              'We built Secure By Design to help you connect what you learn to the systems you build and protect.\n\n'
               'You don’t need to know everything before you start. Pick one lesson, try the idea, and keep going at your own pace.\n\n'
               'If something here helps you, pay us back by sharing our content with someone who could use it.\n\n'
-              'I’m glad you’re here.',
+              'We’re glad you’re here.',
               style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 24),
-          const Text('Jon',
+          const Text('SecureByDesign Team',
               style: TextStyle(
                   fontSize: 28,
                   fontStyle: FontStyle.italic,
                   color: SbdColors.cyan)),
-          const Text('Creator, Secure By Design'),
         ]),
       );
 }
