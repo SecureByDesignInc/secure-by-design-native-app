@@ -1,6 +1,6 @@
 # Secure By Design — native app proof of concept
 
-Version 0.3.0 · October 5, 2026
+Version 0.7.0 · October 5, 2026
 
 A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux. Native apps come first. The web app is deferred.
 
@@ -144,3 +144,32 @@ Memberships are available from Info, My Account, and after learning. The first l
 ## My Account consolidation (0.5.0)
 
 My Account combines account access, learning progress, rewards, and the full membership comparison. Home and first-lesson membership invitations open this tab at the membership section. Continue with Community returns to Training; comparing plans never creates a subscription or changes learning records. Builder and Guided remain coming soon.
+
+
+## App design refresh (0.7.0)
+
+The native app adapts the reviewed Mobbin references: Brilliant's goal and level
+choices, Uxcel Go's grouped cards, MasterClass's expandable curriculum, and the
+Speak / Gentler Streak account patterns. No website files, imported course
+content, progress IDs, backend endpoints, membership pricing, or entitlements
+change in this release.
+
+- Onboarding is three steps: goals, starting level, and a real recommended lesson.
+  It stays skippable, retains existing profiles, and keeps the creator note optional.
+- Training uses app-only Network Foundations, Certificates & Trust, and Network
+  Authorization categories. Tiles expand to reveal course outcomes, durations,
+  and directly accessible lessons. Completion and materials stay visible;
+  unavailable recordings remain labeled Video coming soon.
+- My Account is a compact hub for Community access, genuine learning statistics,
+  continuation, saved materials, rewards, learning preferences, account security,
+  privacy, feedback, and membership comparison. Detailed controls open from this
+  hub. Device-progress import still requires its existing explicit confirmation.
+- Existing navy/cyan colors, Geist typeface, offline learning, and platform
+  accessibility preferences are preserved. No mandatory signup or new tracking.
+
+References:
+- https://mobbin.com/flows/20ad012b-2683-4c0c-beb8-8ff62c6f509e
+- https://mobbin.com/screens/dba87d9e-9955-49be-be73-686477e601ee
+- https://mobbin.com/screens/72dcf33e-58e8-486f-a178-583a2d411f67
+- https://mobbin.com/screens/b1802d44-e332-4130-bbf4-f195931c7bd1
+- https://mobbin.com/screens/83aeb4be-08be-4066-8f85-510daf0ecf8a

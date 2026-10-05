@@ -21,7 +21,7 @@ void main() {
     expect(find.text('A plan that starts with you.'), findsOneWidget);
     await tester.tap(find.text('Find my starting point'));
     await tester.pumpAndSettle();
-    expect(find.text('Step 1 of 5'), findsOneWidget);
+    expect(find.text('Step 1 of 3'), findsOneWidget);
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Dismiss'));
@@ -66,3 +66,4 @@ void main() {
     store.dispose();
   });
 }
+

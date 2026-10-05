@@ -92,7 +92,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     Icons.home_outlined,
     Icons.auto_stories_outlined,
     Icons.explore_outlined,
-    Icons.donut_large_outlined,
+    Icons.person_outline,
   ];
   void _select(int index) {
     if (index == _tab) return;
@@ -348,3 +348,4 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         },
       );
 }
+

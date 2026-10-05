@@ -41,9 +41,11 @@ void main() {
       await tester.runAsync(MembershipCatalog.load);
       await tester.pumpAndSettle();
       expect(find.byType(MyLearningScreen), findsOneWidget);
-      expect(find.text('Continue with your website account.'), findsOneWidget);
+      expect(find.text('Community · Included'), findsOneWidget);
       await tester.ensureVisible(find.text('View membership options'));
       await tester.tap(find.text('View membership options'));
+      await tester.pump();
+      await tester.runAsync(MembershipCatalog.load);
       await tester.pumpAndSettle();
       expect(find.text('Membership options').hitTestable(), findsOneWidget);
       expect(
@@ -128,3 +130,4 @@ void main() {
     store.dispose();
   });
 }
+

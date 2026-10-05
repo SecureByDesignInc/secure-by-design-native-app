@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import '../data/account.dart';
 import '../data/catalog.dart';
 import '../data/getting_started.dart';
 import '../data/learning_store.dart';
-import '../data/models.dart';
 import '../data/published_catalog.dart';
+import '../data/training_categories.dart';
+import '../widgets/training_card.dart';
+export '../widgets/training_card.dart' show TrainingCard;
+export 'my_account_screen.dart' show MyLearningScreen;
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/getting_started.dart';
 import '../widgets/training_share.dart';
 import '../widgets/learning_rewards.dart';
-import 'account_screen.dart';
 import 'main_screens.dart' show ResourcesScreen;
 import 'network_screen.dart';
 import 'path_screen.dart';
 import 'membership_screen.dart';
-import '../widgets/account_navigation.dart';
 
 class TrainingHome extends StatelessWidget {
   const TrainingHome({super.key, required this.store, required this.onTab});
@@ -118,73 +118,6 @@ class TrainingHome extends StatelessWidget {
   }
 }
 
-class TrainingCard extends StatelessWidget {
-  const TrainingCard({super.key, required this.path, required this.store});
-  final LearningPath path;
-  final LearningStore store;
-  @override
-  Widget build(BuildContext context) {
-    final scaled = MediaQuery.textScalerOf(context).scale(16) / 16;
-    return Semantics(
-        label: '${path.title}. ${path.subtitle}',
-        child: Panel(
-            padding: const EdgeInsets.all(20),
-            child: SizedBox(
-                height: scaled > 1.2 ? 310 * scaled : 310,
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                          height: 78,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                              gradient: SbdColors.gradient,
-                              borderRadius: BorderRadius.circular(16)),
-                          child: Row(children: [
-                            const SizedBox(width: 16),
-                            TopicBadge(path.icon),
-                            const SizedBox(width: 16),
-                            Expanded(
-                                child: Text(
-                                    '${path.number} / ${path.category == 'Network build' ? 'BUILD' : 'AUTHORIZE'}',
-                                    style: const TextStyle(
-                                        color: SbdColors.cyan,
-                                        fontWeight: FontWeight.w600)))
-                          ])),
-                      const SizedBox(height: 16),
-                      Tooltip(
-                          message: path.title,
-                          child: Text(path.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium)),
-                      const SizedBox(height: 8),
-                      Text(path.subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: SbdColors.muted, fontSize: 14)),
-                      const Spacer(),
-                      const Wrap(spacing: 10, runSpacing: 6, children: [
-                        Text('Training ready',
-                            style:
-                                TextStyle(color: SbdColors.cyan, fontSize: 13)),
-                        Text('Video coming soon',
-                            style:
-                                TextStyle(color: SbdColors.muted, fontSize: 13))
-                      ]),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                              onPressed: () => openLearningPath(
-                                  context, store, path,
-                                  showMaterials: true),
-                              child: const Text('View materials'))),
-                    ]))));
-  }
-}
-
 class TrainingLibraryScreen extends StatefulWidget {
   const TrainingLibraryScreen({super.key, required this.store});
   final LearningStore store;
@@ -197,11 +130,12 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
   String category = '';
   @override
   Widget build(BuildContext context) {
-    final matches = publishedPaths
-        .where((p) => (category.isEmpty || p.category == category) &&
-            '${p.title} ${p.subtitle} ${p.description} ${p.category}'
-                .toLowerCase().contains(query.trim().toLowerCase()))
-        .toList();
+    final matches = publishedPaths.where((path) {
+      final group = categoryFor(path);
+      return (category.isEmpty || group.id == category) &&
+          '${path.title} ${path.subtitle} ${path.description} ${group.title}'
+              .toLowerCase().contains(query.trim().toLowerCase());
+    }).toList();
     return PageContent(children: [
       const PageTitle('Training Library',
           'Build the network. Understand the why. Prepare it for authorization.',
@@ -210,27 +144,41 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
           decoration: const InputDecoration(
               labelText: 'Search training', prefixIcon: Icon(Icons.search)),
           onChanged: (v) => setState(() => query = v)),
-      const SizedBox(height: 24),
+      const SizedBox(height: 18),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        ChoiceChip(label: const Text('All training'), selected: category.isEmpty,
+            onSelected: (_) => setState(() => category = '')),
+        for (final group in trainingCategories)
+          ChoiceChip(label: Text(group.title), selected: category == group.id,
+              onSelected: (_) {
+                widget.store.haptics.selectionChanged();
+                setState(() => category = group.id);
+              }),
+      ]),
+      const SizedBox(height: 28),
       if (matches.isEmpty)
         const Text('No matching training. Try another topic.'),
-      Wrap(spacing: 8, runSpacing: 8, children: [
-        for (final entry in const {'': 'All training', 'Network build': 'Build the Network', 'Network authorization': 'Authorize the Network'}.entries)
-          ChoiceChip(label: Text(entry.value), selected: category == entry.key,
-              onSelected: (_) => setState(() => category = entry.key)),
-      ]),
-      const SizedBox(height: 24),
-      for (final entry in const {'Network build': 'Build the Network', 'Network authorization': 'Authorize the Network'}.entries)
-        if (matches.any((p) => p.category == entry.key)) ...[
-          Text(entry.value, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Text(entry.key == 'Network build'
-              ? 'Identity, DNS, and certificate services for the network you build.'
-              : 'Prepare the risk decision and maintain the Body of Evidence.',
+      for (final group in trainingCategories)
+        if (matches.any(group.contains)) ...[
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            TopicBadge(group.icon, size: 40),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+              Text(group.title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text('${matches.where(group.contains).length} '
+                  '${matches.where(group.contains).length == 1 ? 'course' : 'courses'}'),
+            ])),
+          ]),
+          const SizedBox(height: 12),
+          Text(group.description,
               style: const TextStyle(color: SbdColors.muted, height: 1.5)),
-          const SizedBox(height: 16),
-          ResponsiveCards(children: matches.where((p) => p.category == entry.key)
-              .map((p) => TrainingCard(path: p, store: widget.store)).toList()),
-          const SizedBox(height: 28),
+          const SizedBox(height: 18),
+          ResponsiveCards(children: matches.where(group.contains)
+              .map((path) => TrainingCard(key: ValueKey(path.id),
+                  path: path, store: widget.store)).toList()),
+          const SizedBox(height: 32),
         ],
       const SizedBox(height: 30),
       ExpansionTile(
@@ -336,195 +284,3 @@ class ExploreScreen extends StatelessWidget {
       ]);
 }
 
-class MyLearningScreen extends StatefulWidget {
-  const MyLearningScreen(
-      {super.key,
-      required this.store,
-      required this.account,
-      this.initiallyShowMemberships = false});
-  final LearningStore store;
-  final AccountStore account;
-  final bool initiallyShowMemberships;
-  @override
-  State<MyLearningScreen> createState() => _MyLearningScreenState();
-}
-
-class _MyLearningScreenState extends State<MyLearningScreen> {
-  final _membershipKey = GlobalKey();
-  LearningStore get store => widget.store;
-  AccountStore get account => widget.account;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initiallyShowMemberships) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showMemberships());
-    }
-  }
-
-  void _showMemberships() {
-    final target = _membershipKey.currentContext;
-    if (!mounted || target == null) return;
-    Scrollable.ensureVisible(target,
-        alignment: 0,
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 250));
-  }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-      animation: Listenable.merge([store, account]),
-      builder: (context, _) => PageContent(children: [
-            PageTitle('My Account', store.storageLabel,
-                kicker: 'Keep learning'),
-            Panel(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Text('Community is included.',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 10),
-                  const Text(
-                      'Your learning, account, and membership options in one place. Keep learning with Community, or explore what’s coming with Builder and Guided.',
-                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                      onPressed: _showMemberships,
-                      icon: const Icon(Icons.layers_outlined),
-                      label: const Text('View membership options')),
-                ])),
-            const SizedBox(height: 26),
-            LearningDashboard(
-                store: store, onPractice: () => openPractice(context, store)),
-            const SizedBox(height: 26),
-            Panel(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Text(
-                      account.signedIn
-                          ? 'Your learning, across devices.'
-                          : 'Continue with your website account.',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 12),
-                  Text(
-                      account.signedIn
-                          ? (store.cloudConnected
-                              ? 'Sync lessons, streaks, XP, and saved materials with your account.'
-                              : 'Connect account progress when you are ready. Your device-only records stay separate.')
-                          : 'Sign in to sync. You can also keep learning and saving materials on this device.',
-                      style:
-                          const TextStyle(color: SbdColors.muted, height: 1.6)),
-                  const SizedBox(height: 16),
-                  Wrap(spacing: 10, runSpacing: 8, children: [
-                    OutlinedButton.icon(
-                        onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    AccountScreen(account: account))),
-                        icon: const Icon(Icons.person_outline),
-                        label: Text(
-                            account.signedIn ? 'Your account' : 'Sign in')),
-                    if (account.signedIn)
-                      FilledButton.icon(
-                          onPressed: store.syncing
-                              ? null
-                              : () async {
-                                  try {
-                                    if (store.cloudConnected) {
-                                      await store.sync();
-                                    } else {
-                                      await store.connectAccount(account);
-                                    }
-                                  } catch (_) {
-                                    if (context.mounted) {
-                                      showNotice(context,
-                                          'Sign in again to connect your progress.');
-                                    }
-                                  }
-                                },
-                          icon: const Icon(Icons.sync),
-                          label: Text(store.syncing
-                              ? 'Syncing…'
-                              : store.cloudConnected
-                                  ? 'Sync now'
-                                  : 'Connect progress')),
-                  ]),
-                  if (store.syncError != null)
-                    Padding(
-                        padding: const EdgeInsets.only(top: 14),
-                        child: Text(store.syncError!,
-                            style: const TextStyle(color: SbdColors.cyan))),
-                  if (store.lastSynced != null &&
-                      !store.syncing &&
-                      store.syncError == null)
-                    const Padding(
-                        padding: EdgeInsets.only(top: 14),
-                        child: Text('Progress synced.',
-                            style: TextStyle(color: SbdColors.success))),
-                  if (store.cloudConnected)
-                    TextButton(
-                        onPressed: store.syncing
-                            ? null
-                            : () async {
-                                final approved = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                            title: const Text(
-                                                'Add device progress?'),
-                                            content: Text(
-                                                'Add this device’s offline lessons, learning activity, and bookmarks to ${account.email}. Existing account records will be kept.'),
-                                            actions: [
-                                              TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                          context, false),
-                                                  child: const Text('Cancel')),
-                                              FilledButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                          context, true),
-                                                  child: const Text(
-                                                      'Add my progress'))
-                                            ]));
-                                if (approved == true) {
-                                  await store.importDeviceProgress();
-                                }
-                              },
-                        child: const Text('Add my device-only progress')),
-                ])),
-            const SizedBox(height: 26),
-            for (final path in learningPaths)
-              Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Panel(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                        Text(path.title,
-                            style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 14),
-                        ProgressLine(value: store.progressIn(path)),
-                        const SizedBox(height: 10),
-                        Text(
-                            '${store.completedIn(path)} of ${path.lessons.length} complete'),
-                        const SizedBox(height: 12),
-                        TextButton(
-                            onPressed: () =>
-                                openLearningPath(context, store, path),
-                            child: const Text('Continue learning')),
-                      ]))),
-            const SizedBox(height: 10),
-            Padding(
-                key: _membershipKey,
-                padding: const EdgeInsets.only(top: 16),
-                child: MembershipSection(
-                    store: store,
-                    onReady: widget.initiallyShowMemberships
-                        ? _showMemberships
-                        : null,
-                    onContinue: () => AccountNavigation.openTraining(context))),
-          ]));
-}
