@@ -1,7 +1,7 @@
 name: secure_by_design_app
 description: A native Secure By Design learning companion proof of concept.
 publish_to: none
-version: 0.2.1+14
+version: 0.3.0+15
 
 environment:
   sdk: '>=3.5.0 <4.0.0'

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/account.dart';
 import '../data/catalog.dart';
+import '../data/getting_started.dart';
 import '../data/learning_store.dart';
 import '../data/models.dart';
 import '../data/published_catalog.dart';
@@ -27,6 +28,9 @@ class TrainingHome extends StatelessWidget {
       Text('Your next chapter.',
           style: Theme.of(context).textTheme.headlineLarge),
       const SizedBox(height: 22),
+      if (store.gettingStarted.next == GettingStartedMessage.welcome)
+        GettingStartedCard(store: store, onTab: onTab),
+      LearningPlanChecklist(store: store, onTab: onTab),
       Panel(
           gradient: true,
           child:
@@ -80,7 +84,8 @@ class TrainingHome extends StatelessWidget {
               onTap: () => openResource(context, r.url)),
         const SizedBox(height: 22),
       ],
-      GettingStartedCard(store: store, onTab: onTab),
+      if (store.gettingStarted.next != GettingStartedMessage.welcome)
+        GettingStartedCard(store: store, onTab: onTab),
       const TrainingShare(),
     ]);
   }

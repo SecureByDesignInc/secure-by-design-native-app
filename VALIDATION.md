@@ -1,9 +1,13 @@
-# Validation — Secure By Design 0.2.0
+# Validation — Secure By Design 0.3.0
 
 Validated with Flutter 3.47.6 / Dart 3.13.5 on October 5, 2026.
 
 - Flutter analysis: no issues.
-- Flutter tests: 40 passing.
+- Flutter tests: 49 passing.
+- Personalized onboarding: every goal/level maps to real lessons; a new learner completes a recommended lesson and the Home checklist reflects the result; skipping and reopening persist correctly.
+- Upgrade safety: existing progress, last path, prompt preferences, haptic preferences, and analytics defaults survive.
+- Onboarding at 390 pixels and at 320 pixels with 2× text, including the creator note and a complete lesson.
+- Haptics: user actions, opt-out persistence, duplicate suppression, silent background/desktop behavior, and unavailable platform channels.
 - Actual Flutter screen previews: Home, Training, Explore, and My Progress at 390×844 logical pixels.
 - Adaptive navigation: 320, 390, 768, and 1280 logical pixels at 1× and 2× text size.
 - Both published course panels: 320-pixel phone at 1× and 2× text size, including materials bookmarks.

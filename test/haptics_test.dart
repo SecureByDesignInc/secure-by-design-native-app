@@ -13,7 +13,8 @@ void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   final pulses = <String>[];
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues(
+        {'sbd.guidance.started.v1': DateTime.now().toUtc().toIso8601String()});
     binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     pulses.clear();
     binding.defaultBinaryMessenger
