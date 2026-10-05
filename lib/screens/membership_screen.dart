@@ -161,12 +161,12 @@ class _MembershipScreenState extends State<MembershipScreen> {
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                      const Kicker('A note from Jon'),
+                      const Kicker('A note from SecureByDesign Team'),
                       const SizedBox(height: 12),
                       Text(catalog.creatorNote,
                           style: const TextStyle(height: 1.7)),
                       const SizedBox(height: 14),
-                      const Text('Jon Mifflin · Creator, Secure By Design',
+                      const Text('SecureByDesign Team',
                           style: TextStyle(color: SbdColors.muted)),
                     ])),
               ]);
