@@ -54,7 +54,7 @@ void main() {
       addTearDown(store.dispose);
       final boundary = GlobalKey();
       await tester.pumpWidget(RepaintBoundary(key: boundary, child: MaterialApp(
-          theme: buildTheme(), home: Scaffold(body: TrainingLibraryScreen(store: store)))));
+          debugShowCheckedModeBanner: false, theme: buildTheme(), home: Scaffold(body: TrainingLibraryScreen(store: store)))));
       await tester.pumpAndSettle();
       if (scale == 1) await capture(tester, boundary, 'training-categories');
       await tester.enterText(find.byType(TextField), 'DNS');
@@ -69,6 +69,7 @@ void main() {
       expect(find.descendant(of: card, matching: find.text('Hide lessons')), findsOneWidget);
       final lesson = publishedPaths[1].lessons.first;
       await tester.ensureVisible(find.text(lesson.title));
+      await tester.pumpAndSettle();
       if (scale == 1) await capture(tester, boundary, 'expanded-training');
       await tester.tap(find.text(lesson.title));
       await tester.pumpAndSettle();
@@ -92,7 +93,7 @@ void main() {
       addTearDown(account.dispose);
       final boundary = GlobalKey();
       await tester.pumpWidget(RepaintBoundary(key: boundary, child: MaterialApp(
-          theme: buildTheme(), home: Scaffold(body: MyLearningScreen(store: store, account: account)))));
+          debugShowCheckedModeBanner: false, theme: buildTheme(), home: Scaffold(body: MyLearningScreen(store: store, account: account)))));
       await tester.pumpAndSettle();
       expect(find.text('Community · Included'), findsOneWidget);
       if (scale == 1) await capture(tester, boundary, 'my-account');

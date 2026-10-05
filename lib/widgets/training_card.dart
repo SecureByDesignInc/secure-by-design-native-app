@@ -62,20 +62,22 @@ class _TrainingCardState extends State<TrainingCard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(children: [
-                                  TopicBadge(path.icon, size: 42),
+                                  TopicBadge(path.icon, size: 38),
                                   const SizedBox(width: 12),
-                                  Expanded(child: Kicker(categoryFor(path).title)),
+                                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                    Text(categoryFor(path).title, style: const TextStyle(
+                                        color: SbdColors.cyan, fontSize: 12)),
+                                    const SizedBox(height: 4),
+                                    Text(path.title, style: Theme.of(context).textTheme.titleMedium),
+                                  ])),
                                   const SizedBox(width: 8),
                                   Icon(_expanded
                                       ? Icons.keyboard_arrow_up
                                       : Icons.keyboard_arrow_down,
                                       color: SbdColors.cyan),
                                 ]),
-                                const SizedBox(height: 18),
-                                Text(path.title,
-                                    style: Theme.of(context).textTheme.titleLarge),
-                                const SizedBox(height: 8),
-                                Text(path.subtitle),
+                                const SizedBox(height: 12),
+                                Text(path.subtitle, style: const TextStyle(fontSize: 13)),
                                 const SizedBox(height: 18),
                                 ProgressLine(value: widget.store.progressIn(path)),
                                 const SizedBox(height: 8),

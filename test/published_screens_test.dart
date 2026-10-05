@@ -32,10 +32,12 @@ void main() {
     await tester.pumpWidget(MaterialApp(theme: buildTheme(),
         home: Scaffold(body: TrainingLibraryScreen(store: store))));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsOneWidget);
     expect(find.text('Configure DNS'), findsNothing);
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
     await tester.enterText(find.byType(TextField), 'Root CA');
     await tester.pumpAndSettle();

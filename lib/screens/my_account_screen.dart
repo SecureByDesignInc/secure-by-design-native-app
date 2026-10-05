@@ -178,8 +178,8 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
         final path = store.currentPath;
         final stats = store.stats;
         return PageContent(children: [
-          const PageTitle('My Account', 'Your learning. Your preferences. One place.',
-              kicker: 'Made for your next step'),
+          Text('My Account', style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 20),
           Panel(gradient: true, child: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -200,8 +200,6 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                   Text('Community · Included', style: TextStyle(color: SbdColors.cyan,
                       fontWeight: FontWeight.w600))]),
             const SizedBox(height: 10),
-            const Text('Your current courses, learning tools, and saved materials are included.'),
-            const SizedBox(height: 12),
             Text(store.storageLabel, style: const TextStyle(fontSize: 13)),
             const SizedBox(height: 14),
             Wrap(spacing: 10, runSpacing: 10, children: [

@@ -145,24 +145,27 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
               .toLowerCase().contains(query.trim().toLowerCase());
     }).toList();
     return PageContent(children: [
-      const PageTitle('Training Library',
-          'Build the network. Understand the why. Prepare it for authorization.',
-          kicker: 'Learn it. Share it. Pay it forward.'),
+      Text('Training Library', style: Theme.of(context).textTheme.headlineMedium),
+      const SizedBox(height: 8),
+      const Text('Build the network. Prepare it for authorization.'),
+      const SizedBox(height: 18),
       TextField(
           decoration: const InputDecoration(
               labelText: 'Search training', prefixIcon: Icon(Icons.search)),
           onChanged: (v) => setState(() => query = v)),
       const SizedBox(height: 18),
-      Wrap(spacing: 8, runSpacing: 8, children: [
+      SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
         ChoiceChip(label: const Text('All training'), selected: category.isEmpty,
             onSelected: (_) => setState(() => category = '')),
-        for (final group in trainingCategories)
+        for (final group in trainingCategories) ...[
+          const SizedBox(width: 8),
           ChoiceChip(label: Text(group.title), selected: category == group.id,
               onSelected: (_) {
                 widget.store.haptics.selectionChanged();
                 setState(() => category = group.id);
               }),
-      ]),
+        ],
+      ])),
       const SizedBox(height: 28),
       if (matches.isEmpty)
         const Text('No matching training. Try another topic.'),
@@ -179,10 +182,7 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
                   '${matches.where(group.contains).length == 1 ? 'course' : 'courses'}'),
             ])),
           ]),
-          const SizedBox(height: 12),
-          Text(group.description,
-              style: const TextStyle(color: SbdColors.muted, height: 1.5)),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           ResponsiveCards(children: matches.where(group.contains)
               .map((path) => TrainingCard(key: ValueKey(path.id),
                   path: path, store: widget.store)).toList()),
