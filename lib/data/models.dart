@@ -44,6 +44,7 @@ class LearningPath {
     this.studyTime = '',
     this.topics = 0,
     this.materials = const [],
+    this.number = '',
   });
   final String id;
   final String title;
@@ -56,6 +57,7 @@ class LearningPath {
   final String studyTime;
   final int topics;
   final List<LearningResource> materials;
+  final String number;
   int get minutes => lessons.fold(0, (sum, lesson) => sum + lesson.minutes);
 }
 
