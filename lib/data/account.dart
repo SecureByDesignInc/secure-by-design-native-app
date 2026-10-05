@@ -170,6 +170,54 @@ class AccountStore extends ChangeNotifier {
     }
   }
 
+  Future<List<dynamic>> syncActivity(List<Map<String, Object>> activity) async {
+    final token = _token, owner = accountId;
+    if (token == null || owner == null) {
+      throw const AccountFailure('Sign in to sync your activity.');
+    }
+    Future<Map<String, dynamic>> page(
+        List<Map<String, Object>> rows, String after) async {
+      if (token != _token || owner != accountId) {
+        throw const AccountFailure('Your account changed.');
+      }
+      try {
+        final data = await _transport.request('POST', '/api/native-activity',
+            token: token, body: {'activity': rows, 'after': after});
+        if (data['accountId'] != owner ||
+            data['activity'] is! List ||
+            (data['nextCursor'] != null && data['nextCursor'] is! String)) {
+          throw const FormatException('Invalid activity response');
+        }
+        return data;
+      } on AccountFailure catch (failure) {
+        if (failure.status == 401 && token == _token) {
+          _clear();
+          _notify();
+        }
+        rethrow;
+      }
+    }
+
+    var offset = 0;
+    while (activity.length - offset > 12) {
+      await page(activity.sublist(offset, offset + 12), '');
+      offset += 12;
+    }
+    var data = await page(activity.sublist(offset), '');
+    final result = <dynamic>[...data['activity'] as List];
+    String previous = '';
+    while (data['nextCursor'] != null) {
+      final cursor = data['nextCursor'] as String;
+      if (cursor.compareTo(previous) <= 0) {
+        throw const FormatException('Invalid activity cursor');
+      }
+      previous = cursor;
+      data = await page([], cursor);
+      result.addAll(data['activity'] as List);
+    }
+    return result;
+  }
+
   Future<void> signOut() async {
     if (busy || _disposed) return;
     final token = _token;

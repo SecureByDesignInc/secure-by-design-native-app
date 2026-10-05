@@ -144,6 +144,8 @@ void main() {
       await tap(tester, 'Prepare');
       await tap(tester, 'Complete lesson');
       expect(store.completed, {'rmf-1'});
+      expect(find.text('+45 XP'), findsOneWidget);
+      await tap(tester, 'Continue');
       expect(find.text('YOUR FIRST STEPS · 2 OF 3'), findsOneWidget);
       await store.toggleSaved('nist-rmf');
       await tester.pumpAndSettle();

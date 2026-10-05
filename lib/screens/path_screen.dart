@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
+import '../data/catalog.dart';
+import '../data/learning_activity.dart';
+import '../widgets/learning_rewards.dart';
 import '../data/learning_store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -30,6 +33,20 @@ Future<void> openLearningPath(
       ),
     );
   }
+}
+
+Future<void> openPractice(BuildContext context, LearningStore store) async {
+  final lesson = store.practiceLesson ??
+      store.nextLesson(store.currentPath) ??
+      store.currentPath.lessons.first;
+  final path =
+      learningPaths.firstWhere((p) => p.lessons.any((l) => l.id == lesson.id));
+  await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => LessonScreen(
+          store: store,
+          lesson: lesson,
+          path: path,
+          practice: store.isCompleted(lesson.id))));
 }
 
 class PathScreen extends StatelessWidget {
@@ -242,7 +259,9 @@ class LessonScreen extends StatefulWidget {
     required this.store,
     required this.lesson,
     required this.path,
+    this.practice = false,
   });
+  final bool practice;
   final LearningStore store;
   final Lesson lesson;
   final LearningPath path;
@@ -260,21 +279,25 @@ class _LessonScreenState extends State<LessonScreen> {
 
   int? _answer;
   bool _saving = false;
+  bool _madeMistake = false;
+  LearningReward? _reward;
   bool get _correct => _answer == widget.lesson.correctAnswer;
 
   Future<void> _complete() async {
     setState(() => _saving = true);
     final scope = widget.store.accountScope;
     try {
-      await widget.store.completeLesson(widget.lesson.id);
-      if (mounted) {
-        if (scope == widget.store.accountScope &&
-            widget.store.isCompleted(widget.lesson.id)) {
-          widget.store.haptics.lessonCompleted();
-        }
-        showNotice(context, 'Lesson completed. Keep following your curiosity.');
-        Navigator.of(context).pop();
+      final reward = await widget.store
+          .finishLesson(widget.lesson.id, perfect: !_madeMistake);
+      if (!mounted) return;
+      if (scope != widget.store.accountScope || reward == null) {
+        setState(() => _saving = false);
+        showNotice(context,
+            'Your account changed. Complete this lesson for the current learner.');
+        return;
       }
+      widget.store.haptics.lessonCompleted();
+      setState(() => _reward = reward);
     } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
@@ -285,11 +308,18 @@ class _LessonScreenState extends State<LessonScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_reward != null) {
+      return Scaffold(
+          appBar: AppBar(title: const Text('Session complete')),
+          body: LessonCelebration(
+              reward: _reward!, onContinue: () => Navigator.pop(context)));
+    }
     final lesson = widget.lesson;
     final completed = widget.store.isCompleted(lesson.id);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your lesson', style: TextStyle(fontSize: 16)),
+        title: Text(widget.practice ? 'Practice' : 'Your lesson',
+            style: const TextStyle(fontSize: 16)),
       ),
       body: PageContent(
         maxWidth: 760,
@@ -302,15 +332,21 @@ class _LessonScreenState extends State<LessonScreen> {
           const SizedBox(height: 14),
           Text(lesson.summary, style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 32),
-          for (final section in lesson.sections) ...[
-            Text(
-              section.heading,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Text(section.body, style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: 28),
-          ],
+          if (widget.practice)
+            const Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Text('Recall it. Check it. Make it stick.',
+                    style: TextStyle(color: SbdColors.cyan))),
+          if (!widget.practice)
+            for (final section in lesson.sections) ...[
+              Text(
+                section.heading,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(section.body, style: Theme.of(context).textTheme.bodyLarge),
+              const SizedBox(height: 28),
+            ],
           Panel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -328,15 +364,20 @@ class _LessonScreenState extends State<LessonScreen> {
                     child: SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {
-                          if (_answer == i) return;
-                          setState(() => _answer = i);
-                          widget.store.haptics.selectionChanged();
-                          widget.store.analytics.knowledgeCheckSubmitted(
-                            lesson.id,
-                            i == lesson.correctAnswer,
-                          );
-                        },
+                        onPressed: _saving
+                            ? null
+                            : () {
+                                if (_answer == i) return;
+                                setState(() {
+                                  _answer = i;
+                                  if (!_correct) _madeMistake = true;
+                                });
+                                widget.store.haptics.selectionChanged();
+                                widget.store.analytics.knowledgeCheckSubmitted(
+                                  lesson.id,
+                                  i == lesson.correctAnswer,
+                                );
+                              },
                         style: OutlinedButton.styleFrom(
                           alignment: Alignment.centerLeft,
                           side: BorderSide(
@@ -391,20 +432,20 @@ class _LessonScreenState extends State<LessonScreen> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: !completed && _correct && !_saving ? _complete : null,
+              onPressed: _correct && !_saving ? _complete : null,
               icon: Icon(
                 completed ? Icons.check_circle_outline : Icons.check_rounded,
               ),
               label: Text(
-                completed
-                    ? 'Lesson completed'
-                    : _saving
-                        ? 'Saving progress…'
+                _saving
+                    ? 'Saving progress…'
+                    : completed
+                        ? 'Complete review'
                         : 'Complete lesson',
               ),
             ),
           ),
-          if (!completed && !_correct)
+          if (!_correct)
             const Padding(
               padding: EdgeInsets.only(top: 12),
               child: Text(
@@ -412,6 +453,24 @@ class _LessonScreenState extends State<LessonScreen> {
                 style: TextStyle(color: SbdColors.muted, fontSize: 13),
               ),
             ),
+          if (widget.practice)
+            ExpansionTile(
+                title: const Text('Review the lesson notes'),
+                children: [
+                  for (final section in lesson.sections)
+                    Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(section.heading,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium),
+                              const SizedBox(height: 8),
+                              Text(section.body,
+                                  style: Theme.of(context).textTheme.bodyLarge)
+                            ]))
+                ]),
           const SizedBox(height: 26),
           const Divider(color: SbdColors.border),
           const SizedBox(height: 12),

@@ -126,3 +126,13 @@ Codemagic checks pull requests targeting main and builds the signed TestFlight I
 - [Flutter desktop setup](https://docs.flutter.dev/platform-integration/desktop)
 
 Original sample explanations link to [Microsoft Learn](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/get-started/virtual-dc/active-directory-domain-services-overview), [NIST](https://csrc.nist.gov/projects/risk-management/about-rmf), and [Splunk](https://help.splunk.com/en/splunk-enterprise/get-started/overview/9.1/about-splunk-enterprise/about-splunk-enterprise) within the app.
+
+## Daily learning (0.4.0)
+
+Home and My Progress include a local-calendar streak, seven-day calendar, daily XP goal (10/20/40), XP levels, three daily quests, a 30-quest monthly challenge, six achievements, and lesson/review celebrations. Haptics retain the existing default-on preference. Completed lessons can be reviewed through Practice; the correct answer is required before rewards are saved.
+
+- New lessons earn 20 XP; reviews earn 10; correct first attempts add 5. Each lesson earns rewards once per calendar day. Each completed daily quest adds 10 XP once. There are no timers, purchases, or penalties that lock lessons.
+- One lesson or review maintains a streak independently of the daily goal. One automatic freeze is earned on the first active day; another every seven active days, capped at two. Freezes preserve a run but add neither streak days nor XP. Historical best streak remains after a reset.
+- Immutable local date/lesson keys make rewards idempotent across retries and device imports. Existing undated completions do not become fictional streak history. Dates keep their original local-calendar meaning across time-zone changes. The daily goal is device-local and account-scoped.
+- `/api/native-activity` syncs account activity with bounded uploads and paginated history. Guest data only joins an account through the existing explicit import. Delayed responses are discarded after account changes, and failed writes remain pending. Activity is private; there are no fabricated competitors, public leaderboards, or friend invitations. Website reading completions do not retroactively earn app activity rewards.
+- Deploy the additive Site migration 0008 and native-activity endpoint before distributing this app. The previous app remains compatible with its unchanged native-progress endpoint.

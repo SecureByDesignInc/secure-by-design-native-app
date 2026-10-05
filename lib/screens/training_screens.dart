@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/getting_started.dart';
 import '../widgets/training_share.dart';
+import '../widgets/learning_rewards.dart';
 import 'account_screen.dart';
 import 'main_screens.dart' show ResourcesScreen;
 import 'network_screen.dart';
@@ -28,6 +29,19 @@ class TrainingHome extends StatelessWidget {
       Text('Your next chapter.',
           style: Theme.of(context).textTheme.headlineLarge),
       const SizedBox(height: 22),
+      DailyLearningCard(
+          store: store,
+          onDetails: () => onTab(3),
+          onLearn: () {
+            if (next == null) {
+              openPractice(context, store);
+              return;
+            }
+            Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) =>
+                    LessonScreen(store: store, lesson: next, path: path)));
+          }),
+      const SizedBox(height: 18),
       if (store.gettingStarted.next == GettingStartedMessage.welcome)
         GettingStartedCard(store: store, onTab: onTab),
       LearningPlanChecklist(store: store, onTab: onTab),
@@ -58,6 +72,13 @@ class TrainingHome extends StatelessWidget {
                     ? 'Start learning'
                     : 'Continue learning')),
           ])),
+      if (store.practiceLesson != null) ...[
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+            onPressed: () => openPractice(context, store),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Practice what you know')),
+      ],
       const SizedBox(height: 28),
       Row(children: [
         Expanded(
@@ -306,6 +327,9 @@ class MyLearningScreen extends StatelessWidget {
       builder: (context, _) => PageContent(children: [
             PageTitle('My Progress', store.storageLabel,
                 kicker: 'Keep learning'),
+            LearningDashboard(
+                store: store, onPractice: () => openPractice(context, store)),
+            const SizedBox(height: 26),
             Panel(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +343,7 @@ class MyLearningScreen extends StatelessWidget {
                   Text(
                       account.signedIn
                           ? (store.cloudConnected
-                              ? 'Sync lessons and saved materials with your account.'
+                              ? 'Sync lessons, streaks, XP, and saved materials with your account.'
                               : 'Connect account progress when you are ready. Your device-only records stay separate.')
                           : 'Sign in to sync. You can also keep learning and saving materials on this device.',
                       style:
@@ -383,7 +407,7 @@ class MyLearningScreen extends StatelessWidget {
                                             title: const Text(
                                                 'Add device progress?'),
                                             content: Text(
-                                                'Add this device’s offline completions and bookmarks to ${account.email}. Existing account records will be kept.'),
+                                                'Add this device’s offline lessons, learning activity, and bookmarks to ${account.email}. Existing account records will be kept.'),
                                             actions: [
                                               TextButton(
                                                   onPressed: () =>

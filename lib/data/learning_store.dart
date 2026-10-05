@@ -8,23 +8,66 @@ import 'models.dart';
 import 'getting_started.dart';
 import 'account.dart';
 import 'haptics.dart';
+import 'learning_activity.dart';
 
 class LearningStore extends ChangeNotifier {
-  LearningStore._(this._preferences, {AnalyticsTransport? transport})
-      : analytics = LearningAnalytics(_preferences, transport: transport),
+  LearningStore._(this._preferences,
+      {AnalyticsTransport? transport, DateTime Function()? clock})
+      : _clock = clock ?? DateTime.now,
+        analytics = LearningAnalytics(_preferences, transport: transport),
         haptics = AppHaptics(_preferences),
         gettingStarted = GettingStartedStore(_preferences) {
     gettingStarted.addListener(notifyListeners);
     _readLocal();
   }
-  static Future<LearningStore> load({AnalyticsTransport? transport}) async {
+  static Future<LearningStore> load(
+      {AnalyticsTransport? transport, DateTime Function()? clock}) async {
     final store = LearningStore._(await SharedPreferences.getInstance(),
-        transport: transport);
+        transport: transport, clock: clock);
     await store.gettingStarted.initialize();
     return store;
   }
 
   final SharedPreferences _preferences;
+  final DateTime Function() _clock;
+  Map<String, LearningActivity> _activities = {};
+  Set<String> _pendingActivity = {};
+  int _dailyGoal = 20;
+  LearningStats get stats =>
+      LearningStats(_activities.values, _clock(), _dailyGoal);
+  int get dailyGoal => _dailyGoal;
+  void refreshDay() => _notify();
+  bool rewardedToday(String id) =>
+      _activities.containsKey('${learningDay(_clock())}|$id');
+  Lesson? get practiceLesson {
+    final lessons = learningPaths
+        .expand((p) => p.lessons)
+        .where((l) => isCompleted(l.id))
+        .toList();
+    String lastDay(Lesson lesson) {
+      final dates = _activities.values
+          .where((a) => a.lessonId == lesson.id)
+          .map((a) => a.day)
+          .toList()
+        ..sort();
+      return dates.isEmpty ? '' : dates.last;
+    }
+
+    lessons.sort((a, b) => lastDay(a).compareTo(lastDay(b)));
+    return lessons.isEmpty ? null : lessons.first;
+  }
+
+  Future<void> setDailyGoal(int goal) {
+    final epoch = _epoch;
+    return _serialize(() async {
+      if (epoch != _epoch) return;
+      if (![10, 20, 40].contains(goal)) throw ArgumentError.value(goal);
+      _dailyGoal = goal;
+      await _persist();
+      _notify();
+    });
+  }
+
   final LearningAnalytics analytics;
   final AppHaptics haptics;
   final GettingStartedStore gettingStarted;
@@ -80,6 +123,9 @@ class LearningStore extends ChangeNotifier {
   }
 
   void _readLocal() {
+    _activities = {};
+    _pendingActivity = {};
+    _dailyGoal = 20;
     _completed = (_preferences.getStringList(_key('completed')) ?? [])
         .toSet()
         .intersection(_lessonIds);
@@ -113,6 +159,17 @@ class LearningStore extends ChangeNotifier {
         _lastPath = state['lastPath'] as String?;
         _pendingRecords = Map<String, String>.from(state['pendingRecords']);
         _pendingBookmarks = Map<String, bool>.from(state['pendingBookmarks']);
+        for (final raw in state['activity'] is List ? state['activity'] : []) {
+          final event = LearningActivity.fromJson(raw, _lessonIds);
+          if (event != null) _activities[event.key] = event;
+        }
+        _pendingActivity = (state['pendingActivity'] is List
+                ? (state['pendingActivity'] as List).whereType<String>().toSet()
+                : <String>{})
+            .intersection(_activities.keys.toSet());
+        if ([10, 20, 40].contains(state['dailyGoal'])) {
+          _dailyGoal = state['dailyGoal'] as int;
+        }
       }
     } catch (_) {
       /* Existing version-one records remain the migration fallback. */
@@ -131,6 +188,9 @@ class LearningStore extends ChangeNotifier {
       'lastPath': _lastPath,
       'pendingRecords': _pendingRecords,
       'pendingBookmarks': _pendingBookmarks,
+      'activity': _activities.values.map((e) => e.toJson()).toList(),
+      'pendingActivity': _pendingActivity.toList(),
+      'dailyGoal': _dailyGoal,
     });
     if (!await _preferences.setString(_key('state'), state)) {
       throw StateError('Could not save learning progress.');
@@ -145,6 +205,9 @@ class LearningStore extends ChangeNotifier {
       final records = Map<String, String>.of(_pendingRecords),
           bookmarks = Map<String, bool>.of(_pendingBookmarks);
       final lastPath = _lastPath;
+      final activity = Map<String, LearningActivity>.of(_activities);
+      final pendingActivity = Set<String>.of(_pendingActivity);
+      final goal = _dailyGoal;
       try {
         await action();
       } catch (_) {
@@ -154,6 +217,9 @@ class LearningStore extends ChangeNotifier {
         _pendingRecords = records;
         _pendingBookmarks = bookmarks;
         _lastPath = lastPath;
+        _activities = activity;
+        _pendingActivity = pendingActivity;
+        _dailyGoal = goal;
         rethrow;
       }
     });
@@ -173,7 +239,51 @@ class LearningStore extends ChangeNotifier {
   }
 
   Future<void> startLesson(String id) => _record(id, false);
-  Future<void> completeLesson(String id) => _record(id, true);
+  Future<void> completeLesson(String id) async {
+    await finishLesson(id);
+  }
+
+  Future<LearningReward?> finishLesson(String id,
+      {bool perfect = false}) async {
+    final epoch = _epoch;
+    LearningReward? reward;
+    await _serialize(() async {
+      if (epoch != _epoch) return;
+      if (!_lessonIds.contains(id)) throw ArgumentError.value(id);
+      final before = stats;
+      final review = isCompleted(id);
+      final event = LearningActivity(
+          day: learningDay(_clock()),
+          lessonId: id,
+          review: review,
+          perfect: perfect);
+      _started.add(id);
+      _completed.add(id);
+      if (!_activities.containsKey(event.key)) {
+        _activities[event.key] = event;
+        if (cloudConnected) _pendingActivity.add(event.key);
+      }
+      if (cloudConnected) _pendingRecords[id] = 'completed';
+      await _persist();
+      final after = stats;
+      reward = LearningReward(
+          xp: after.totalXp - before.totalXp,
+          review: review,
+          stats: after,
+          extendedStreak: !before.learnedToday && after.learnedToday,
+          newBadges: after.badges
+              .where((b) =>
+                  b.earned &&
+                  !before.badges
+                      .any((old) => old.title == b.title && old.earned))
+              .toList());
+      if (!review) analytics.lessonCompleted(id);
+      _notify();
+    });
+    if (cloudConnected) unawaited(sync());
+    return reward;
+  }
+
   Future<void> _record(String id, bool done) async {
     final epoch = _epoch;
     await _serialize(() async {
@@ -261,6 +371,12 @@ class LearningStore extends ChangeNotifier {
           _pendingBookmarks[id] = true;
         }
       }
+      for (final raw in guest['activity'] is List ? guest['activity'] : []) {
+        final event = LearningActivity.fromJson(raw, _lessonIds);
+        if (event == null) continue;
+        _activities[event.key] = _activities[event.key]?.merge(event) ?? event;
+        _pendingActivity.add(event.key);
+      }
       await _persist();
       _notify();
     });
@@ -286,6 +402,9 @@ class LearningStore extends ChangeNotifier {
     _notify();
     final records = Map<String, String>.from(_pendingRecords);
     final bookmarks = Map<String, bool>.from(_pendingBookmarks);
+    final activity = {
+      for (final key in _pendingActivity) key: _activities[key]!
+    };
     try {
       final data = await account.syncProgress(
         records.entries
@@ -348,7 +467,28 @@ class LearningStore extends ChangeNotifier {
           }
         }
         await _persist();
-        lastSynced = DateTime.now();
+      });
+      if (epoch != _epoch || account.accountId != scope) return;
+      final activityData = await account
+          .syncActivity(activity.values.map((e) => e.toJson()).toList());
+      if (epoch != _epoch || account.accountId != scope) return;
+      await _serialize(() async {
+        if (epoch != _epoch) return;
+        for (final raw in activityData) {
+          final event = LearningActivity.fromJson(raw, _lessonIds);
+          if (event == null) {
+            throw const FormatException('Invalid learning activity');
+          }
+          _activities[event.key] =
+              _activities[event.key]?.merge(event) ?? event;
+        }
+        for (final entry in activity.entries) {
+          if (_activities[entry.key]?.xp == entry.value.xp) {
+            _pendingActivity.remove(entry.key);
+          }
+        }
+        await _persist();
+        lastSynced = _clock();
       });
     } catch (_) {
       if (epoch == _epoch) {
@@ -360,7 +500,9 @@ class LearningStore extends ChangeNotifier {
         syncing = false;
         _notify();
         if (syncError == null &&
-            (_pendingRecords.isNotEmpty || _pendingBookmarks.isNotEmpty)) {
+            (_pendingRecords.isNotEmpty ||
+                _pendingBookmarks.isNotEmpty ||
+                _pendingActivity.isNotEmpty)) {
           unawaited(sync());
         }
       }
