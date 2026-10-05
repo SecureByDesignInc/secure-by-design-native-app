@@ -264,9 +264,14 @@ class _LessonScreenState extends State<LessonScreen> {
 
   Future<void> _complete() async {
     setState(() => _saving = true);
+    final scope = widget.store.accountScope;
     try {
       await widget.store.completeLesson(widget.lesson.id);
       if (mounted) {
+        if (scope == widget.store.accountScope &&
+            widget.store.isCompleted(widget.lesson.id)) {
+          widget.store.haptics.lessonCompleted();
+        }
         showNotice(context, 'Lesson completed. Keep following your curiosity.');
         Navigator.of(context).pop();
       }
@@ -324,7 +329,9 @@ class _LessonScreenState extends State<LessonScreen> {
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () {
+                          if (_answer == i) return;
                           setState(() => _answer = i);
+                          widget.store.haptics.selectionChanged();
                           widget.store.analytics.knowledgeCheckSubmitted(
                             lesson.id,
                             i == lesson.correctAnswer,

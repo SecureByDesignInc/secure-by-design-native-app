@@ -32,6 +32,13 @@ class _CourseScreenState extends State<CourseScreen> {
       MaterialPageRoute<void>(
           builder: (_) => LessonScreen(
               store: widget.store, lesson: lesson, path: widget.path)));
+
+  void _selectTab(int tab) {
+    if (_tab == tab) return;
+    widget.store.haptics.selectionChanged();
+    setState(() => _tab = tab);
+  }
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
       animation: widget.store,
@@ -72,7 +79,7 @@ class _CourseScreenState extends State<CourseScreen> {
                     _tab
                   },
                   showSelectedIcon: false,
-                  onSelectionChanged: (v) => setState(() => _tab = v.first)),
+                  onSelectionChanged: (v) => _selectTab(v.first)),
               const SizedBox(height: 24),
               if (_tab == 0) ...[
                 Text(path.description,
@@ -100,7 +107,7 @@ class _CourseScreenState extends State<CourseScreen> {
                     ])),
                 const SizedBox(height: 24),
                 OutlinedButton.icon(
-                    onPressed: () => setState(() => _tab = 2),
+                    onPressed: () => _selectTab(2),
                     icon: const Icon(Icons.download_outlined),
                     label: const Text('View training materials')),
               ],
@@ -168,8 +175,17 @@ class _CourseScreenState extends State<CourseScreen> {
                                           ? 'Remove saved material'
                                           : 'Save material',
                                       onPressed: () async {
+                                        final wasSaved =
+                                            store.isSaved(resource.id);
+                                        final scope = store.accountScope;
                                         try {
                                           await store.toggleSaved(resource.id);
+                                          if (context.mounted &&
+                                              scope == store.accountScope &&
+                                              wasSaved !=
+                                                  store.isSaved(resource.id)) {
+                                            store.haptics.bookmarkChanged();
+                                          }
                                         } catch (_) {
                                           if (context.mounted) {
                                             showNotice(context,

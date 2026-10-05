@@ -25,6 +25,17 @@ void main() {
   testWidgets(
     'a learner opens a path, answers, completes, and sees saved progress',
     (tester) async {
+      final pulses = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'HapticFeedback.vibrate') {
+          pulses.add(call.arguments as String);
+        }
+        return null;
+      });
+      addTearDown(() => TestDefaultBinaryMessengerBinding
+          .instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null));
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -48,12 +59,20 @@ void main() {
       await tester.tap(find.text('A public DNS resolver'));
       await tester.pumpAndSettle();
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
+      await tester.tap(find.text('A public DNS resolver'));
+      await tester.pumpAndSettle();
+      expect(pulses, ['HapticFeedbackType.selectionClick']);
       await tester.tap(find.text('DC01, once its domain DNS is available'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(complete);
       await tester.tap(complete);
       await tester.pumpAndSettle();
       expect(store.completed, {'training:dc01-dc02:prepare'});
+      expect(pulses, [
+        'HapticFeedbackType.selectionClick',
+        'HapticFeedbackType.selectionClick',
+        'HapticFeedbackType.successNotification',
+      ]);
       expect(find.text('1 of 5 chapters complete'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();

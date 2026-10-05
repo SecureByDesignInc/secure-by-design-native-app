@@ -354,6 +354,13 @@ class ResourcesScreen extends StatefulWidget {
 
 class _ResourcesScreenState extends State<ResourcesScreen> {
   bool _savedOnly = false;
+
+  void _selectFilter(bool savedOnly) {
+    if (_savedOnly == savedOnly) return;
+    widget.store.haptics.selectionChanged();
+    setState(() => _savedOnly = savedOnly);
+  }
+
   @override
   Widget build(BuildContext context) {
     final visible = resources
@@ -375,13 +382,13 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             ),
             ButtonSegment(
               value: true,
-              label: Text('Saved (${resources.where((r) => widget.store.isSaved(r.id)).length})'),
+              label: Text(
+                  'Saved (${resources.where((r) => widget.store.isSaved(r.id)).length})'),
               icon: const Icon(Icons.bookmark_border),
             ),
           ],
           selected: {_savedOnly},
-          onSelectionChanged: (value) =>
-              setState(() => _savedOnly = value.first),
+          onSelectionChanged: (value) => _selectFilter(value.first),
           showSelectedIcon: false,
           style: const ButtonStyle(visualDensity: VisualDensity.comfortable),
         ),
@@ -412,7 +419,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                 ),
                 const SizedBox(height: 20),
                 OutlinedButton(
-                  onPressed: () => setState(() => _savedOnly = false),
+                  onPressed: () => _selectFilter(false),
                   child: const Text('Explore resources'),
                 ),
               ],
@@ -456,8 +463,15 @@ class _ResourceCard extends StatelessWidget {
                     ? 'Remove ${resource.title} from saved'
                     : 'Save ${resource.title}',
                 onPressed: () async {
+                  final wasSaved = store.isSaved(resource.id);
+                  final scope = store.accountScope;
                   try {
                     await store.toggleSaved(resource.id);
+                    if (context.mounted &&
+                        scope == store.accountScope &&
+                        wasSaved != store.isSaved(resource.id)) {
+                      store.haptics.bookmarkChanged();
+                    }
                   } catch (_) {
                     if (context.mounted) {
                       showNotice(
