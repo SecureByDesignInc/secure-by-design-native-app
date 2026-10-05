@@ -6,6 +6,7 @@ import 'data/account.dart';
 import 'screens/account_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/training_screens.dart';
+import 'screens/membership_screen.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/app_support.dart';
@@ -134,6 +135,15 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 24),
                 const CreatorNote(),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.layers_outlined),
+                  label: const Text('Memberships'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    openMemberships(this.context, widget.store);
+                  },
+                ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.route_outlined),
