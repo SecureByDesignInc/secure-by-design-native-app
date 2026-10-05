@@ -136,7 +136,7 @@ void main() {
       expect(find.text('START HERE · 3 MIN'), findsOneWidget);
       if (!largeText) await capture(tester, boundary, 'plan');
       await tap(tester, 'A note before you begin');
-      expect(find.text('Hi, we’re the SecureByDesign Team.'), findsOneWidget);
+      expect(find.text('Hi, we’re Secure By Design.'), findsOneWidget);
       if (!largeText) await capture(tester, boundary, 'creator');
       expect(tester.takeException(), isNull);
       await tap(tester, 'Start my first lesson');

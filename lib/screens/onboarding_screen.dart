@@ -40,9 +40,9 @@ class CreatorNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Panel(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Kicker('A note from SecureByDesign Team'),
+          const Kicker('A note from Secure By Design'),
           const SizedBox(height: 20),
-          Text('Hi, we’re the SecureByDesign Team.',
+          Text('Hi, we’re Secure By Design.',
               style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 18),
           Text(
@@ -52,7 +52,7 @@ class CreatorNote extends StatelessWidget {
               'We’re glad you’re here.',
               style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 24),
-          const Text('SecureByDesign Team',
+          const Text('Secure By Design',
               style: TextStyle(
                   fontSize: 28,
                   fontStyle: FontStyle.italic,
