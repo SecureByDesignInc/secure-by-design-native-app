@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'data/learning_store.dart';
 import 'data/account.dart';
 import 'screens/account_screen.dart';
-import 'screens/main_screens.dart';
+import 'screens/training_screens.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/app_support.dart';
@@ -33,6 +33,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _account.removeListener(_accountChanged);
     _account.dispose();
     super.dispose();
   }
@@ -42,19 +43,31 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.store.analytics.appOpened();
+    _account.addListener(_accountChanged);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) setState(() {});
+    if (state == AppLifecycleState.resumed) {
+      setState(() {});
+      widget.store.sync();
+    }
+  }
+
+  void _accountChanged() {
+    if (widget.store.cloudConnected &&
+        (!_account.signedIn ||
+            widget.store.accountScope != _account.accountId)) {
+      widget.store.disconnectAccount();
+    }
   }
 
   int _tab = 0;
-  static const labels = ['Home', 'Learn', 'Resources', 'Progress'];
+  static const labels = ['Home', 'Training', 'Explore', 'My Progress'];
   static const icons = [
     Icons.home_outlined,
     Icons.auto_stories_outlined,
-    Icons.bookmark_border_rounded,
+    Icons.explore_outlined,
     Icons.donut_large_outlined,
   ];
   void _select(int index) => setState(() => _tab = index);
@@ -79,7 +92,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'A first look at the Secure By Design learning app. Explore sample lessons, save useful references, and track your progress.',
+                  'Build your skills with the published Training Library. Explore the network, save useful materials, and continue your learning across devices.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 16,
@@ -88,7 +101,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Lessons are available offline. Your progress and bookmarks stay on this device. External references open in your browser.',
+                  'Lessons and the system reference are available offline. Connect account progress in My Progress to sync. Downloadable materials and the 3D view require a connection.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 14,
@@ -97,7 +110,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Sign-in is optional. Getting-started prompts stay in the app. Cloud syncing and live lab connections are future additions.',
+                  'Sign-in and progress sync are optional. Device-only records remain separate until you choose to add them. Cyber Range remains a request-access preview.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 14,
@@ -143,10 +156,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         builder: (context, _) {
           final wide = MediaQuery.sizeOf(context).width >= 860;
           final page = switch (_tab) {
-            0 => HomeScreen(store: widget.store, onTab: _select),
-            1 => LearnScreen(store: widget.store),
-            2 => ResourcesScreen(store: widget.store),
-            _ => ProgressScreen(store: widget.store, onLearn: () => _select(1)),
+            0 => TrainingHome(store: widget.store, onTab: _select),
+            1 => TrainingLibraryScreen(store: widget.store),
+            2 => ExploreScreen(store: widget.store),
+            _ => MyLearningScreen(store: widget.store, account: _account),
           };
           final content = Column(
             children: [

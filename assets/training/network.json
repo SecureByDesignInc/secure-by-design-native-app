@@ -1,0 +1,1479 @@
+{
+  "nodes": [
+    {
+      "id": "dc1",
+      "name": "SBD-DC01",
+      "role": "AD DS + DNS",
+      "zone": "v10",
+      "controls": [
+        "AC-2",
+        "IA-2",
+        "AC-6"
+      ],
+      "known": "Listed as the primary domain controller with AD and DNS. FSMO ownership, writability, and replication configuration have not been provided.",
+      "design": [
+        "Protect identity administration from lower-trust workstation sessions.",
+        "Restrict directory and DNS changes; monitor privileged changes.",
+        "Test directory recovery and replication health."
+      ],
+      "evidence": [
+        "Account and privilege reviews; AD/DNS configuration.",
+        "Replication checks, audited changes, and recovery exercise records."
+      ],
+      "address": "10.0.10.10"
+    },
+    {
+      "id": "dc2",
+      "name": "SBD-DC02",
+      "role": "AD DS + DNS",
+      "zone": "v10",
+      "controls": [
+        "AC-2",
+        "IA-2",
+        "CP-9"
+      ],
+      "known": "Listed as the secondary domain controller with AD and DNS. This label does not establish a passive standby role or identify the PDC emulator.",
+      "design": [
+        "Verify the intended replication and DNS redundancy design.",
+        "Apply the same privileged-access protections as SBD-DC01.",
+        "Keep tested backups; replication alone is not a backup."
+      ],
+      "evidence": [
+        "Replication and DNS failover tests.",
+        "Domain controller backup and restoration evidence."
+      ],
+      "address": "10.0.10.11"
+    },
+    {
+      "id": "subca",
+      "name": "SBD-SUBCA01",
+      "role": "Issuing certificate authority",
+      "zone": "v30",
+      "controls": [
+        "SC-12",
+        "SC-17",
+        "AC-6"
+      ],
+      "known": "Subordinate / issuing CA. CA type, domain membership, certificate templates, and publication endpoints are not specified.",
+      "design": [
+        "Constrain enrollment rights and permitted certificate purposes.",
+        "Protect CA private keys and separate CA administration.",
+        "Define certificate revocation, CRL/AIA publication, and recovery procedures."
+      ],
+      "evidence": [
+        "Certificate policy, enrollment permissions, and issuance logs.",
+        "Key protection and certificate-revocation tests."
+      ],
+      "address": "10.0.30.20"
+    },
+    {
+      "id": "dhcp",
+      "name": "SBD-DHCP01",
+      "role": "DHCP server",
+      "zone": "v20",
+      "controls": [
+        "CM-6",
+        "AC-6",
+        "AU-12"
+      ],
+      "known": "Dynamic Host Configuration Protocol server. Scopes, failover, and cross-subnet relay configuration are not provided.",
+      "design": [
+        "Define approved scopes, reservations, DNS options, and lease policy.",
+        "Restrict administrative changes and monitor lease events.",
+        "Plan relay behavior explicitly if clients occupy separate VLANs."
+      ],
+      "evidence": [
+        "Approved DHCP settings and administrative access review.",
+        "Lease logs and client addressing tests."
+      ],
+      "address": "10.0.20.10"
+    },
+    {
+      "id": "fs",
+      "name": "SBD-FS01",
+      "role": "File share server",
+      "zone": "v40",
+      "controls": [
+        "AC-3",
+        "AC-6",
+        "SC-28(1)"
+      ],
+      "known": "File share server. Shares, data sensitivity, access groups, and encryption settings are not provided.",
+      "design": [
+        "Grant share and filesystem permissions through approved roles.",
+        "Protect sensitive data in transit and at rest according to policy.",
+        "Back up data and test restoration of both data and permissions."
+      ],
+      "evidence": [
+        "Share and filesystem access reviews and denial tests.",
+        "Encryption configuration and restoration evidence."
+      ],
+      "address": "10.0.40.10"
+    },
+    {
+      "id": "apps",
+      "name": "SBD-APPS01",
+      "role": "License server",
+      "zone": "v40",
+      "controls": [
+        "AC-3",
+        "AC-6",
+        "CM-6"
+      ],
+      "known": "License server. No application-hosting role or SQL dependency has been assumed.",
+      "design": [
+        "Expose only the vendor-required licensing services to approved clients.",
+        "Restrict service identity and administrative privileges.",
+        "Document vendor ports, configuration, and recovery requirements."
+      ],
+      "evidence": [
+        "Vendor-supported flow matrix and configuration.",
+        "Service account permissions and approved client list."
+      ],
+      "address": "10.0.40.30"
+    },
+    {
+      "id": "sql",
+      "name": "SBD-SQL01",
+      "role": "SQL server",
+      "zone": "v40",
+      "controls": [
+        "AC-3",
+        "AC-6",
+        "SC-8(1)",
+        "SC-28(1)"
+      ],
+      "known": "SQL server. Consumers, instances, databases, and connection ports have not been specified. No workstation-to-SQL or license-server-to-SQL path is assumed.",
+      "design": [
+        "Allow only identified consumers and approved management paths.",
+        "Use narrowly scoped database roles and protect sensitive data.",
+        "Test database, key, and configuration recovery together."
+      ],
+      "evidence": [
+        "Database permission reviews and approved consumer matrix.",
+        "Transport, storage, key-management, and restore test evidence."
+      ],
+      "address": "10.0.40.20"
+    },
+    {
+      "id": "syslog",
+      "name": "SBD-SYSLOG01",
+      "role": "Log message server",
+      "zone": "v20",
+      "controls": [
+        "AU-12",
+        "AU-9",
+        "SC-8(1)"
+      ],
+      "known": "Log-message collection server. Sources, collection agents, transport, and routing to Splunk or the audit repository remain to be confirmed.",
+      "design": [
+        "Collect the defined event types from supported sources.",
+        "Use protected transport where supported and required.",
+        "Monitor delivery failures, time alignment, and collector capacity."
+      ],
+      "evidence": [
+        "Source-to-collector tests and event coverage.",
+        "Transport settings and log-delivery failure alerts."
+      ],
+      "address": "10.0.20.20"
+    },
+    {
+      "id": "audit",
+      "name": "SBD-AUDIT01",
+      "role": "Audit log repository",
+      "zone": "v50",
+      "controls": [
+        "AU-9",
+        "AU-11"
+      ],
+      "known": "Audit log repository. Retention, tamper protection, backup, and ingestion routes are not yet specified.",
+      "design": [
+        "Separate log administration from administration of audited systems.",
+        "Define retention and protect against unauthorized alteration or deletion.",
+        "Test search, export, and recovery of retained records."
+      ],
+      "evidence": [
+        "Repository permissions and retention configuration.",
+        "Integrity checks and retrieval tests."
+      ],
+      "address": "10.0.50.40"
+    },
+    {
+      "id": "splunk",
+      "name": "SBD-SPLUNK01",
+      "role": "Splunk SIEM",
+      "zone": "v50",
+      "controls": [
+        "AU-6",
+        "SI-4"
+      ],
+      "known": "Splunk SIEM server. A server name alone does not establish log coverage, detection rules, or a response process.",
+      "design": [
+        "Validate relevant source coverage and detection logic.",
+        "Assign review and investigation responsibilities.",
+        "Test alerts and escalation; manage false positives and gaps."
+      ],
+      "evidence": [
+        "Detection tests, log coverage, and review records.",
+        "Investigation tickets and escalation procedures."
+      ],
+      "address": "10.0.50.10"
+    },
+    {
+      "id": "epo",
+      "name": "SBD-EPO01",
+      "role": "Trellix ePO + DLP",
+      "zone": "v50",
+      "controls": [
+        "AC-4",
+        "SI-3",
+        "SI-4"
+      ],
+      "known": "Trellix ePO and DLP management server. Agent deployment, protection modules, licensing, and policy enforcement are not verified.",
+      "design": [
+        "Restrict who can change or disable endpoint and DLP policies.",
+        "Verify the relevant agents and protection modules are installed and enforcing policy.",
+        "Test policy updates, health reporting, and authorized data-flow restrictions."
+      ],
+      "evidence": [
+        "Agent coverage and policy enforcement tests.",
+        "Management access reviews and alert/investigation records."
+      ],
+      "address": "10.0.50.30"
+    },
+    {
+      "id": "workstations",
+      "name": "50 Windows 11 PCs",
+      "role": "User workstations × 50",
+      "zone": "v80",
+      "controls": [
+        "CM-6",
+        "AC-6",
+        "SI-2",
+        "SI-3"
+      ],
+      "known": "Fifty Windows 11 user workstations, displayed as one selectable group. Individual hostnames and domain-join status were not provided.",
+      "design": [
+        "Apply approved hardening and minimize local administrative access.",
+        "Deploy and verify patching, protection, and required logging.",
+        "Use separate protected workflows for privileged administration."
+      ],
+      "evidence": [
+        "Configuration and patch compliance reports.",
+        "Endpoint protection coverage and local administrator reviews."
+      ],
+      "address": "10.0.80.100–149"
+    },
+    {
+      "id": "jump",
+      "name": "AdminJumpBox01",
+      "role": "Identity / PKI administration only",
+      "zone": "v60",
+      "controls": [
+        "AC-6",
+        "IA-2(1)",
+        "SC-7(15)"
+      ],
+      "known": "Dedicated Tier 0 administrative host for AD, DNS, and PKI; no server or endpoint administration.",
+      "design": [
+        "Use separate identity/PKI admin accounts and offline-compatible MFA.",
+        "Restrict targets to DCs, issuing CA, and template administration; root CA ceremonies remain local."
+      ],
+      "evidence": [
+        "Privileged target allowlist and account reviews.",
+        "MFA, audit, and cross-tier denial tests."
+      ],
+      "address": "10.0.60.10"
+    },
+    {
+      "id": "wsus",
+      "name": "SBD-WSUS01",
+      "role": "Windows update service",
+      "zone": "v20",
+      "controls": [
+        "SI-2",
+        "CM-6"
+      ],
+      "known": "Windows Server Update Services server. Upstream source, approval rings, client groups, and signing configuration remain unspecified.",
+      "design": [
+        "Approve and test updates before deployment.",
+        "Verify update provenance, integrity, and delivery settings.",
+        "Track missing updates, failures, exceptions, and remediation deadlines."
+      ],
+      "evidence": [
+        "Update approvals and testing records.",
+        "Client patch reports and exception reviews."
+      ],
+      "address": "10.0.20.30"
+    },
+    {
+      "id": "repo",
+      "name": "SBD-REPO01",
+      "role": "Linux repository server",
+      "zone": "v70",
+      "controls": [
+        "SI-2",
+        "AC-6",
+        "CM-6"
+      ],
+      "known": "Linux repository server. Package consumers, repository content, upstream sources, and signing practices are not provided.",
+      "design": [
+        "Restrict repository publication and synchronize only approved sources.",
+        "Validate package signatures and document trust and key changes.",
+        "Monitor repository changes and protect credentials."
+      ],
+      "evidence": [
+        "Repository configuration and signature verification tests.",
+        "Publisher permissions and change history."
+      ],
+      "address": "10.0.70.20"
+    },
+    {
+      "id": "nessus",
+      "name": "SBD-NESSUS01",
+      "role": "Tenable / Nessus",
+      "zone": "v50",
+      "controls": [
+        "RA-5",
+        "AC-6"
+      ],
+      "known": "Vulnerability management server. Scan scopes, schedules, credentials, and agents are not specified.",
+      "design": [
+        "Authorize target scope and constrain scanner access and credentials.",
+        "Analyze findings and track remediation and exceptions.",
+        "Rescan to validate fixes; exclude the offline root from network scans."
+      ],
+      "evidence": [
+        "Authorized scan plan and credential protection settings.",
+        "Findings, remediation records, and validation scans."
+      ],
+      "address": "10.0.50.20"
+    },
+    {
+      "id": "root",
+      "name": "SBD-ROOTCA01",
+      "role": "Offline root CA · workgroup",
+      "zone": "offline",
+      "controls": [
+        "SC-12",
+        "SC-17",
+        "CP-9"
+      ],
+      "known": "Offline, non-domain-joined root certificate authority. It has no live network edges in this diagram.",
+      "design": [
+        "Keep routine operation disconnected from all network segments.",
+        "Use a controlled offline ceremony for subordinate signing and root CRL publication.",
+        "Protect private keys, backup media, and physical access; test recovery."
+      ],
+      "evidence": [
+        "Key ceremony and certificate policy records.",
+        "Physical/media controls and protected recovery tests."
+      ],
+      "address": null
+    },
+    {
+      "id": "templates",
+      "name": "SBD-PKI-MGMT01",
+      "role": "Certificate template administration",
+      "controls": [
+        "SC-17",
+        "IA-5",
+        "AC-6"
+      ],
+      "known": "Certificate templates are directory objects. This host provides the administrative tools to manage them.",
+      "design": [
+        "Separate enrollment approval from template administration.",
+        "Review template permissions and certificate purposes."
+      ],
+      "evidence": [
+        "Template export and permission review.",
+        "Enrollment approval and denial tests."
+      ],
+      "zone": "v30",
+      "address": "10.0.30.30"
+    },
+    {
+      "id": "web",
+      "name": "SBD-WEB01",
+      "role": "Internal Apache web server",
+      "controls": [
+        "AC-3",
+        "CM-6",
+        "SC-8(1)"
+      ],
+      "known": "Internal web services. Define application listeners, certificate use, and database dependencies.",
+      "design": [
+        "Permit only approved internal consumers.",
+        "Harden the web service and maintain trusted certificates."
+      ],
+      "evidence": [
+        "Service configuration and approved flow matrix.",
+        "TLS and access-control tests."
+      ],
+      "zone": "v40",
+      "address": "10.0.40.40"
+    },
+    {
+      "id": "management",
+      "name": "SBD-MGMT01",
+      "role": "Management tools server",
+      "controls": [
+        "CM-2",
+        "CM-3",
+        "CM-8",
+        "AC-6"
+      ],
+      "known": "Management tools. Define administrative accounts, permitted targets, and protocols.",
+      "design": [
+        "Maintain an approved configuration baseline and inventory.",
+        "Track changes and constrain management scope."
+      ],
+      "evidence": [
+        "Configuration baseline and asset register.",
+        "Approved change records and access reviews."
+      ],
+      "zone": "v70",
+      "address": "10.0.70.10"
+    },
+    {
+      "id": "time",
+      "name": "SBD-TIME01",
+      "role": "Internal authoritative time",
+      "controls": [
+        "AU-8",
+        "SC-45"
+      ],
+      "known": "Internal reference clock. Source accuracy, fallback, and drift thresholds must be approved without adding an external network connection.",
+      "design": [
+        "Use a documented internal time hierarchy; domain clients follow domain time.",
+        "Monitor drift and loss of synchronization."
+      ],
+      "evidence": [
+        "Time hierarchy and approved reference source.",
+        "Clock drift and source-failure test results."
+      ],
+      "zone": "v20",
+      "address": "10.0.20.40"
+    },
+    {
+      "id": "jump1",
+      "name": "SBD-ADMIN-SRV01",
+      "role": "Server administration only",
+      "controls": [
+        "AC-5",
+        "AC-6",
+        "IA-2(1)",
+        "AU-12"
+      ],
+      "known": "Dedicated privileged workstation for approved member-server targets. Separate operator roles further restrict security tools and protected audit storage.",
+      "design": [
+        "Separate privileged accounts from identity and endpoint administration.",
+        "Require offline-compatible MFA, named targets, and session auditing."
+      ],
+      "evidence": [
+        "Target allowlist and effective host rules.",
+        "Cross-tier denial and MFA tests."
+      ],
+      "zone": "v60",
+      "address": "10.0.60.20"
+    },
+    {
+      "id": "jump2",
+      "name": "SBD-ADMIN-PC01",
+      "role": "Endpoint administration only",
+      "controls": [
+        "AC-5",
+        "AC-6",
+        "IA-2(1)",
+        "AU-12"
+      ],
+      "known": "Dedicated privileged workstation for the 50 client endpoints. No AD, CA, or server administrative sessions.",
+      "design": [
+        "Use scoped endpoint-admin identities and managed local credentials.",
+        "Deny direct management from ordinary user workstations."
+      ],
+      "evidence": [
+        "Endpoint scope and privileged account review.",
+        "Server and identity management denial tests."
+      ],
+      "zone": "v60",
+      "address": "10.0.60.30"
+    }
+  ],
+  "vlans": [
+    {
+      "id": "v10",
+      "number": 10,
+      "name": "Domain controllers",
+      "subnet": "10.0.10.0/24",
+      "color": "#70b7ff",
+      "x": -30,
+      "z": -19,
+      "w": 18,
+      "d": 15,
+      "ids": [
+        "dc1",
+        "dc2"
+      ],
+      "functions": [
+        "Directory authentication",
+        "Internal DNS and global catalog",
+        "Directory and SYSVOL replication"
+      ],
+      "controls": [
+        "AC-2",
+        "AC-6",
+        "IA-2",
+        "SC-7",
+        "CP-9"
+      ],
+      "boundary": "Restrict directory administration; allow only documented identity and DNS dependencies."
+    },
+    {
+      "id": "v20",
+      "number": 20,
+      "name": "Identity & services",
+      "subnet": "10.0.20.0/24",
+      "color": "#94d779",
+      "x": -10,
+      "z": -19,
+      "w": 18,
+      "d": 15,
+      "ids": [
+        "dhcp",
+        "syslog",
+        "wsus",
+        "time"
+      ],
+      "functions": [
+        "DHCP scopes and reservations",
+        "Central log collection",
+        "Offline Windows update distribution",
+        "Internal authoritative time"
+      ],
+      "controls": [
+        "CM-6",
+        "CM-8",
+        "SI-2",
+        "AU-12"
+      ],
+      "boundary": "Define DHCP relay and approved update and collection routes. No internet upstream."
+    },
+    {
+      "id": "v30",
+      "number": 30,
+      "name": "PKI infrastructure",
+      "subnet": "10.0.30.0/24",
+      "color": "#bf9dff",
+      "x": 10,
+      "z": -19,
+      "w": 18,
+      "d": 15,
+      "ids": [
+        "subca",
+        "templates"
+      ],
+      "functions": [
+        "Certificate issuance",
+        "Enrollment policy and templates",
+        "Internal revocation publication"
+      ],
+      "controls": [
+        "SC-12",
+        "SC-17",
+        "IA-5",
+        "AC-6"
+      ],
+      "boundary": "Only the issuing services join this segment. The offline root has no switch connection."
+    },
+    {
+      "id": "v40",
+      "number": 40,
+      "name": "Servers & data",
+      "subnet": "10.0.40.0/24",
+      "color": "#ff9b81",
+      "x": 30,
+      "z": -19,
+      "w": 18,
+      "d": 15,
+      "ids": [
+        "fs",
+        "sql",
+        "apps",
+        "web"
+      ],
+      "functions": [
+        "File shares",
+        "Database services",
+        "Licensing and internal web services"
+      ],
+      "controls": [
+        "AC-3",
+        "AC-6",
+        "SC-8(1)",
+        "SC-28(1)",
+        "CP-9"
+      ],
+      "boundary": "Authorize each client-to-service path. SQL consumers and licensing ports remain to be defined."
+    },
+    {
+      "id": "v50",
+      "number": 50,
+      "name": "Security & monitoring",
+      "subnet": "10.0.50.0/24",
+      "color": "#65deeb",
+      "x": -27,
+      "z": 14,
+      "w": 21,
+      "d": 17,
+      "ids": [
+        "splunk",
+        "nessus",
+        "epo",
+        "audit"
+      ],
+      "functions": [
+        "Event analysis and retention",
+        "Vulnerability management",
+        "Endpoint protection and DLP"
+      ],
+      "controls": [
+        "AU-6",
+        "AU-9",
+        "AU-11",
+        "RA-5",
+        "SI-3",
+        "SI-4"
+      ],
+      "boundary": "Scope scanners and agents explicitly. Protect audit records and separate security administration."
+    },
+    {
+      "id": "v60",
+      "number": 60,
+      "name": "Tiered administration",
+      "subnet": "10.0.60.0/24",
+      "color": "#f7c477",
+      "x": -3,
+      "z": 14,
+      "w": 18,
+      "d": 15,
+      "ids": [
+        "jump",
+        "jump1",
+        "jump2"
+      ],
+      "functions": [
+        "Dedicated administrator sessions",
+        "Privileged MFA",
+        "Session logging and change control"
+      ],
+      "controls": [
+        "AC-2",
+        "AC-6",
+        "IA-2(1)",
+        "AU-12",
+        "SC-7(15)"
+      ],
+      "boundary": "Separate identity/PKI, server, and endpoint administrative hosts and accounts. Host rules deny cross-tier management; sharing this VLAN does not grant access."
+    },
+    {
+      "id": "v70",
+      "number": 70,
+      "name": "Management tools",
+      "subnet": "10.0.70.0/24",
+      "color": "#acbdce",
+      "x": 16,
+      "z": 14,
+      "w": 20,
+      "d": 15,
+      "ids": [
+        "management",
+        "repo"
+      ],
+      "functions": [
+        "Configuration and asset inventory",
+        "Approved Linux packages",
+        "System maintenance and recovery planning"
+      ],
+      "controls": [
+        "CM-2",
+        "CM-3",
+        "CM-6",
+        "CM-8",
+        "SI-2",
+        "CP-10"
+      ],
+      "boundary": "Constrain publishers and management identities. Validate packages brought in on approved media."
+    },
+    {
+      "id": "v80",
+      "number": 80,
+      "name": "User workstations",
+      "subnet": "10.0.80.0/24",
+      "color": "#6ebde9",
+      "x": -26,
+      "z": 36,
+      "w": 19,
+      "d": 13,
+      "ids": [
+        "workstations"
+      ],
+      "functions": [
+        "50 Windows 11 endpoints",
+        "Internal identity, files, and approved updates",
+        "Host firewall blocks peer management"
+      ],
+      "controls": [
+        "AC-3",
+        "AC-6",
+        "CM-6",
+        "CM-7",
+        "SC-7"
+      ],
+      "boundary": "Dedicated client segment. Block peer SMB/RDP and direct administrative access; allow documented identity and resource dependencies only."
+    }
+  ],
+  "facilities": [
+    {
+      "id": "core",
+      "name": "Core switch stack",
+      "color": "#7bddf0",
+      "controls": [
+        "SC-7",
+        "SC-7(5)",
+        "AC-4",
+        "CM-6"
+      ],
+      "detail": "Internal Layer 3 switching and inter-VLAN routing. Access control lists enforce documented exceptions; segmentation alone does not establish enforcement.",
+      "items": [
+        "Default deny between VLANs; explicit source, destination, service, purpose, and owner for exceptions.",
+        "Host firewalls also enforce isolation within VLANs 40, 50, 60, and 80.",
+        "VLAN 80 DHCP relay is a proposed core function; verify relay and scope settings.",
+        "Test allowed sessions and blocked lateral movement; back up approved rules."
+      ]
+    },
+    {
+      "id": "media",
+      "name": "Controlled media handling",
+      "color": "#eeb978",
+      "controls": [
+        "MP-7",
+        "MP-5",
+        "MP-4",
+        "SI-3",
+        "AC-4",
+        "AU-12"
+      ],
+      "detail": "Inbound: approve source and media, scan and validate content, record custody, then let an authorized operator import it. Outbound: approve release, review content and destination, record the export, then physically carry the approved media.",
+      "items": [
+        "No cable, data diode, or automatic transfer crosses the air gap.",
+        "Use write protection where appropriate to the approved procedure.",
+        "Keep inbound and outbound handling distinct; sanitize media under MP-6."
+      ]
+    },
+    {
+      "id": "backup",
+      "name": "Offline backup & recovery",
+      "color": "#86c4f1",
+      "controls": [
+        "CP-2",
+        "CP-9",
+        "CP-9(1)",
+        "CP-10",
+        "MP-4"
+      ],
+      "detail": "Keep protected offline copies of required information, system configurations, and recovery material. Define retention, custody, recovery priorities, and restoration responsibilities.",
+      "items": [
+        "Test restoration of AD/DNS, PKI, files, SQL, and network configuration.",
+        "Splunk, Tenable/Nessus, and Trellix ePO/DLP each remain one server: no cluster or standby.",
+        "Protect each platform’s configuration, required data, keys, and recovery material; validate vendor-supported recovery.",
+        "Define downtime, recovery point and recovery time targets; rehearse loss of each platform."
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "signin",
+      "label": "Sign in",
+      "title": "A workstation finds its identity.",
+      "caption": "Addressing, name resolution, and domain authentication.",
+      "color": "#64dff2",
+      "dependencies": [
+        "workstations",
+        "dhcp",
+        "dc1",
+        "dc2"
+      ],
+      "assumption": "Domain-joined Windows workstation using internal addressing, DNS, and authentication services.",
+      "steps": [
+        {
+          "title": "Obtain a network address",
+          "short": "Addressing",
+          "from": "workstations",
+          "to": "dhcp",
+          "protocol": "DHCP · UDP 67 / 68",
+          "description": "A new client requests an address and receives lease settings. The exchange includes discovery, offer, request, and acknowledgement.",
+          "note": "Clients use VLAN 80 with a core DHCP relay. Validate relay settings and lease options.",
+          "source": "dhcp",
+          "transport": "UDP",
+          "initiation": "Client / relay",
+          "detail": "Server 67 · client 68"
+        },
+        {
+          "title": "Locate directory services",
+          "short": "Find the directory",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "DNS · TCP / UDP 53",
+          "description": "The workstation asks internal DNS to locate domain services. DNS records connect service names to reachable hosts.",
+          "note": "DC01 handles this request. DC02 also provides DNS; configure the client resolver order.",
+          "source": "dns",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 53"
+        },
+        {
+          "title": "Authenticate to the domain",
+          "short": "Authenticate",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "Kerberos · TCP / UDP 88",
+          "description": "The client proves its identity to the domain controller’s Key Distribution Center and obtains a ticket-granting ticket.",
+          "note": "Domain membership, account state, DNS, and time configuration must support authentication. This does not grant access to every resource.",
+          "source": "auth",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 88"
+        },
+        {
+          "title": "Read directory information",
+          "short": "Directory lookup",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "LDAP · TCP 389 / LDAPS · TCP 636",
+          "description": "Directory clients retrieve the information they need from Active Directory. Protection and binding behavior depend on the client and server configuration.",
+          "note": "Choose the required directory binding and apply signing, channel binding, and TLS where applicable.",
+          "source": "ad",
+          "transport": "TCP",
+          "initiation": "Directory client",
+          "detail": "Verify chosen binding"
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "label": "Open a file",
+      "title": "From a name to an authorized file.",
+      "caption": "Follow a domain client to its file share.",
+      "color": "#72c9ff",
+      "dependencies": [
+        "workstations",
+        "dc1",
+        "dc2",
+        "fs"
+      ],
+      "assumption": "Kerberos-based SMB access by a domain client. Cached DNS and tickets can remove steps from the exchange.",
+      "steps": [
+        {
+          "title": "Resolve the file server",
+          "short": "Resolve the name",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "DNS · TCP / UDP 53",
+          "description": "The client resolves the file server’s name before opening a connection. The diagram uses SBD-FS01 as the named destination.",
+          "note": "Configure the service DNS records and authorized share paths.",
+          "source": "dns",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 53"
+        },
+        {
+          "title": "Request a service ticket",
+          "short": "Get a ticket",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "Kerberos · TCP / UDP 88",
+          "description": "The workstation uses its ticket-granting ticket to request a ticket for the file service. It then presents that service ticket to the server.",
+          "note": "Service identity and name resolution must agree. Authentication and file authorization are separate decisions.",
+          "source": "auth",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 88"
+        },
+        {
+          "title": "Open the approved share",
+          "short": "Access the share",
+          "from": "workstations",
+          "to": "fs",
+          "protocol": "SMB · TCP 445",
+          "description": "The client requests a file over SMB. The server applies the relevant share and filesystem permissions before allowing access.",
+          "note": "The animation represents a request; replies return on the established session. Share names, data classification, and encryption settings remain undefined.",
+          "source": "ad",
+          "transport": "TCP",
+          "initiation": "Workstation",
+          "detail": "Destination 445"
+        }
+      ]
+    },
+    {
+      "id": "updates",
+      "label": "Get updates",
+      "title": "Bring updates inside. Distribute with care.",
+      "caption": "A disconnected update workflow, with no internet edge.",
+      "color": "#82e8bf",
+      "dependencies": [
+        "workstations",
+        "wsus",
+        "repo"
+      ],
+      "assumption": "Internal WSUS distribution through approved deployment rings and controlled media imports.",
+      "steps": [
+        {
+          "title": "Import approved update material",
+          "short": "Controlled import",
+          "from": null,
+          "to": "wsus",
+          "protocol": "MANUAL TRANSFER · NO NETWORK SESSION",
+          "description": "An authorized operator brings approved update material across the air gap using controlled media and an established import process.",
+          "note": "An authorized operator performs the transfer using approved removable media.",
+          "source": null,
+          "manual": true,
+          "transport": "Approved media",
+          "initiation": "Authorized operator",
+          "detail": "No network port"
+        },
+        {
+          "title": "Check update metadata",
+          "short": "Check metadata",
+          "from": "workstations",
+          "to": "wsus",
+          "protocol": "HTTPS · TCP 8531",
+          "description": "The client contacts the internal WSUS service for update metadata using the TLS-enabled configuration.",
+          "note": "Verify server certificate trust and configured client policy. Reference ports can be changed.",
+          "source": "wsus",
+          "transport": "HTTPS",
+          "initiation": "Workstation",
+          "detail": "Port 8531"
+        },
+        {
+          "title": "Retrieve signed update content",
+          "short": "Download content",
+          "from": "workstations",
+          "to": "wsus",
+          "protocol": "HTTP · TCP 8530",
+          "description": "WSUS uses its HTTP connection for update payloads, with signatures protecting payload authenticity. TLS is used for metadata rather than every WSUS path.",
+          "note": "The arrow shows the client request; the content response travels back. Validate content signatures and approved deployment settings.",
+          "source": "wsus",
+          "transport": "HTTP + signed payload",
+          "initiation": "Workstation",
+          "detail": "Port 8530"
+        }
+      ]
+    },
+    {
+      "id": "logs",
+      "label": "Follow a log",
+      "title": "Turn an event into useful evidence.",
+      "caption": "From a Linux source to collection, analysis, and retention.",
+      "color": "#c1a6ff",
+      "dependencies": [
+        "repo",
+        "syslog",
+        "splunk",
+        "audit"
+      ],
+      "assumption": "Events move through collection, Splunk analysis, and protected archive retention. Select the ingestion and archive transports.",
+      "steps": [
+        {
+          "title": "Deliver a source event",
+          "short": "Collect",
+          "from": "repo",
+          "to": "syslog",
+          "protocol": "SYSLOG OVER TLS · TCP 6514",
+          "description": "A configured Linux source can initiate a protected syslog session to the collector. The connection uses TLS transport.",
+          "note": "Verify sender / receiver support, peer identity, certificate trust, and queue behavior.",
+          "source": "syslog",
+          "transport": "TLS over TCP",
+          "initiation": "Log sender",
+          "detail": "Port 6514"
+        },
+        {
+          "title": "Ingest for investigation",
+          "short": "Analyze",
+          "from": "syslog",
+          "to": "splunk",
+          "protocol": "INTEGRATION · TRANSPORT TO DEFINE",
+          "description": "The collection layer supplies events to Splunk for indexing and investigation. The exact forwarder, API, or input method must be chosen.",
+          "note": "Select the forwarding method and listener, define event coverage, and test detection rules.",
+          "source": null,
+          "transport": "Not yet defined",
+          "initiation": "Integration-dependent",
+          "detail": "No port assumed",
+          "unverified": true
+        },
+        {
+          "title": "Retain an audit copy",
+          "short": "Retain",
+          "from": "syslog",
+          "to": "audit",
+          "protocol": "ARCHIVE DELIVERY · METHOD TO DEFINE",
+          "description": "An approved archive process preserves the records needed for review and retention. This is a proposed collector-to-repository relationship.",
+          "note": "Define ingestion, integrity protection, retention duration, access controls, and restoration.",
+          "source": null,
+          "transport": "Not yet defined",
+          "initiation": "Process-dependent",
+          "detail": "No port assumed",
+          "unverified": true
+        }
+      ]
+    },
+    {
+      "id": "license",
+      "label": "License check",
+      "title": "A licensing service has its own contract.",
+      "caption": "Follow the client request to its licensing service.",
+      "color": "#72c9ff",
+      "dependencies": [
+        "workstations",
+        "apps"
+      ],
+      "assumption": "APPS01 provides licensing. Define the vendor-specific service contract and approved consumers.",
+      "steps": [
+        {
+          "title": "Request a license",
+          "short": "Check entitlement",
+          "from": "workstations",
+          "to": "apps",
+          "protocol": "VENDOR LICENSING · PORTS TO DEFINE",
+          "description": "An approved client contacts the licensing service to check or obtain its entitlement. Protocol, direction, persistence, and offline behavior depend on the product.",
+          "note": "Identify the vendor and license manager before defining rules. No APPS01-to-SQL01 connection is assumed.",
+          "source": null,
+          "transport": "Vendor-specific",
+          "initiation": "Client request",
+          "detail": "No port assumed",
+          "unverified": true
+        }
+      ]
+    },
+    {
+      "id": "trust",
+      "label": "Offline trust",
+      "title": "The root stays outside the live network.",
+      "caption": "A controlled offline certificate ceremony.",
+      "color": "#efc484",
+      "dependencies": [
+        "root",
+        "subca"
+      ],
+      "assumption": "No live root CA connection exists. Signing artifacts move only through an approved, human-controlled offline process.",
+      "steps": [
+        {
+          "title": "Prepare the signing material",
+          "short": "Prepare",
+          "from": null,
+          "to": "subca",
+          "protocol": "OFFLINE CEREMONY · NO LIVE PATH",
+          "description": "Prepare the subordinate CA’s signing request and the records required for the ceremony. Protect the request and validate the intended certificate policy.",
+          "note": "The root and issuing CA are separate trust responsibilities. Domain membership and CA type are not established.",
+          "source": null,
+          "manual": true,
+          "transport": "Controlled artifacts",
+          "initiation": "CA administrators",
+          "detail": "No network port"
+        },
+        {
+          "title": "Use the offline root",
+          "short": "Sign offline",
+          "from": null,
+          "to": "root",
+          "protocol": "OFFLINE ROOT · NO NETWORK SESSION",
+          "description": "Authorized operators use the protected root key in a controlled ceremony. The root CA remains non-domain-joined and disconnected.",
+          "note": "Keep the root physically disconnected and restrict use of its private key to authorized ceremonies.",
+          "source": null,
+          "manual": true,
+          "transport": "Offline operation",
+          "initiation": "Authorized operators",
+          "detail": "No network port"
+        },
+        {
+          "title": "Return publication artifacts",
+          "short": "Publish approved artifacts",
+          "from": null,
+          "to": "subca",
+          "protocol": "CONTROLLED TRANSFER · NO LIVE PATH",
+          "description": "Return approved certificate and revocation artifacts through the documented offline transfer process. Define the issuing CA’s enrollment and publication design separately.",
+          "note": "Transfer root signing artifacts manually. Define internal CRL/AIA publication endpoints and enrollment transports.",
+          "source": null,
+          "manual": true,
+          "transport": "Approved media",
+          "initiation": "Authorized operators",
+          "detail": "No network port"
+        }
+      ]
+    }
+  ],
+  "technical": {
+    "dc1": {
+      "purpose": "Find services, authenticate identities, and answer directory requests.",
+      "services": [
+        {
+          "name": "DNS",
+          "port": "TCP / UDP 53",
+          "note": ""
+        },
+        {
+          "name": "Kerberos KDC",
+          "port": "TCP / UDP 88",
+          "note": ""
+        },
+        {
+          "name": "Directory access",
+          "port": "LDAP 389 / LDAPS 636",
+          "note": "Client and protection settings determine the binding."
+        }
+      ],
+      "depends": [
+        "dc2"
+      ],
+      "dependencyText": "Check DNS, time, replication, and recovery design together. “Primary” is the supplied label, not proof of FSMO ownership.",
+      "verify": [
+        "DNS and directory discovery from a client.",
+        "Replication health and protected restore procedures."
+      ],
+      "source": "ad"
+    },
+    "dc2": {
+      "purpose": "Provide another AD DS and DNS service point.",
+      "services": [
+        {
+          "name": "DNS",
+          "port": "TCP / UDP 53",
+          "note": ""
+        },
+        {
+          "name": "Kerberos KDC",
+          "port": "TCP / UDP 88",
+          "note": ""
+        },
+        {
+          "name": "Directory access",
+          "port": "LDAP 389 / LDAPS 636",
+          "note": ""
+        }
+      ],
+      "depends": [
+        "dc1"
+      ],
+      "dependencyText": "Another domain controller is not merely a passive standby. Confirm site placement, replication, DNS behavior, and role ownership.",
+      "verify": [
+        "Client behavior when one DC is unavailable.",
+        "Replication and directory recovery tests."
+      ],
+      "source": "ad"
+    },
+    "dhcp": {
+      "purpose": "Provide client lease settings for the approved address space.",
+      "services": [
+        {
+          "name": "DHCPv4",
+          "port": "UDP 67 server / 68 client",
+          "note": "An initial broadcast may require a relay across subnets."
+        }
+      ],
+      "depends": [],
+      "dependencyText": "Scopes, address options, leases, relay placement, and failover need an explicit design.",
+      "verify": [
+        "Lease acquisition and renewal.",
+        "Configured DNS options and relay behavior."
+      ],
+      "source": "dhcp"
+    },
+    "fs": {
+      "purpose": "Serve shared files while enforcing resource permissions.",
+      "services": [
+        {
+          "name": "SMB",
+          "port": "TCP 445",
+          "note": "Reference service port; share and encryption policies are unspecified."
+        }
+      ],
+      "depends": [
+        "dc1",
+        "dc2"
+      ],
+      "dependencyText": "Use domain-based identity and name resolution. Define share names, access groups, and data sensitivity.",
+      "verify": [
+        "Allowed and denied access by role.",
+        "File, permission, and encryption-key restoration."
+      ],
+      "source": "ad"
+    },
+    "apps": {
+      "purpose": "Answer requests for the supplied licensing role.",
+      "services": [
+        {
+          "name": "License manager",
+          "port": "Vendor-specific",
+          "note": "Confirm product, ports, direction, and client population."
+        }
+      ],
+      "depends": [],
+      "dependencyText": "No application-hosting role or SQL dependency is inferred from this hostname.",
+      "verify": [
+        "Vendor connection matrix and entitlement behavior.",
+        "License backup and recovery procedure."
+      ]
+    },
+    "sql": {
+      "purpose": "Host databases for consumers that still need to be identified.",
+      "services": [
+        {
+          "name": "SQL Database Engine",
+          "port": "TCP 1433 for a default instance",
+          "note": "Named instances can use dynamic or explicitly configured ports."
+        }
+      ],
+      "depends": [],
+      "dependencyText": "No workstation, license-server, ePO, or WSUS database dependency is assumed. Confirm consumers and instance configuration first.",
+      "verify": [
+        "Actual instance listener and permitted consumers.",
+        "Database permissions, transport protection, and restore tests."
+      ],
+      "source": "sql"
+    },
+    "syslog": {
+      "purpose": "Receive and route the chosen log messages.",
+      "services": [
+        {
+          "name": "Syslog over TLS",
+          "port": "TCP 6514",
+          "note": "Configure the collector listener and trusted senders."
+        },
+        {
+          "name": "SIEM / archive delivery",
+          "port": "Integration-specific",
+          "note": "Do not infer Splunk or archive ports from the arrow."
+        }
+      ],
+      "depends": [
+        "splunk",
+        "audit"
+      ],
+      "dependencyText": "Define downstream delivery, buffering, acknowledgements, and loss handling.",
+      "verify": [
+        "End-to-end event arrival and timestamp quality.",
+        "Collector outage and backlog recovery."
+      ],
+      "source": "syslog"
+    },
+    "splunk": {
+      "purpose": "Single server instance; no cluster or standby. Index and investigate the security events that are actually collected.",
+      "services": [
+        {
+          "name": "Splunk ingestion",
+          "port": "Input-dependent",
+          "note": "Choose the approved forwarder, input, or API design."
+        }
+      ],
+      "depends": [
+        "syslog"
+      ],
+      "dependencyText": "The collector is one proposed source. Indexing, storage, parsing, time handling, and detection coverage remain to be configured.",
+      "verify": [
+        "Searchable source events and parsing.",
+        "Detection tests and investigation workflow."
+      ]
+    },
+    "audit": {
+      "purpose": "Retain security records under the approved retention policy.",
+      "services": [
+        {
+          "name": "Audit ingestion",
+          "port": "Method to define",
+          "note": "No listener, storage protocol, or immutable mode is assumed."
+        }
+      ],
+      "depends": [
+        "syslog"
+      ],
+      "dependencyText": "An archive copy is proposed from the collector. Retention, integrity, access separation, and backup design must be established.",
+      "verify": [
+        "Record retrieval across the retention period.",
+        "Unauthorized-change prevention and recovery."
+      ]
+    },
+    "wsus": {
+      "purpose": "Distribute approved Windows updates inside the air gap.",
+      "services": [
+        {
+          "name": "Update metadata",
+          "port": "HTTPS 8531",
+          "note": ""
+        },
+        {
+          "name": "Signed update payloads",
+          "port": "HTTP 8530",
+          "note": "WSUS uses separate metadata and payload connections."
+        }
+      ],
+      "depends": [
+        "workstations"
+      ],
+      "dependencyText": "Clients are the illustrated consumers. Content arrives through a human-controlled boundary transfer; no live upstream path is drawn.",
+      "verify": [
+        "Client policy, certificate trust, and approvals.",
+        "Payload signatures and installation results."
+      ],
+      "source": "wsus"
+    },
+    "repo": {
+      "purpose": "Single Trellix ePO/DLP server instance; no cluster or standby. Serve the approved Linux package collection.",
+      "services": [
+        {
+          "name": "Package repository",
+          "port": "Transport to define",
+          "note": "Choose the repository server, listener, and consumers."
+        },
+        {
+          "name": "Log forwarding",
+          "port": "TLS 6514",
+          "note": "Chosen only for the log scenario."
+        }
+      ],
+      "depends": [
+        "syslog"
+      ],
+      "dependencyText": "Linux package consumers were not supplied. Import and publication need approved media handling and signing-key controls.",
+      "verify": [
+        "Package signature validation and allowed publishers.",
+        "Repository content and log delivery."
+      ]
+    },
+    "subca": {
+      "purpose": "Issue certificates under the approved subordinate CA policy.",
+      "services": [
+        {
+          "name": "Certificate enrollment",
+          "port": "Transport to define",
+          "note": ""
+        },
+        {
+          "name": "CRL / AIA publication",
+          "port": "Endpoints to define",
+          "note": ""
+        }
+      ],
+      "depends": [
+        "root"
+      ],
+      "dependencyText": "Root trust is a certificate relationship and controlled offline process, not a network dependency. Templates, CA type, and domain membership are unknown.",
+      "verify": [
+        "Enrollment permissions and certificate purpose.",
+        "Revocation publication and CA recovery."
+      ]
+    },
+    "root": {
+      "purpose": "Protect the trust anchor and perform authorized offline ceremonies.",
+      "services": [
+        {
+          "name": "Live network listeners",
+          "port": "None represented",
+          "note": "Offline and non-domain-joined."
+        },
+        {
+          "name": "Subordinate signing / root CRL",
+          "port": "Offline ceremony",
+          "note": ""
+        }
+      ],
+      "depends": [],
+      "dependencyText": "Signing and publication artifacts are handled through a controlled manual process. No network scan or remote administration path exists in this model.",
+      "verify": [
+        "Private-key custody and physical access.",
+        "Ceremony records and tested recovery."
+      ]
+    },
+    "epo": {
+      "purpose": "Single Trellix ePO/DLP server instance; no cluster or standby. Manage the chosen endpoint protection and DLP policies.",
+      "services": [
+        {
+          "name": "Agent management / policy",
+          "port": "Product-dependent",
+          "note": "Confirm deployed modules, agent versions, and listener configuration."
+        }
+      ],
+      "depends": [
+        "workstations"
+      ],
+      "dependencyText": "The workstation group is an intended policy audience. Verify agent deployment, applied policies, management transport, and database requirements.",
+      "verify": [
+        "Agent inventory and policy application.",
+        "Tamper controls and protection alerts."
+      ]
+    },
+    "nessus": {
+      "purpose": "Single Tenable/Nessus server instance; no cluster or standby. Assess authorized targets for known vulnerabilities.",
+      "services": [
+        {
+          "name": "Scanning / agents",
+          "port": "Scope-dependent",
+          "note": "No general port range or scan permission is assumed."
+        }
+      ],
+      "depends": [],
+      "dependencyText": "Targets, credential use, plugin updates, and scan windows need approval. The offline root is excluded from network scans.",
+      "verify": [
+        "Authorized scan scope and credential protection.",
+        "Finding validation and remediation rescan."
+      ]
+    },
+    "jump": {
+      "purpose": "Provide dedicated identity and PKI administration from the Tier 0 host.",
+      "services": [
+        {
+          "name": "Remote management",
+          "port": "Scope and protocols to define",
+          "note": "No broad access to identity, servers, or clients is assumed."
+        }
+      ],
+      "depends": [],
+      "dependencyText": "Targets are DC01, DC02, the issuing CA, and PKI template administration. Separate ADMIN-SRV01 and ADMIN-PC01 hosts handle member servers and clients. Host firewalls and scoped accounts deny cross-tier access; exact management protocols require validation.",
+      "verify": [
+        "Approved target list and privileged identities.",
+        "Session controls and administrative audit trail."
+      ]
+    },
+    "workstations": {
+      "purpose": "Represent 50 Windows 11 user endpoints.",
+      "services": [
+        {
+          "name": "Addressing",
+          "port": "DHCP client",
+          "note": ""
+        },
+        {
+          "name": "Identity and resource clients",
+          "port": "DNS / Kerberos / SMB",
+          "note": ""
+        },
+        {
+          "name": "Update client",
+          "port": "Internal WSUS",
+          "note": ""
+        }
+      ],
+      "depends": [
+        "dhcp",
+        "dc1",
+        "dc2",
+        "fs",
+        "wsus"
+      ],
+      "dependencyText": "VLAN 80 uses the 10.0.80.100–149 client pool. Configure hostnames and domain membership. Block peer SMB/RDP and direct privileged management.",
+      "verify": [
+        "Effective configuration and allowed applications.",
+        "Patch results, local privileges, and logging coverage."
+      ]
+    }
+  }
+}

@@ -1,20 +1,22 @@
 # Secure By Design — native app proof of concept
 
-Version 0.1.0 · October 3, 2026
+Version 0.2.0 · October 5, 2026
 
 A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux. Native apps come first. The web app is deferred.
 
 ## What works
 
-- Home screen with a starting or continuing learning path.
-- Three sample paths: Active Directory, security monitoring, and RMF.
-- Nine short lessons with a knowledge check before completion.
-- Resource collection with external links and saved-resource filtering.
-- Progress and bookmarks stored on the device, including after the app restarts.
-- Bottom navigation on phones/tablets and side navigation on larger windows.
-- Website-derived colors, Geist typography, the supplied logo, and native launcher icons.
+- Home, Training, Explore, and My Progress with the website's navy/cyan design.
+- Both published courses, in website order: DC01/DC02 (five chapters) and RMF/Body of Evidence/ATO (12 modules, 36 topics).
+- Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
+- Bundled course text and knowledge checks, plus the nine original foundation lessons.
+- Inside the Network: six offline traffic walkthroughs and 23 system references; the complete website 3D explorer opens in-app on iOS, Android, and macOS.
+- Saved materials and native homepage sharing: Learn it. Share it. Pay it forward.
+- Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
+- Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
+- Getting-started prompts, optional anonymous analytics, and existing feedback flow.
 
-The lessons are bundled with the app and work offline. External links require internet access. This version has no account creation, cloud sync, payments, live lab connection, or embedded video playback.
+Course text and the network reference work offline. 3D, downloads, external resources, and account synchronization require a connection. Account sessions stay in memory and expire within 12 hours. Lab access remains request-based. This release does not add public store listings or recordings.
 
 ## Start here
 
@@ -89,12 +91,22 @@ The logo mark is the existing website asset's displayed viewport. It is reused f
 | `codemagic.yaml` | Hosted macOS validation and signed TestFlight workflows |
 | `CODEMAGIC_SETUP.md` | Windows-to-Codemagic setup and signing walkthrough |
 
-## Where to go next
+## Course content updates
 
-1. Run the app on Jon's iPhone and an Android test device.
-2. Review the screen layout and agree on the next learning flow.
-3. Add account and shared-backend requirements once the fundamentals are settled.
-4. Expand real lessons and lab connections; add the web application in a later phase.
+Import from the current Site checkout, then format and validate:
+
+```bash
+node tool/import_site_training.mjs /path/to/site
+dart format lib/data/published_catalog.dart
+flutter analyze
+flutter test
+```
+
+The importer also writes the Site's course progress and material catalogs so both clients keep identical IDs. Preserve those IDs on content edits.
+
+## Release workflow
+
+Codemagic checks pull requests targeting main and builds the signed TestFlight IPA when main changes, provided the existing repository webhook is enabled. The Apple integration and bundle identifier remain unchanged. No public App Store review or external tester invitation is configured. Platform compilation and physical-device checks are separate from the Flutter widget tests.
 
 ## Official setup references
 

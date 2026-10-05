@@ -375,7 +375,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             ),
             ButtonSegment(
               value: true,
-              label: Text('Saved (${widget.store.saved.length})'),
+              label: Text('Saved (${resources.where((r) => widget.store.isSaved(r.id)).length})'),
               icon: const Icon(Icons.bookmark_border),
             ),
           ],

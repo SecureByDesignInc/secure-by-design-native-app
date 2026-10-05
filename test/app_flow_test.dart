@@ -35,32 +35,33 @@ void main() {
       await tester.ensureVisible(find.text('Start learning'));
       await tester.tap(find.text('Start learning'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Start the first lesson'));
       await tester.tap(find.text('Start the first lesson'));
       await tester.pumpAndSettle();
       final complete = find.widgetWithText(FilledButton, 'Complete lesson');
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
       await tester.scrollUntilVisible(
-        find.text('Only internet browsing history'),
+        find.text('A public DNS resolver'),
         260,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.text('Only internet browsing history'));
+      await tester.tap(find.text('A public DNS resolver'));
       await tester.pumpAndSettle();
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
-      await tester.tap(find.text('User, computer, and resource information'));
+      await tester.tap(find.text('DC01, once its domain DNS is available'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(complete);
       await tester.tap(complete);
       await tester.pumpAndSettle();
-      expect(store.completed, {'ad-1'});
-      expect(find.text('1 / 3'), findsOneWidget);
+      expect(store.completed, {'training:dc01-dc02:prepare'});
+      expect(find.text('1 of 5 chapters complete'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Progress').last);
+      await tester.tap(find.text('My Progress').last);
       await tester.pumpAndSettle();
-      expect(find.text('1 of 3 lessons completed'), findsOneWidget);
+      expect(find.text('1 of 5 complete'), findsOneWidget);
       final reloaded = await LearningStore.load();
-      expect(reloaded.completed, {'ad-1'});
+      expect(reloaded.completed, {'training:dc01-dc02:prepare'});
       expect(tester.takeException(), isNull);
     },
   );
@@ -75,11 +76,18 @@ void main() {
     final store = await LearningStore.load();
     await tester.pumpWidget(SecureByDesignApp(store: store));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Resources').last);
+    await tester.tap(find.text('Explore').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Saved resources & materials'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+        find.byTooltip('Save Active Directory fundamentals'), 300,
+        scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Save Active Directory fundamentals'));
     await tester.pumpAndSettle();
     expect(store.isSaved('ms-ad'), isTrue);
+    await tester.ensureVisible(find.text('Saved (1)'));
     await tester.tap(find.text('Saved (1)'));
     await tester.pumpAndSettle();
     expect(find.text('Active Directory fundamentals'), findsOneWidget);
@@ -112,7 +120,7 @@ void main() {
           await tester.pumpWidget(SecureByDesignApp(store: store));
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
-          for (final tab in ['Learn', 'Resources', 'Progress']) {
+          for (final tab in ['Training', 'Explore', 'My Progress']) {
             await tester.tap(find.text(tab).last);
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
@@ -173,9 +181,9 @@ void main() {
     await tester.pumpAndSettle();
     for (final entry in {
       'Home': 'home',
-      'Learn': 'learn',
-      'Resources': 'resources',
-      'Progress': 'progress',
+      'Training': 'training',
+      'Explore': 'explore',
+      'My Progress': 'progress',
     }.entries) {
       await tester.tap(find.text(entry.key).last);
       await tester.pumpAndSettle();

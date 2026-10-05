@@ -1,4 +1,5 @@
 import 'models.dart';
+import 'published_catalog.dart';
 
 const adSource =
     'https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/get-started/virtual-dc/active-directory-domain-services-overview';
@@ -6,7 +7,7 @@ const rmfSource = 'https://csrc.nist.gov/projects/risk-management/about-rmf';
 const splunkSource =
     'https://help.splunk.com/en/splunk-enterprise/get-started/overview/9.1/about-splunk-enterprise/about-splunk-enterprise';
 
-const learningPaths = <LearningPath>[
+const foundationPaths = <LearningPath>[
   LearningPath(
     id: 'ad',
     title: 'Active Directory, explained',
@@ -271,7 +272,7 @@ const learningPaths = <LearningPath>[
   ),
 ];
 
-const resources = <LearningResource>[
+const foundationResources = <LearningResource>[
   LearningResource(
     id: 'ms-ad',
     title: 'Active Directory fundamentals',
@@ -310,10 +311,10 @@ const resources = <LearningResource>[
   ),
   LearningResource(
     id: 'career',
-    title: 'Career Explorer',
+    title: 'Community · Career Goals & Support',
     publisher: 'Secure By Design',
     description: 'Explore your next step in cybersecurity.',
-    url: 'https://securebydesigninc.com/career-explorer',
+    url: 'https://securebydesigninc.com/careers#goals',
     category: 'Secure By Design',
     icon: 'career',
   ),
@@ -326,4 +327,10 @@ const resources = <LearningResource>[
     category: 'Secure By Design',
     icon: 'video',
   ),
+];
+
+const learningPaths = <LearningPath>[...publishedPaths, ...foundationPaths];
+final resources = <LearningResource>[
+  for (final path in publishedPaths) ...path.materials,
+  ...foundationResources.where((resource) => resource.id != 'journal'),
 ];

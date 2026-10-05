@@ -90,6 +90,7 @@ class AccountStore extends ChangeNotifier {
   final AccountTransport _transport;
   String? _token;
   String? email;
+  String? accountId;
   String? error;
   bool busy = false;
   bool _disposed = false;
@@ -104,6 +105,7 @@ class AccountStore extends ChangeNotifier {
     _expiry?.cancel();
     _token = null;
     email = null;
+    accountId = null;
   }
 
   Future<void> signIn(String emailAddress, String password) async {
@@ -134,6 +136,7 @@ class AccountStore extends ChangeNotifier {
       _clear();
       _token = token;
       email = user['email'] as String;
+      accountId = user['id'] is String ? user['id'] as String : null;
       _expiry = Timer(expiry.difference(DateTime.now()), () {
         _clear();
         error = 'Your session ended. Sign in again when you are ready.';
@@ -146,6 +149,24 @@ class AccountStore extends ChangeNotifier {
     } finally {
       busy = false;
       _notify();
+    }
+  }
+
+  Future<Map<String, dynamic>> syncProgress(List<Map<String, Object>> records,
+      List<Map<String, Object>> bookmarks) async {
+    final token = _token;
+    if (token == null) {
+      throw const AccountFailure('Sign in to sync your progress.');
+    }
+    try {
+      return await _transport.request('POST', '/api/native-progress',
+          token: token, body: {'records': records, 'bookmarks': bookmarks});
+    } on AccountFailure catch (failure) {
+      if (failure.status == 401 && token == _token) {
+        _clear();
+        _notify();
+      }
+      rethrow;
     }
   }
 
