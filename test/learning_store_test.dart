@@ -19,8 +19,8 @@ void main() {
       expect(reloaded.completed, {'ad-1'});
       expect(reloaded.saved, {'nist-rmf'});
       expect(reloaded.currentPath.id, 'rmf');
-      expect(reloaded.completedIn(learningPaths.first), 1);
-      expect(reloaded.nextLesson(learningPaths.first)?.id, 'ad-2');
+      expect(reloaded.completedIn(foundationPaths.first), 1);
+      expect(reloaded.nextLesson(foundationPaths.first)?.id, 'ad-2');
     },
   );
 
@@ -60,7 +60,7 @@ void main() {
       final store = await LearningStore.load();
       expect(store.completed, {'ad-1'});
       expect(store.saved, isEmpty);
-      expect(store.currentPath.id, 'ad');
+      expect(store.currentPath.id, 'dc01-dc02');
       await expectLater(store.completeLesson('missing'), throwsArgumentError);
       await expectLater(store.toggleSaved('missing'), throwsArgumentError);
     },

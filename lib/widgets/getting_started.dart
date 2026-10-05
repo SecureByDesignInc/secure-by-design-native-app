@@ -26,7 +26,7 @@ class GettingStartedCard extends StatelessWidget {
               ),
             GettingStartedMessage.resources => (
                 'Keep a useful reference close.',
-                'Visit Resources and bookmark one guide for your next learning session. Your saved references stay together on this device.',
+                'Visit Explore and bookmark one guide for your next learning session. Find saved references in Resources & materials.',
                 'Explore resources'
               ),
             GettingStartedMessage.feedback => (

@@ -4,12 +4,14 @@ import '../data/models.dart';
 import '../data/learning_store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'course_screen.dart';
 
 Future<void> openLearningPath(
   BuildContext context,
   LearningStore store,
-  LearningPath path,
-) async {
+  LearningPath path, {
+  bool showMaterials = false,
+}) async {
   try {
     await store.openPath(path.id);
   } catch (_) {
@@ -21,7 +23,10 @@ Future<void> openLearningPath(
     store.analytics.pathOpened(path.id);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => PathScreen(store: store, path: path),
+        builder: (_) => path.published
+            ? CourseScreen(
+                store: store, path: path, initialTab: showMaterials ? 2 : 0)
+            : PathScreen(store: store, path: path),
       ),
     );
   }
@@ -177,57 +182,56 @@ class _LessonRow extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         onTap: onTap,
         child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: SbdColors.surface,
-                  ),
-                  child: Center(
-                    child: completed
-                        ? const Icon(
-                            Icons.check,
-                            color: SbdColors.success,
-                            size: 21,
-                          )
-                        : Text(
-                            '${index + 1}'.padLeft(2, '0'),
-                            style: const TextStyle(color: SbdColors.cyan),
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        lesson.title,
-                        style: const TextStyle(
-                          color: SbdColors.ink,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: SbdColors.surface,
+              ),
+              child: Center(
+                child: completed
+                    ? const Icon(
+                        Icons.check,
+                        color: SbdColors.success,
+                        size: 21,
+                      )
+                    : Text(
+                        '${index + 1}'.padLeft(2, '0'),
+                        style: const TextStyle(color: SbdColors.cyan),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        completed
-                            ? 'Completed · ${lesson.minutes} min'
-                            : '${lesson.minutes} min · Read & reflect',
-                        style: const TextStyle(
-                          color: SbdColors.muted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lesson.title,
+                    style: const TextStyle(
+                      color: SbdColors.ink,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                const Icon(Icons.chevron_right,
-                    color: SbdColors.muted, size: 20),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    completed
+                        ? 'Completed · ${lesson.minutes} min'
+                        : '${lesson.minutes} min · Read & reflect',
+                    style: const TextStyle(
+                      color: SbdColors.muted,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Icon(Icons.chevron_right, color: SbdColors.muted, size: 20),
+          ],
         ),
       );
 }
@@ -251,6 +255,7 @@ class _LessonScreenState extends State<LessonScreen> {
   void initState() {
     super.initState();
     widget.store.analytics.lessonOpened(widget.lesson.id);
+    widget.store.startLesson(widget.lesson.id).catchError((Object _) {});
   }
 
   int? _answer;
@@ -321,7 +326,8 @@ class _LessonScreenState extends State<LessonScreen> {
                         onPressed: () {
                           setState(() => _answer = i);
                           widget.store.analytics.knowledgeCheckSubmitted(
-                            lesson.id, i == lesson.correctAnswer,
+                            lesson.id,
+                            i == lesson.correctAnswer,
                           );
                         },
                         style: OutlinedButton.styleFrom(
@@ -416,5 +422,3 @@ class _LessonScreenState extends State<LessonScreen> {
     );
   }
 }
-
-

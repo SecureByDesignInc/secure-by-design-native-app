@@ -39,6 +39,11 @@ class LearningPath {
     required this.description,
     required this.icon,
     required this.lessons,
+    this.subtitle = '',
+    this.published = false,
+    this.studyTime = '',
+    this.topics = 0,
+    this.materials = const [],
   });
   final String id;
   final String title;
@@ -46,6 +51,11 @@ class LearningPath {
   final String description;
   final String icon;
   final List<Lesson> lessons;
+  final String subtitle;
+  final bool published;
+  final String studyTime;
+  final int topics;
+  final List<LearningResource> materials;
   int get minutes => lessons.fold(0, (sum, lesson) => sum + lesson.minutes);
 }
 
