@@ -74,6 +74,10 @@ void main() {
         'HapticFeedbackType.selectionClick',
         'HapticFeedbackType.successNotification',
       ]);
+      expect(find.text('1-day streak'), findsOneWidget);
+      await tester.ensureVisible(find.text('Continue'));
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
       expect(find.text('1 of 5 chapters complete'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();

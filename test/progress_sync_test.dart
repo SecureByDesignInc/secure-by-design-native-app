@@ -10,6 +10,7 @@ class Cloud implements AccountTransport {
   Completer<Map<String, dynamic>>? delayed;
   final records = <String, Map<String, String>>{};
   final bookmarks = <String, Map<String, bool>>{};
+  final activity = <String, Map<String, Map<String, Object>>>{};
   @override
   Future<Map<String, dynamic>> request(String method, String path,
       {Map<String, Object>? body, String? token}) async {
@@ -25,6 +26,18 @@ class Cloud implements AccountTransport {
     if (offline) throw const AccountFailure('Offline');
     if (delayed != null) return delayed!.future;
     final owner = token!.startsWith('a') ? 'alice' : 'bob';
+    if (path == '/api/native-activity') {
+      final a = activity.putIfAbsent(owner, () => {});
+      for (final row in body!['activity'] as List) {
+        final event = Map<String, Object>.from(row as Map);
+        a['${event['day']}|${event['lessonId']}'] = event;
+      }
+      return {
+        'accountId': owner,
+        'activity': a.values.toList(),
+        'nextCursor': null
+      };
+    }
     final r = records.putIfAbsent(owner, () => {});
     final b = bookmarks.putIfAbsent(owner, () => {});
     for (final row in body!['records'] as List) {
@@ -103,6 +116,8 @@ void main() {
     cloud.offline = false;
     await next.sync();
     expect(next.syncError, isNull);
+    expect(next.stats.streak, 1);
+    expect(cloud.activity['alice']!.length, 1);
     expect(cloud.records['alice']!['training:dc01-dc02:prepare'], 'completed');
     await next.toggleSaved('dc-pdf');
     await settled(next);
@@ -139,6 +154,7 @@ void main() {
     expect(store.accountScope, 'bob');
     expect(store.completed, isEmpty);
     expect(store.saved, isEmpty);
+    expect(store.stats.totalXp, 0);
   });
   test('a response for another identity cannot replace cached progress',
       () async {

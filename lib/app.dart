@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'data/learning_store.dart';
@@ -31,8 +32,10 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   final _account = AccountStore();
+  Timer? _dayRefresh;
   @override
   void dispose() {
+    _dayRefresh?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _account.removeListener(_accountChanged);
     _account.dispose();
@@ -43,6 +46,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _dayRefresh = Timer.periodic(
+        const Duration(minutes: 1), (_) => widget.store.refreshDay());
     widget.store.analytics.appOpened();
     _account.addListener(_accountChanged);
     if (widget.store.gettingStarted.shouldPresentWelcome) {
