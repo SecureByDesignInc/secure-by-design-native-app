@@ -5,8 +5,6 @@ import '../data/learning_store.dart';
 import '../data/published_catalog.dart';
 import '../data/training_categories.dart';
 import '../widgets/training_card.dart';
-export '../widgets/training_card.dart' show TrainingCard;
-export 'my_account_screen.dart' show MyLearningScreen;
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/getting_started.dart';
@@ -16,6 +14,9 @@ import 'main_screens.dart' show ResourcesScreen;
 import 'network_screen.dart';
 import 'path_screen.dart';
 import 'membership_screen.dart';
+
+export '../widgets/training_card.dart' show TrainingCard;
+export 'my_account_screen.dart' show MyLearningScreen;
 
 class TrainingHome extends StatelessWidget {
   const TrainingHome({super.key, required this.store, required this.onTab});
@@ -33,7 +34,14 @@ class TrainingHome extends StatelessWidget {
       const SizedBox(height: 22),
       DailyLearningCard(
           store: store,
-          onDetails: () => onTab(3),
+          onDetails: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Quests & rewards')),
+                  body: SafeArea(child: AnimatedBuilder(animation: store,
+                      builder: (context, _) => PageContent(children: [
+                        LearningDashboard(store: store,
+                            onPractice: () => openPractice(context, store)),
+                      ])))))),
           onLearn: () {
             if (next == null) {
               openPractice(context, store);

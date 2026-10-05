@@ -83,7 +83,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('My Account').last);
       await tester.pumpAndSettle();
-      expect(find.text('1 of 5 complete'), findsOneWidget);
+      expect(find.text('1 of 5 lessons complete'), findsOneWidget);
       final reloaded = await LearningStore.load();
       expect(reloaded.completed, {'training:dc01-dc02:prepare'});
       expect(tester.takeException(), isNull);
@@ -225,3 +225,4 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+
