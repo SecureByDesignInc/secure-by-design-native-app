@@ -146,9 +146,7 @@ class TrainingCard extends StatelessWidget {
                             const SizedBox(width: 16),
                             Expanded(
                                 child: Text(
-                                    path.id == 'dc01-dc02'
-                                        ? '01 / BUILD'
-                                        : '02 / AUTHORIZE',
+                                    '${path.number} / ${path.category == 'Network build' ? 'BUILD' : 'AUTHORIZE'}',
                                     style: const TextStyle(
                                         color: SbdColors.cyan,
                                         fontWeight: FontWeight.w600)))
@@ -196,12 +194,13 @@ class TrainingLibraryScreen extends StatefulWidget {
 
 class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
   String query = '';
+  String category = '';
   @override
   Widget build(BuildContext context) {
     final matches = publishedPaths
-        .where((p) => '${p.title} ${p.subtitle} ${p.category}'
-            .toLowerCase()
-            .contains(query.toLowerCase()))
+        .where((p) => (category.isEmpty || p.category == category) &&
+            '${p.title} ${p.subtitle} ${p.description} ${p.category}'
+                .toLowerCase().contains(query.trim().toLowerCase()))
         .toList();
     return PageContent(children: [
       const PageTitle('Training Library',
@@ -214,10 +213,25 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
       const SizedBox(height: 24),
       if (matches.isEmpty)
         const Text('No matching training. Try another topic.'),
-      ResponsiveCards(
-          children: matches
-              .map((p) => TrainingCard(path: p, store: widget.store))
-              .toList()),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        for (final entry in const {'': 'All training', 'Network build': 'Build the Network', 'Network authorization': 'Authorize the Network'}.entries)
+          ChoiceChip(label: Text(entry.value), selected: category == entry.key,
+              onSelected: (_) => setState(() => category = entry.key)),
+      ]),
+      const SizedBox(height: 24),
+      for (final entry in const {'Network build': 'Build the Network', 'Network authorization': 'Authorize the Network'}.entries)
+        if (matches.any((p) => p.category == entry.key)) ...[
+          Text(entry.value, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(entry.key == 'Network build'
+              ? 'Identity, DNS, and certificate services for the network you build.'
+              : 'Prepare the risk decision and maintain the Body of Evidence.',
+              style: const TextStyle(color: SbdColors.muted, height: 1.5)),
+          const SizedBox(height: 16),
+          ResponsiveCards(children: matches.where((p) => p.category == entry.key)
+              .map((p) => TrainingCard(path: p, store: widget.store)).toList()),
+          const SizedBox(height: 28),
+        ],
       const SizedBox(height: 30),
       ExpansionTile(
           tilePadding: EdgeInsets.zero,

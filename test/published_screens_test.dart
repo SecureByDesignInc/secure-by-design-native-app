@@ -13,6 +13,39 @@ import 'package:secure_by_design_app/theme.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  test('DNS and two-tier PKI belong to the build category with stable progress IDs', () {
+    expect(publishedPaths.map((path) => path.id),
+        ['dc01-dc02', 'dns-configuration', 'two-tier-pki', 'rmf-boe-ato']);
+    final build = publishedPaths.where((path) => path.category == 'Network build');
+    expect(build.length, 3);
+    expect(publishedPaths[1].lessons.length, 5);
+    expect(publishedPaths[2].lessons.length, 6);
+    final ids = publishedPaths.expand((path) => path.lessons).map((lesson) => lesson.id).toList();
+    expect(ids.toSet().length, ids.length);
+    expect(ids, contains('training:two-tier-pki:sign'));
+    expect(publishedPaths[2].lessons[3].sourceUrl,
+        'https://securebydesigninc.com/training/two-tier-pki#sign');
+  });
+  testWidgets('library categories combine with search and show related courses', (tester) async {
+    final store = await LearningStore.load();
+    addTearDown(store.dispose);
+    await tester.pumpWidget(MaterialApp(theme: buildTheme(),
+        home: Scaffold(body: TrainingLibraryScreen(store: store))));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Authorize the Network'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TrainingCard), findsOneWidget);
+    expect(find.text('Configure DNS'), findsNothing);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Build the Network'));
+    await tester.enterText(find.byType(TextField), 'Root CA');
+    await tester.pumpAndSettle();
+    expect(find.byType(TrainingCard), findsOneWidget);
+    expect(find.text('Configure a Root CA & issuing CA'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'no matching topic');
+    await tester.pumpAndSettle();
+    expect(find.byType(TrainingCard), findsNothing);
+    expect(find.text('No matching training. Try another topic.'), findsOneWidget);
+  });
   testWidgets('View materials opens the material collection directly',
       (tester) async {
     final store = await LearningStore.load();
