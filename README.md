@@ -6,7 +6,7 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 
 ## What works
 
-- Home, Training, Explore, and My Progress with the website's navy/cyan design.
+- Home, Training, Explore, and My Account with the website's navy/cyan design.
 - Both published courses, in website order: DC01/DC02 (five chapters) and RMF/Body of Evidence/ATO (12 modules, 36 topics).
 - Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
 - Bundled course text and knowledge checks, plus the nine original foundation lessons.
@@ -129,7 +129,7 @@ Original sample explanations link to [Microsoft Learn](https://learn.microsoft.c
 
 ## Daily learning (0.4.0)
 
-Home and My Progress include a local-calendar streak, seven-day calendar, daily XP goal (10/20/40), XP levels, three daily quests, a 30-quest monthly challenge, six achievements, and lesson/review celebrations. Haptics retain the existing default-on preference. Completed lessons can be reviewed through Practice; the correct answer is required before rewards are saved.
+Home and My Account include a local-calendar streak, seven-day calendar, daily XP goal (10/20/40), XP levels, three daily quests, a 30-quest monthly challenge, six achievements, and lesson/review celebrations. Haptics retain the existing default-on preference. Completed lessons can be reviewed through Practice; the correct answer is required before rewards are saved.
 
 - New lessons earn 20 XP; reviews earn 10; correct first attempts add 5. Each lesson earns rewards once per calendar day. Each completed daily quest adds 10 XP once. There are no timers, purchases, or penalties that lock lessons.
 - One lesson or review maintains a streak independently of the daily goal. One automatic freeze is earned on the first active day; another every seven active days, capped at two. Freezes preserve a run but add neither streak days nor XP. Historical best streak remains after a reset.
@@ -139,4 +139,8 @@ Home and My Progress include a local-calendar streak, seven-day calendar, daily 
 
 ## Membership plans (0.4.1)
 
-Memberships are available from Info, My Progress, and after learning. The first lesson celebration offers an optional link; Continue remains the primary action. Community keeps all current lessons, rewards, downloads, and optional progress sync. Builder ($20/month or $180/year) and Guided ($99/month) are coming-soon previews. Detail selection and the billing-period toggle are local display state only: no checkout, subscription, paid entitlement, or marketing signup exists. The bundled `assets/membership-plans.json` matches the website’s `content/membership-plans.json`; update both together. Haptics keep the saved default-on preference.
+Memberships are available from Info, My Account, and after learning. The first lesson celebration offers an optional link; Continue remains the primary action. Community keeps all current lessons, rewards, downloads, and optional progress sync. Builder ($20/month or $180/year) and Guided ($99/month) are coming-soon previews. Detail selection and the billing-period toggle are local display state only: no checkout, subscription, paid entitlement, or marketing signup exists. The bundled `assets/membership-plans.json` matches the website’s `content/membership-plans.json`; update both together. Haptics keep the saved default-on preference.
+
+## My Account consolidation (0.5.0)
+
+My Account combines account access, learning progress, rewards, and the full membership comparison. Home and first-lesson membership invitations open this tab at the membership section. Continue with Community returns to Training; comparing plans never creates a subscription or changes learning records. Builder and Guided remain coming soon.

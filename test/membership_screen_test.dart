@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:secure_by_design_app/app.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
 import 'package:secure_by_design_app/data/membership.dart';
-import 'package:secure_by_design_app/screens/membership_screen.dart';
-import 'package:secure_by_design_app/theme.dart';
+import 'package:secure_by_design_app/screens/training_screens.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -30,20 +30,30 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({
+        'sbd.guidance.started.v1': DateTime.now().toUtc().toIso8601String(),
+      });
       final store = await LearningStore.load();
-      await tester.pumpWidget(MaterialApp(
-          theme: buildTheme(),
-          home: Builder(
-              builder: (context) => Scaffold(
-                  body: Center(
-                      child: FilledButton(
-                          onPressed: () => openMemberships(context, store),
-                          child: const Text('Open plans')))))));
-      await tester.tap(find.text('Open plans'));
+      await tester.pumpWidget(SecureByDesignApp(store: store));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('My Account').last);
       await tester.pump();
       await tester.runAsync(MembershipCatalog.load);
       await tester.pumpAndSettle();
+      expect(find.byType(MyLearningScreen), findsOneWidget);
+      expect(find.text('Continue with your website account.'), findsOneWidget);
+      await tester.ensureVisible(find.text('View membership options'));
+      await tester.tap(find.text('View membership options'));
+      await tester.pumpAndSettle();
+      expect(find.text('Membership options').hitTestable(), findsOneWidget);
+      expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          3);
+      expect(
+          Navigator.of(tester.element(find.byType(MyLearningScreen))).canPop(),
+          isFalse);
       expect(find.text('Community'), findsOneWidget);
       expect(find.text('Coming soon · planned benefits'), findsNWidgets(2));
       await tester.ensureVisible(find.text('Annual · save 25%'));
@@ -60,9 +70,61 @@ void main() {
       await tester.ensureVisible(find.text('Continue with Community').first);
       await tester.tap(find.text('Continue with Community').first);
       await tester.pumpAndSettle();
-      expect(find.text('Open plans'), findsOneWidget);
+      expect(find.byType(TrainingLibraryScreen), findsOneWidget);
+      expect(
+          tester
+              .widget<NavigationBar>(find.byType(NavigationBar))
+              .selectedIndex,
+          1);
+      expect(
+          Navigator.of(tester.element(find.byType(TrainingLibraryScreen)))
+              .canPop(),
+          isFalse);
       await tester.pumpWidget(const SizedBox.shrink());
       store.dispose();
     });
   }
+
+  testWidgets('first lesson invitation opens memberships in the My Account tab',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({
+      'sbd.guidance.started.v1': DateTime.now().toUtc().toIso8601String(),
+    });
+    final store = await LearningStore.load();
+    await tester.pumpWidget(SecureByDesignApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Start learning'));
+    await tester.tap(find.text('Start learning'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Start the first lesson'));
+    await tester.tap(find.text('Start the first lesson'));
+    await tester.pumpAndSettle();
+    await tester
+        .ensureVisible(find.text('DC01, once its domain DNS is available'));
+    await tester.tap(find.text('DC01, once its domain DNS is available'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Complete lesson'));
+    await tester.tap(find.text('Complete lesson'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Explore plans in My Account'));
+    await tester.tap(find.text('Explore plans in My Account'));
+    await tester.pump();
+    await tester.runAsync(MembershipCatalog.load);
+    await tester.pumpAndSettle();
+    expect(find.byType(MyLearningScreen), findsOneWidget);
+    expect(find.text('Membership options').hitTestable(), findsOneWidget);
+    expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        3);
+    expect(Navigator.of(tester.element(find.byType(MyLearningScreen))).canPop(),
+        isFalse);
+    expect(store.completed, {'training:dc01-dc02:prepare'});
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    store.dispose();
+  });
 }
