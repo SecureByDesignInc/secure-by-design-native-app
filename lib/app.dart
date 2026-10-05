@@ -3,25 +3,35 @@ import 'package:flutter/material.dart';
 
 import 'data/learning_store.dart';
 import 'data/account.dart';
-import 'screens/account_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/training_screens.dart';
-import 'screens/membership_screen.dart';
+import 'widgets/account_navigation.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 import 'widgets/app_support.dart';
 import 'widgets/getting_started.dart';
 
-class SecureByDesignApp extends StatelessWidget {
+class SecureByDesignApp extends StatefulWidget {
   const SecureByDesignApp({super.key, required this.store});
   final LearningStore store;
   @override
-  Widget build(BuildContext context) => MaterialApp(
+  State<SecureByDesignApp> createState() => _SecureByDesignAppState();
+}
+
+class _SecureByDesignAppState extends State<SecureByDesignApp> {
+  final _shellKey = GlobalKey<_AppShellState>();
+
+  @override
+  Widget build(BuildContext context) => AccountNavigation(
+      onAccount: (memberships) =>
+          _shellKey.currentState?._openAccount(memberships),
+      onTraining: () => _shellKey.currentState?._select(1),
+      child: MaterialApp(
         title: 'Secure By Design',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
-        home: AppShell(store: store),
-      );
+        home: AppShell(key: _shellKey, store: widget.store),
+      ));
 }
 
 class AppShell extends StatefulWidget {
@@ -75,7 +85,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   int _tab = 0;
-  static const labels = ['Home', 'Training', 'Explore', 'My Progress'];
+  bool _showMemberships = false;
+  int _accountVisit = 0;
+  static const labels = ['Home', 'Training', 'Explore', 'My Account'];
   static const icons = [
     Icons.home_outlined,
     Icons.auto_stories_outlined,
@@ -85,7 +97,19 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _select(int index) {
     if (index == _tab) return;
     widget.store.haptics.selectionChanged();
-    setState(() => _tab = index);
+    setState(() {
+      _tab = index;
+      _showMemberships = false;
+    });
+  }
+
+  void _openAccount(bool memberships) {
+    widget.store.haptics.selectionChanged();
+    setState(() {
+      _tab = 3;
+      _showMemberships = memberships;
+      _accountVisit++;
+    });
   }
 
   void _about() => showModalBottomSheet<void>(
@@ -117,7 +141,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Lessons and the system reference are available offline. Connect account progress in My Progress to sync. Downloadable materials and the 3D view require a connection.',
+                  'Lessons and the system reference are available offline. Connect account progress in My Account to sync. Downloadable materials and the 3D view require a connection.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 14,
@@ -137,12 +161,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 const CreatorNote(),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.layers_outlined),
-                  label: const Text('Memberships'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    openMemberships(this.context, widget.store);
-                  },
+                  icon: const Icon(Icons.person_outline),
+                  label: const Text('My Account'),
+                  onPressed: () => AccountNavigation.openAccount(context),
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
@@ -151,19 +172,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                   onPressed: () {
                     Navigator.pop(context);
                     openOnboarding(this.context, widget.store);
-                  },
-                ),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.person_outline),
-                  label: const Text('Your account'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.of(this.context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => AccountScreen(account: _account),
-                      ),
-                    );
                   },
                 ),
                 const SizedBox(height: 24),
@@ -199,7 +207,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             0 => TrainingHome(store: widget.store, onTab: _select),
             1 => TrainingLibraryScreen(store: widget.store),
             2 => ExploreScreen(store: widget.store),
-            _ => MyLearningScreen(store: widget.store, account: _account),
+            _ => MyLearningScreen(
+                key: ValueKey(_accountVisit),
+                store: widget.store,
+                account: _account,
+                initiallyShowMemberships: _showMemberships),
           };
           final content = Column(
             children: [

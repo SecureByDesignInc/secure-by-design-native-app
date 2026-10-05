@@ -171,7 +171,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       ],
                       const SizedBox(height: 24),
                       const Text(
-                        'This preview signs you out when you close the app or after 12 hours. Connect progress in My Progress to sync your lessons and bookmarks. Device-only records are kept separately.',
+                        'This preview signs you out when you close the app or after 12 hours. Connect progress in My Account to sync your lessons and bookmarks. Device-only records are kept separately.',
                         style: TextStyle(
                           color: SbdColors.muted,
                           fontSize: 13,

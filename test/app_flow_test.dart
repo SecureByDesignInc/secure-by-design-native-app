@@ -81,7 +81,7 @@ void main() {
       expect(find.text('1 of 5 chapters complete'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await tester.tap(find.text('My Progress').last);
+      await tester.tap(find.text('My Account').last);
       await tester.pumpAndSettle();
       expect(find.text('1 of 5 complete'), findsOneWidget);
       final reloaded = await LearningStore.load();
@@ -144,7 +144,7 @@ void main() {
           await tester.pumpWidget(SecureByDesignApp(store: store));
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
-          for (final tab in ['Training', 'Explore', 'My Progress']) {
+          for (final tab in ['Training', 'Explore', 'My Account']) {
             await tester.tap(find.text(tab).last);
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
@@ -207,7 +207,7 @@ void main() {
       'Home': 'home',
       'Training': 'training',
       'Explore': 'explore',
-      'My Progress': 'progress',
+      'My Account': 'progress',
     }.entries) {
       await tester.tap(find.text(entry.key).last);
       await tester.pumpAndSettle();

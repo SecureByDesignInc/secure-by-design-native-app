@@ -15,6 +15,7 @@ import 'main_screens.dart' show ResourcesScreen;
 import 'network_screen.dart';
 import 'path_screen.dart';
 import 'membership_screen.dart';
+import '../widgets/account_navigation.dart';
 
 class TrainingHome extends StatelessWidget {
   const TrainingHome({super.key, required this.store, required this.onTab});
@@ -111,7 +112,7 @@ class TrainingHome extends StatelessWidget {
       const TrainingShare(),
       if (store.completed.isNotEmpty) ...[
         const SizedBox(height: 22),
-        MembershipInvitation(store: store),
+        const MembershipInvitation(),
       ],
     ]);
   }
@@ -321,17 +322,65 @@ class ExploreScreen extends StatelessWidget {
       ]);
 }
 
-class MyLearningScreen extends StatelessWidget {
+class MyLearningScreen extends StatefulWidget {
   const MyLearningScreen(
-      {super.key, required this.store, required this.account});
+      {super.key,
+      required this.store,
+      required this.account,
+      this.initiallyShowMemberships = false});
   final LearningStore store;
   final AccountStore account;
+  final bool initiallyShowMemberships;
+  @override
+  State<MyLearningScreen> createState() => _MyLearningScreenState();
+}
+
+class _MyLearningScreenState extends State<MyLearningScreen> {
+  final _membershipKey = GlobalKey();
+  LearningStore get store => widget.store;
+  AccountStore get account => widget.account;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initiallyShowMemberships) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showMemberships());
+    }
+  }
+
+  void _showMemberships() {
+    final target = _membershipKey.currentContext;
+    if (!mounted || target == null) return;
+    Scrollable.ensureVisible(target,
+        alignment: 0,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 250));
+  }
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
       animation: Listenable.merge([store, account]),
       builder: (context, _) => PageContent(children: [
-            PageTitle('My Progress', store.storageLabel,
+            PageTitle('My Account', store.storageLabel,
                 kicker: 'Keep learning'),
+            Panel(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text('Community is included.',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 10),
+                  const Text(
+                      'Your learning, account, and membership options in one place. Keep learning with Community, or explore what’s coming with Builder and Guided.',
+                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                      onPressed: _showMemberships,
+                      icon: const Icon(Icons.layers_outlined),
+                      label: const Text('View membership options')),
+                ])),
+            const SizedBox(height: 26),
             LearningDashboard(
                 store: store, onPractice: () => openPractice(context, store)),
             const SizedBox(height: 26),
@@ -454,6 +503,14 @@ class MyLearningScreen extends StatelessWidget {
                             child: const Text('Continue learning')),
                       ]))),
             const SizedBox(height: 10),
-            MembershipInvitation(store: store),
+            Padding(
+                key: _membershipKey,
+                padding: const EdgeInsets.only(top: 16),
+                child: MembershipSection(
+                    store: store,
+                    onReady: widget.initiallyShowMemberships
+                        ? _showMemberships
+                        : null,
+                    onContinue: () => AccountNavigation.openTraining(context))),
           ]));
 }

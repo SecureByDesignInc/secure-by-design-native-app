@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'membership_screen.dart';
+import '../widgets/account_navigation.dart';
 
 import '../data/models.dart';
 import '../data/catalog.dart';
@@ -316,7 +316,8 @@ class _LessonScreenState extends State<LessonScreen> {
               reward: _reward!,
               onContinue: () => Navigator.pop(context),
               onMemberships: widget.store.completed.length == 1
-                  ? () => openMemberships(context, widget.store)
+                  ? () =>
+                      AccountNavigation.openAccount(context, memberships: true)
                   : null));
     }
     final lesson = widget.lesson;
