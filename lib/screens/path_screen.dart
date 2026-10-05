@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'membership_screen.dart';
 
 import '../data/models.dart';
 import '../data/catalog.dart';
@@ -312,7 +313,11 @@ class _LessonScreenState extends State<LessonScreen> {
       return Scaffold(
           appBar: AppBar(title: const Text('Session complete')),
           body: LessonCelebration(
-              reward: _reward!, onContinue: () => Navigator.pop(context)));
+              reward: _reward!,
+              onContinue: () => Navigator.pop(context),
+              onMemberships: widget.store.completed.length == 1
+                  ? () => openMemberships(context, widget.store)
+                  : null));
     }
     final lesson = widget.lesson;
     final completed = widget.store.isCompleted(lesson.id);

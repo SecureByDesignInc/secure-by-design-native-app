@@ -1,7 +1,7 @@
 name: secure_by_design_app
 description: A native Secure By Design learning companion proof of concept.
 publish_to: none
-version: 0.4.0+16
+version: 0.4.1+17
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -24,6 +24,7 @@ flutter:
   assets:
     - assets/brand/brand-mark.png
     - assets/training/network.json
+    - assets/membership-plans.json
   fonts:
     - family: Geist
       fonts:
