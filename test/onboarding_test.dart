@@ -112,16 +112,15 @@ void main() {
       await tester.pumpWidget(RepaintBoundary(
           key: boundary, child: SecureByDesignApp(store: store)));
       await tester.pumpAndSettle();
-      expect(find.text('Step 1 of 5'), findsOneWidget);
+      expect(find.text('Step 1 of 3'), findsOneWidget);
       if (!largeText) await capture(tester, boundary, 'welcome');
-      await tap(tester, 'Find my starting point');
       expect(
           tester
               .widget<FilledButton>(
                   find.widgetWithText(FilledButton, 'Continue'))
               .onPressed,
           isNull);
-      await tap(tester, 'Understand RMF & authorization');
+      await tap(tester, 'Understand risk & authorization');
       if (!largeText) await capture(tester, boundary, 'goals');
       await tap(tester, 'Continue');
       expect(
@@ -135,7 +134,7 @@ void main() {
       expect(find.text('Make sense of RMF'), findsOneWidget);
       expect(find.text('START HERE · 3 MIN'), findsOneWidget);
       if (!largeText) await capture(tester, boundary, 'plan');
-      await tap(tester, 'A note before you begin');
+      await tap(tester, 'A note from Secure By Design');
       expect(find.text('Hi, we’re Secure By Design.'), findsOneWidget);
       if (!largeText) await capture(tester, boundary, 'creator');
       expect(tester.takeException(), isNull);
@@ -181,8 +180,8 @@ void main() {
     await tester.tap(find.byTooltip('About this preview'));
     await tester.pumpAndSettle();
     await tap(tester, 'Personalize my learning');
-    await tap(tester, 'Find my starting point');
     await tap(tester, 'Understand security monitoring');
+    await tap(tester, 'Continue');
     await tester.tap(find.byTooltip('Previous step'));
     await tester.pumpAndSettle();
     await tap(tester, 'Close');
@@ -194,3 +193,4 @@ void main() {
     restored.dispose();
   });
 }
+

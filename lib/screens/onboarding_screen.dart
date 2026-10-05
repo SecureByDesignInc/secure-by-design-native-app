@@ -96,8 +96,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       OnboardingProfile(goals: _goals, start: _start!);
   bool get _canContinue =>
       !_saving &&
-      (_step != 1 || _goals.isNotEmpty) &&
-      (_step != 2 || _start != null);
+      (_step != 0 || _goals.isNotEmpty) &&
+      (_step != 1 || _start != null);
 
   void _move(int step) {
     if (_saving) return;
@@ -141,80 +141,73 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   List<Widget> _content() => switch (_step) {
         0 => [
-            const Brand(),
-            const SizedBox(height: 32),
-            _heading('Build confidence.\nOne lesson at a time.',
-                'Understand the systems you build and the security decisions behind them. Let’s find your first useful step.'),
-            Panel(
-                gradient: true,
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Kicker('From learning to doing'),
-                      const SizedBox(height: 18),
-                      const _Outcome(
-                          icon: Icons.hub_outlined,
-                          title: 'Build the identity foundation',
-                          body:
-                              'Follow DC01 + DC02 through Active Directory and DNS.'),
-                      const SizedBox(height: 20),
-                      const _Outcome(
-                          icon: Icons.verified_user_outlined,
-                          title: 'Turn security decisions into evidence',
-                          body:
-                              'Work through RMF, the Body of Evidence, and authorization.'),
-                    ])),
-            const SizedBox(height: 22),
-            const Text(
-                'Two quick questions. A plan you can change. Start learning without an account.'),
-          ],
-        1 => [
-            _heading('What brings you here?',
-                'Choose one or more goals. Your answers decide which lessons we recommend.'),
+            const Brand(compact: true),
+            const SizedBox(height: 28),
+            _heading('What would you like to learn?',
+                'Choose one or more goals. We’ll help you find a useful place to begin.'),
             for (final goal in LearningGoal.values)
               _Choice(
+                  icon: switch (goal) {
+                    LearningGoal.build => Icons.hub_outlined,
+                    LearningGoal.authorize => Icons.verified_user_outlined,
+                    LearningGoal.monitor => Icons.insights_outlined,
+                  },
                   label: goal.label,
                   body: goal.description,
                   selected: _goals.contains(goal),
                   onTap: () {
                     widget.store.haptics.selectionChanged();
                     setState(() => _goals.contains(goal)
-                        ? _goals.remove(goal)
-                        : _goals.add(goal));
+                        ? _goals.remove(goal) : _goals.add(goal));
                   }),
-            const SizedBox(height: 12),
-            const Text('Your choices stay on this device.'),
+            const SizedBox(height: 8),
+            const Text('Two quick choices. Learn at your own pace. Sign-in is optional.'),
           ],
-        2 => [
-            _heading('Where would you like to start?',
-                'There’s no test to pass here. Choose the approach that feels useful today.'),
-            for (final start in LearningStart.values)
-              _Choice(
-                  label: start.label,
-                  body: start.description,
-                  selected: _start == start,
-                  onTap: () {
-                    if (_start == start) return;
-                    widget.store.haptics.selectionChanged();
-                    setState(() => _start = start);
-                  }),
-          ],
-        3 => [
-            _heading('Your starting point is ready.',
-                'Here’s what your answers unlocked. You can explore every course whenever you like.'),
-            Text(_profile.reason,
-                style: const TextStyle(color: SbdColors.cyan)),
-            const SizedBox(height: 22),
-            for (final id in _profile.pathIds) _recommendation(id),
+        1 => [
+            _heading('Where are you starting from?',
+                'Pick the level that feels right today. You can change your plan in My Account.'),
+            LayoutBuilder(builder: (context, constraints) {
+              final twoColumns = constraints.maxWidth >= 520 &&
+                  MediaQuery.textScalerOf(context).scale(16) <= 20;
+              return Wrap(spacing: 16, children: [
+                for (final start in LearningStart.values)
+                  SizedBox(width: twoColumns
+                      ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth,
+                      child: _Choice(
+                          icon: start == LearningStart.foundations
+                              ? Icons.school_outlined : Icons.terminal_outlined,
+                          label: start.label,
+                          body: start.description,
+                          selected: _start == start,
+                          onTap: () {
+                            if (_start == start) return;
+                            widget.store.haptics.selectionChanged();
+                            setState(() => _start = start);
+                          })),
+              ]);
+            }),
             const SizedBox(height: 12),
-            const Text(
-                'A simple rhythm: learn one idea, check your understanding, then save a reference for next time.'),
+            const Panel(child: Text(
+                'Every course remains available. Your choice simply helps us recommend your first lesson.')),
           ],
         _ => [
-            const CreatorNote(),
-            const SizedBox(height: 20),
-            const Text('Learn it. Share it. Pay it forward.',
-                style: TextStyle(color: SbdColors.cyan))
+            _heading('Your starting point is ready.',
+                'A practical next step, chosen for your goals and experience.'),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final goal in _goals)
+                ActionChip(label: Text(goal.label), onPressed: () => _move(0)),
+              ActionChip(label: Text(_start!.label), onPressed: () => _move(1)),
+            ]),
+            const SizedBox(height: 22),
+            for (final id in _profile.pathIds) _recommendation(id),
+            const Text('Learn one idea, check your understanding, then save a useful reference.'),
+            const SizedBox(height: 16),
+            const ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text('A note from Secure By Design'),
+                children: [CreatorNote()]),
+            const SizedBox(height: 12),
+            const Text('Your learning choices stay on this device.'),
           ],
       };
 
@@ -269,7 +262,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Expanded(
                       child: Padding(
                           padding: const EdgeInsets.only(left: 10),
-                          child: Text('Step ${_step + 1} of 5',
+                          child: Text('Step ${_step + 1} of 3',
                               style: const TextStyle(color: SbdColors.cyan)))),
                   TextButton(
                       onPressed: _saving ? null : _close,
@@ -278,9 +271,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: LinearProgressIndicator(
-                  value: (_step + 1) / 5,
+                  value: (_step + 1) / 3,
                   minHeight: 4,
-                    semanticsLabel: 'Welcome progress, step ${_step + 1} of 5',
+                    semanticsLabel: 'Welcome progress, step ${_step + 1} of 3',
                   borderRadius: BorderRadius.circular(8),
                 )),
             Expanded(
@@ -305,24 +298,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: FilledButton(
                         onPressed: !_canContinue
                             ? null
-                            : _step == 4
+                            : _step == 2
                                 ? () => _finish(startLesson: true)
                                 : () => _move(_step + 1),
                         child: Text(_saving
                             ? 'Saving…'
                             : switch (_step) {
-                                0 => 'Find my starting point',
-                                1 => 'Continue',
-                                2 => 'Show my plan',
-                                3 => 'A note before you begin',
+                                0 => 'Continue',
+                                1 => 'Show my plan',
                                 _ => 'Start my first lesson',
                               }),
                       )),
-                  if (_step == 4)
+                  if (_step == 2)
                     TextButton(
                         onPressed:
                             _saving ? null : () => _finish(startLesson: false),
-                        child: const Text('Explore my plan first')),
+                        child: const Text('Save my plan for later')),
                 ])),
           ]),
         )))),
@@ -331,10 +322,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class _Choice extends StatelessWidget {
   const _Choice(
-      {required this.label,
+      {required this.icon,
+      required this.label,
       required this.body,
       required this.selected,
       required this.onTap});
+  final IconData icon;
   final String label, body;
   final bool selected;
   final VoidCallback onTap;
@@ -359,9 +352,7 @@ class _Choice extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
-                              selected
-                                  ? Icons.check_circle
-                                  : Icons.circle_outlined,
+                              selected ? Icons.check_circle_rounded : icon,
                               color:
                                   selected ? SbdColors.cyan : SbdColors.muted),
                           const SizedBox(width: 14),
@@ -382,21 +373,3 @@ class _Choice extends StatelessWidget {
       );
 }
 
-class _Outcome extends StatelessWidget {
-  const _Outcome({required this.icon, required this.title, required this.body});
-  final IconData icon;
-  final String title, body;
-  @override
-  Widget build(BuildContext context) =>
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, color: SbdColors.cyan),
-        const SizedBox(width: 14),
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 6),
-          Text(body),
-        ])),
-      ]);
-}

@@ -1,20 +1,20 @@
 # Secure By Design — native app proof of concept
 
-Version 0.3.0 · October 5, 2026
+Version 0.7.0 · October 5, 2026
 
 A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux. Native apps come first. The web app is deferred.
 
 ## What works
 
 - Home, Training, Explore, and My Account with the website's navy/cyan design.
-- Both published courses, in website order: DC01/DC02 (five chapters) and RMF/Body of Evidence/ATO (12 modules, 36 topics).
+- Four published courses: DC01/DC02, DNS configuration, two-tier PKI, and Risk Management Framework / Body of Evidence / Authorization to Operate. The app groups them into three training categories.
 - Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
 - Bundled course text and knowledge checks, plus the nine original foundation lessons.
 - Inside the Network: six offline traffic walkthroughs and 23 system references; the complete website 3D explorer opens in-app on iOS, Android, and macOS.
 - Saved materials and native homepage sharing: Learn it. Share it. Pay it forward.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
-- A skippable first-run welcome: goals, starting level, real lesson recommendations, and a personal note from Jon. The Home checklist follows actual lesson and bookmark progress.
+- A skippable first-run welcome: goals, starting level, real lesson recommendations, and an optional note from Secure By Design. The Home checklist follows actual lesson and bookmark progress.
 - Returning learners keep their place. Reopen the welcome through the info button → Personalize my learning; the creator note is also available there.
 - Device-only onboarding choices, getting-started prompts, optional anonymous analytics, and existing feedback flow.
 - Optional haptic feedback on supported iOS and Android devices: selection taps, saved bookmark confirmations, and successful lesson completion. Use the info button → Haptic feedback to turn it off; the preference stays on this device across account changes and app restarts. Background synchronization and unsupported platforms remain silent.
@@ -23,7 +23,7 @@ Course text and the network reference work offline. 3D, downloads, external reso
 
 ## Onboarding design
 
-The welcome adapts the outcome-first presentation, useful personalization, founder note, and continuing checklist described in [Mobbin’s onboarding video](https://www.youtube.com/watch?v=Qsq-Sj_rojU), with [Tiimo’s flow](https://mobbin.com/explore/flows/817f5bfd-1701-4756-bcbc-dcdfc3597723) as a reference. Goals and starting level select existing lessons, with their real durations. Recommendations never claim a guaranteed result or completion date. The note is original Secure By Design copy. Sharing is voluntary; lesson access and optional sign-in keep their existing behavior.
+The original welcome adapted the outcome-first presentation, useful personalization, founder note, and continuing checklist described in [Mobbin’s onboarding video](https://www.youtube.com/watch?v=Qsq-Sj_rojU), with [Tiimo’s flow](https://mobbin.com/explore/flows/817f5bfd-1701-4756-bcbc-dcdfc3597723) as a reference. Goals and starting level select existing lessons, with their real durations. Recommendations never claim a guaranteed result or completion date. The note is original Secure By Design copy. Sharing is voluntary; lesson access and optional sign-in keep their existing behavior.
 
 The new profile is stored under `sbd.onboarding.v1`, separate from account progress and analytics. Existing install markers prevent an intrusive first-run replay after upgrading. Finishing or skipping suppresses the old welcome card while retaining the existing learning-tip schedule. Disabling getting-started prompts hides the Home checklist.
 
@@ -115,7 +115,7 @@ The importer also writes the Site's course progress and material catalogs so bot
 
 ## Release workflow
 
-Codemagic checks pull requests targeting main and builds the signed TestFlight IPA when main changes, provided the existing repository webhook is enabled. The Apple integration and bundle identifier remain unchanged. No public App Store review or external tester invitation is configured. Platform compilation and physical-device checks are separate from the Flutter widget tests.
+Codemagic checks pull requests targeting main and builds the signed TestFlight IPA when main changes, provided the existing repository webhook is enabled. The Apple integration and bundle identifier remain unchanged. No public App Store review or external tester invitation is configured. The Native app checks GitHub Actions workflow also runs analysis and widget tests on pull requests, with rendered preview artifacts. Platform compilation and physical-device checks are separate from the Flutter widget tests.
 
 ## Official setup references
 
@@ -144,3 +144,32 @@ Memberships are available from Info, My Account, and after learning. The first l
 ## My Account consolidation (0.5.0)
 
 My Account combines account access, learning progress, rewards, and the full membership comparison. Home and first-lesson membership invitations open this tab at the membership section. Continue with Community returns to Training; comparing plans never creates a subscription or changes learning records. Builder and Guided remain coming soon.
+
+
+## App design refresh (0.7.0)
+
+The native app adapts the reviewed Mobbin references: Brilliant's goal and level
+choices, Uxcel Go's grouped cards, MasterClass's expandable curriculum, and the
+Speak / Gentler Streak account patterns. No website files, imported course
+content, progress IDs, backend endpoints, membership pricing, or entitlements
+change in this release.
+
+- Onboarding is three steps: goals, starting level, and a real recommended lesson.
+  It stays skippable, retains existing profiles, and keeps the creator note optional.
+- Training uses app-only Network Foundations, Certificates & Trust, and Network
+  Authorization categories. Tiles expand to reveal course outcomes, durations,
+  and directly accessible lessons. Completion and materials stay visible;
+  unavailable recordings remain labeled Video coming soon.
+- My Account is a compact hub for Community access, genuine learning statistics,
+  continuation, saved materials, rewards, learning preferences, account security,
+  privacy, feedback, and membership comparison. Detailed controls open from this
+  hub. Device-progress import still requires its existing explicit confirmation.
+- Existing navy/cyan colors, Geist typeface, offline learning, and platform
+  accessibility preferences are preserved. No mandatory signup or new tracking.
+
+References:
+- https://mobbin.com/flows/20ad012b-2683-4c0c-beb8-8ff62c6f509e
+- https://mobbin.com/screens/dba87d9e-9955-49be-be73-686477e601ee
+- https://mobbin.com/screens/72dcf33e-58e8-486f-a178-583a2d411f67
+- https://mobbin.com/screens/b1802d44-e332-4130-bbf4-f195931c7bd1
+- https://mobbin.com/screens/83aeb4be-08be-4066-8f85-510daf0ecf8a

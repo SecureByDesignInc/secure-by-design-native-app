@@ -32,11 +32,13 @@ void main() {
     await tester.pumpWidget(MaterialApp(theme: buildTheme(),
         home: Scaffold(body: TrainingLibraryScreen(store: store))));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Authorize the Network'));
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Network Authorization'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsOneWidget);
     expect(find.text('Configure DNS'), findsNothing);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Build the Network'));
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
     await tester.enterText(find.byType(TextField), 'Root CA');
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsOneWidget);
@@ -54,7 +56,7 @@ void main() {
         theme: buildTheme(),
         home: Scaffold(
             body: TrainingCard(path: publishedPaths.first, store: store))));
-    await tester.tap(find.text('View materials'));
+    await tester.tap(find.text('View materials (${publishedPaths.first.materials.length})'));
     await tester.pumpAndSettle();
     expect(find.text('Interactive build guide'), findsOneWidget);
     expect(find.text('Start the first lesson'), findsNothing);
@@ -137,3 +139,4 @@ void main() {
     expect(find.text('Copy homepage link'), findsNothing);
   });
 }
+

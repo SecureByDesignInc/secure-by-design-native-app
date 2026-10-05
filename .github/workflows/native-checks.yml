@@ -1,0 +1,40 @@
+name: Native app checks
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  flutter-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
+      FLUTTER_SUPPRESS_ANALYTICS: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - name: Restore packages
+        run: flutter pub get
+      - name: Analyze app
+        run: flutter analyze
+      - name: Run app tests
+        run: flutter test --reporter expanded
+      - name: Collect app previews
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-app-previews
+          path: previews/*.png
+          if-no-files-found: ignore
+          retention-days: 7

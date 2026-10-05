@@ -1,8 +1,8 @@
 enum LearningGoal {
   build('Build a network',
       'Connect Active Directory, DNS, and the systems they serve.'),
-  authorize('Understand RMF & authorization',
-      'Connect security decisions to evidence and an authorization package.'),
+  authorize('Understand risk & authorization',
+      'Apply the Risk Management Framework and build a Body of Evidence.'),
   monitor('Understand security monitoring',
       'Make sense of machine data and the questions it can answer.');
 
@@ -13,9 +13,9 @@ enum LearningGoal {
 
 enum LearningStart {
   foundations('Start with the foundations',
-      'Build understanding with a short, guided lesson.'),
+      'I’m new to these concepts. Start with a short, guided explanation.'),
   practical('I’m ready to apply it',
-      'Start with a practical course where one is available.');
+      'I have some experience. Help me build, configure, and document a real system.');
 
   const LearningStart(this.label, this.description);
   final String label;
@@ -63,3 +63,4 @@ class OnboardingProfile {
     return OnboardingProfile(goals: goals, start: starts.first);
   }
 }
+

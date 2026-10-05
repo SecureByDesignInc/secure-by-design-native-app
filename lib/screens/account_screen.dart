@@ -142,7 +142,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         const SizedBox(height: 24),
                         const Panel(
                           child: Text(
-                            'Welcome messages, learning tips, and feedback prompts appear inside the app. Email is reserved for account verification and password resets. Manage getting-started prompts in About this preview.',
+                            'Welcome messages, learning tips, and feedback prompts appear inside the app. Email is reserved for account verification and password resets. Manage in-app reminders in My Account → Learning preferences.',
                             style: TextStyle(height: 1.6),
                           ),
                         ),
@@ -187,3 +187,4 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
       );
 }
+
