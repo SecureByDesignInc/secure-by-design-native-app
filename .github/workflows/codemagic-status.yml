@@ -1,0 +1,79 @@
+name: Codemagic status
+on:
+  workflow_dispatch:
+    inputs:
+      cm_token:
+        description: Codemagic API token (prefer the CM_API_TOKEN secret; this input is a fallback)
+        required: false
+        default: ''
+      mode:
+        description: status (list apps and recent builds) or trigger (start the TestFlight workflow)
+        required: false
+        default: status
+      app_id:
+        description: Codemagic app id (required for trigger)
+        required: false
+        default: ''
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: codemagic-status
+jobs:
+  codemagic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CM_TOKEN: ${{ inputs.cm_token != '' && inputs.cm_token || secrets.CM_API_TOKEN }}
+    steps:
+      - name: Query Codemagic
+        run: |
+          set -euo pipefail
+          if [ -z "$CM_TOKEN" ]; then
+            echo "No Codemagic token provided (input or CM_API_TOKEN secret)." > comment.md
+            exit 0
+          fi
+          curl -sS --fail -H "x-auth-token: $CM_TOKEN" https://api.codemagic.io/apps > apps.json
+          curl -sS --fail -H "x-auth-token: $CM_TOKEN" https://api.codemagic.io/builds > builds.json
+          python3 - <<'PY'
+          import json
+          apps = json.load(open('apps.json')).get('applications', [])
+          names = {}
+          lines = ['### Codemagic status', '', '#### Apps']
+          for a in apps:
+              rep = a.get('repository') or {}
+              url = rep.get('htmlUrl') or (rep.get('owner') or {}).get('name') or '?'
+              names[a.get('_id')] = a.get('appName')
+              lines.append(f"- `{a.get('_id')}` **{a.get('appName')}** — repo: {url}")
+          data = json.load(open('builds.json'))
+          builds = (data.get('builds') or [])[:10]
+          lines += ['', '#### Recent builds']
+          if not builds:
+              lines.append('_No builds found._')
+          for b in builds:
+              commit = ((b.get('commit') or {}).get('hash') or '')[:9]
+              lines.append(
+                  f"- {b.get('startedAt', 'queued')} · app **{names.get(b.get('appId'), b.get('appId'))}** · "
+                  f"workflow `{b.get('workflowId')}` · branch `{b.get('branch')}` · commit `{commit}` · "
+                  f"status: **{b.get('status')}**")
+          open('comment.md', 'w').write('\n'.join(lines) + '\n')
+          PY
+      - name: Trigger TestFlight workflow
+        if: ${{ inputs.mode == 'trigger' && inputs.app_id != '' }}
+        run: |
+          set -euo pipefail
+          curl -sS --fail -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" \
+            -d "{\"appId\": \"${{ inputs.app_id }}\", \"workflowId\": \"ios-testflight\", \"branch\": \"main\"}" \
+            https://api.codemagic.io/builds > trigger.json
+          {
+            echo ''
+            echo '#### Build trigger response'
+            echo '```json'
+            cat trigger.json
+            echo ''
+            echo '```'
+          } >> comment.md
+      - name: Post results on PR 14
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment 14 --repo "$GITHUB_REPOSITORY" --body-file comment.md
