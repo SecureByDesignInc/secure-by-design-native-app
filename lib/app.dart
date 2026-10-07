@@ -230,6 +230,35 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                             )
                           : const Brand(),
                     ),
+                    if (widget.store.stats.streak > 0) ...[
+                      const SizedBox(width: 8),
+                      Semantics(
+                        label: '${widget.store.stats.streak}-day streak',
+                        child: ExcludeSemantics(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 11, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: SbdColors.surfaceLow,
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: SbdColors.border),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.local_fire_department_rounded,
+                                    size: 16, color: Color(0xFFFFB15C)),
+                                const SizedBox(width: 5),
+                                Text('${widget.store.stats.streak}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: _about,

@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  pull-requests: write
 concurrency:
   group: native-checks-${{ github.ref }}
   cancel-in-progress: true
@@ -27,9 +28,32 @@ jobs:
       - name: Restore packages
         run: flutter pub get
       - name: Analyze app
-        run: flutter analyze
+        shell: bash
+        run: flutter analyze 2>&1 | tee analyze-output.txt
       - name: Run app tests
-        run: flutter test --reporter expanded
+        shell: bash
+        run: flutter test 2>&1 | tee test-output.txt
+      - name: Report failure details on the pull request
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo '### Native app checks failed'
+            if [ -f analyze-output.txt ]; then
+              echo '#### flutter analyze (last 80 lines)'
+              echo '```'
+              tail -n 80 analyze-output.txt
+              echo '```'
+            fi
+            if [ -f test-output.txt ]; then
+              echo '#### flutter test (last 120 lines)'
+              echo '```'
+              tail -n 120 test-output.txt
+              echo '```'
+            fi
+          } > failure-comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file failure-comment.md
       - name: Collect app previews
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

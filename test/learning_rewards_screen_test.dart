@@ -67,8 +67,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('6-day streak'), findsOneWidget);
       if (!large) await _capture(tester, boundary, 'home');
-      await _tap(tester, 'Learn today');
+      await _tap(tester, 'Start learning');
+      await _tap(tester, 'Start the first lesson');
       expect(find.text('Your lesson'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
       await _tap(tester, 'Daily goal');

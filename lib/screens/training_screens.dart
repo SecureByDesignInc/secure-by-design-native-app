@@ -22,80 +22,134 @@ class TrainingHome extends StatelessWidget {
   const TrainingHome({super.key, required this.store, required this.onTab});
   final LearningStore store;
   final ValueChanged<int> onTab;
+
+  void _openQuests(BuildContext context) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (context) => Scaffold(
+              appBar: AppBar(title: const Text('Quests & rewards')),
+              body: SafeArea(child: AnimatedBuilder(animation: store,
+                  builder: (context, _) => PageContent(children: [
+                        LearningDashboard(store: store,
+                            onPractice: () => openPractice(context, store)),
+                      ]))))));
+
   @override
   Widget build(BuildContext context) {
     final path = store.currentPath;
     final next = store.nextLesson(path);
+    final done = store.completedIn(path);
+    final started = done > 0 && next != null;
+    final upNext = [
+      for (final p in publishedPaths)
+        if (p.id != path.id && store.nextLesson(p) != null) p
+    ].take(2).toList();
     return PageContent(children: [
       const Kicker('Cybersecurity starts with curiosity.'),
       const SizedBox(height: 12),
-      Text('Your next chapter.',
+      Text(started ? 'Pick up where you left off.' : 'Your next chapter.',
           style: Theme.of(context).textTheme.headlineLarge),
       const SizedBox(height: 22),
-      DailyLearningCard(
-          store: store,
-          onDetails: () => Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (context) => Scaffold(
-                  appBar: AppBar(title: const Text('Quests & rewards')),
-                  body: SafeArea(child: AnimatedBuilder(animation: store,
-                      builder: (context, _) => PageContent(children: [
-                        LearningDashboard(store: store,
-                            onPractice: () => openPractice(context, store)),
-                      ])))))),
-          onLearn: () {
-            if (next == null) {
-              openPractice(context, store);
-              return;
-            }
-            Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) =>
-                    LessonScreen(store: store, lesson: next, path: path)));
-          }),
-      const SizedBox(height: 18),
-      if (store.gettingStarted.next == GettingStartedMessage.welcome)
-        GettingStartedCard(store: store, onTab: onTab),
-      LearningPlanChecklist(store: store, onTab: onTab),
+      // The hero leads with content: one card, one primary action.
       Panel(
           gradient: true,
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Kicker(store.completedIn(path) > 0
-                ? 'Continue learning'
-                : 'A good place to start'),
+            Kicker(next == null
+                ? 'Path completed'
+                : '${categoryFor(path).title} · Lesson '
+                    '${path.lessons.indexOf(next) + 1} of ${path.lessons.length}'),
             const SizedBox(height: 14),
             Text(path.title, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
                 next?.title ??
                     'You completed this path. Revisit what you learned.',
                 style: const TextStyle(color: SbdColors.muted, height: 1.6)),
-            const SizedBox(height: 20),
+            if (next != null) ...[
+              const SizedBox(height: 10),
+              Row(children: [
+                const Icon(Icons.schedule_outlined,
+                    size: 15, color: SbdColors.cyan),
+                const SizedBox(width: 6),
+                Text('${next.minutes} min',
+                    style:
+                        const TextStyle(color: SbdColors.ink, fontSize: 13)),
+              ]),
+            ],
+            const SizedBox(height: 18),
             ProgressLine(value: store.progressIn(path)),
-            const SizedBox(height: 10),
-            Text(
-                '${store.completedIn(path)} of ${path.lessons.length} learning units complete'),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-                onPressed: () => openLearningPath(context, store, path),
-                icon: const Icon(Icons.play_arrow),
-                label: Text(store.completedIn(path) == 0
-                    ? 'Start learning'
-                    : 'Continue learning')),
+            const SizedBox(height: 8),
+            Text('$done of ${path.lessons.length} lessons complete',
+                style: const TextStyle(color: SbdColors.muted, fontSize: 13)),
+            const SizedBox(height: 18),
+            SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                    onPressed: () {
+                      if (started) {
+                        Navigator.of(context).push(MaterialPageRoute<void>(
+                            builder: (_) => LessonScreen(
+                                store: store, lesson: next, path: path)));
+                      } else {
+                        openLearningPath(context, store, path);
+                      }
+                    },
+                    icon: Icon(next == null
+                        ? Icons.replay_rounded
+                        : Icons.play_arrow_rounded),
+                    label: Text(next == null
+                        ? 'Revisit this path'
+                        : started
+                            ? 'Continue lesson'
+                            : 'Start learning'))),
           ])),
-      if (store.practiceLesson != null) ...[
+      const SizedBox(height: 14),
+      DailyStrip(store: store, onDetails: () => _openQuests(context)),
+      const SizedBox(height: 24),
+      if (upNext.isNotEmpty) ...[
+        Row(children: [
+          Expanded(
+              child: Text('Up next',
+                  style: Theme.of(context).textTheme.titleLarge)),
+          TextButton(onPressed: () => onTab(1), child: const Text('View all'))
+        ]),
+        const SizedBox(height: 10),
+        for (final p in upNext)
+          Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Panel(
+                  padding: const EdgeInsets.all(16),
+                  onTap: () => openLearningPath(context, store, p),
+                  child: Row(children: [
+                    TopicBadge(p.icon, size: 42),
+                    const SizedBox(width: 13),
+                    Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                          Text(store.nextLesson(p)!.title,
+                              style: const TextStyle(
+                                  color: SbdColors.ink,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 4),
+                          Text(
+                              '${store.nextLesson(p)!.minutes} min · '
+                              '${categoryFor(p).title}',
+                              style: const TextStyle(
+                                  color: SbdColors.muted, fontSize: 13)),
+                        ])),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right,
+                        color: SbdColors.muted, size: 20),
+                  ]))),
         const SizedBox(height: 12),
-        OutlinedButton.icon(
-            onPressed: () => openPractice(context, store),
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Practice what you know')),
       ],
-      const SizedBox(height: 28),
-      Row(children: [
-        Expanded(
-            child: Text('Build. Then authorize.',
-                style: Theme.of(context).textTheme.titleLarge)),
-        TextButton(onPressed: () => onTab(1), child: const Text('View all'))
-      ]),
+      if (store.gettingStarted.next == GettingStartedMessage.welcome)
+        GettingStartedCard(store: store, onTab: onTab),
+      LearningPlanChecklist(store: store, onTab: onTab),
+      Text('Build. Then authorize.',
+          style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 14),
       ResponsiveCards(
           children: publishedPaths
@@ -117,11 +171,7 @@ class TrainingHome extends StatelessWidget {
       ],
       if (store.gettingStarted.next != GettingStartedMessage.welcome)
         GettingStartedCard(store: store, onTab: onTab),
-      const TrainingShare(),
-      if (store.completed.isNotEmpty) ...[
-        const SizedBox(height: 22),
-        const MembershipInvitation(),
-      ],
+      if (store.completed.isNotEmpty) const MembershipInvitation(),
     ]);
   }
 }
@@ -236,15 +286,39 @@ class ExploreScreen extends StatelessWidget {
         const PageTitle('Explore',
             'Follow a connection. Find a useful resource. Bring your experience.',
             kicker: 'Keep your curiosity moving'),
-        link(
-            context,
-            'Inside the Network',
-            'Explore systems, services, and six traffic flows.',
-            Icons.hub_outlined,
-            () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                    builder: (_) => const NetworkScreen()))),
+        // The map is the most distinctive feature here, so it leads.
+        Panel(
+            gradient: true,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute<void>(builder: (_) => const NetworkScreen())),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const Expanded(child: Kicker('Interactive map')),
+                    Icon(Icons.hub_outlined,
+                        color: SbdColors.cyan.withValues(alpha: 0.7),
+                        size: 34),
+                  ]),
+                  const SizedBox(height: 10),
+                  Text('Inside the Network',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  const Text(
+                      'Walk the systems, services, and six traffic flows behind every lesson.',
+                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
+                  const SizedBox(height: 18),
+                  FilledButton.icon(
+                      onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                              builder: (_) => const NetworkScreen())),
+                      icon: const Icon(Icons.explore_outlined, size: 19),
+                      label: const Text('Open the map')),
+                ])),
+        const SizedBox(height: 28),
+        Text('Your library', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
         link(
             context,
             'Saved resources & materials',
@@ -261,18 +335,21 @@ class ExploreScreen extends StatelessWidget {
                                 ResourcesScreen(store: store)))))),
         link(
             context,
-            'Career Goals & Support',
-            'Explore your goals and start a conversation.',
-            Icons.explore_outlined,
-            () => openResource(
-                context, 'https://securebydesigninc.com/careers#goals')),
-        link(
-            context,
             'Cybersecurity Resources',
             'Find practical tools and learning material.',
             Icons.menu_book_outlined,
             () => openResource(
                 context, 'https://securebydesigninc.com/careers#resources')),
+        const SizedBox(height: 14),
+        Text('Community', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        link(
+            context,
+            'Career Goals & Support',
+            'Explore your goals and start a conversation.',
+            Icons.explore_outlined,
+            () => openResource(
+                context, 'https://securebydesigninc.com/careers#goals')),
         link(
             context,
             'Share What You Know',

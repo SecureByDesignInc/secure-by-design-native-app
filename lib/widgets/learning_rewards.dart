@@ -118,6 +118,86 @@ class DailyLearningCard extends StatelessWidget {
   }
 }
 
+/// A compact streak-and-goal strip for Home: the hero card leads with the
+/// next lesson, so daily momentum shows small and stays one tap away.
+class DailyStrip extends StatelessWidget {
+  const DailyStrip({super.key, required this.store, this.onDetails});
+  final LearningStore store;
+  final VoidCallback? onDetails;
+  @override
+  Widget build(BuildContext context) {
+    final stats = store.stats;
+    final today = parseLearningDay(stats.today)!;
+    final first = today.subtract(const Duration(days: 6));
+    return Panel(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.local_fire_department_rounded,
+                size: 30, color: _flame),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text('${stats.streak}-day streak',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 2),
+                  Text('${stats.todayXp} / ${stats.dailyGoal} XP today',
+                      style: const TextStyle(
+                          color: SbdColors.muted, fontSize: 13)),
+                ])),
+            const SizedBox(width: 10),
+            Semantics(
+                label: 'Your learning week',
+                child: ExcludeSemantics(
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  for (var i = 0; i < 7; i++)
+                    Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Builder(builder: (context) {
+                          final key =
+                              learningDay(first.add(Duration(days: i)));
+                          final active = stats.days.containsKey(key);
+                          final frozen = stats.frozenDays.contains(key);
+                          final isToday = key == stats.today;
+                          return Container(
+                              width: 13,
+                              height: 13,
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: active
+                                      ? _flame.withValues(alpha: .22)
+                                      : frozen
+                                          ? SbdColors.cyan
+                                              .withValues(alpha: .15)
+                                          : SbdColors.surface,
+                                  border: Border.all(
+                                      color: isToday
+                                          ? _flame
+                                          : active
+                                              ? _flame.withValues(alpha: .6)
+                                              : SbdColors.border,
+                                      width: isToday ? 2 : 1)));
+                        })),
+                ]))),
+          ]),
+          const SizedBox(height: 14),
+          ProgressLine(value: (stats.todayXp / stats.dailyGoal).clamp(0, 1)),
+          const SizedBox(height: 2),
+          Wrap(spacing: 10, children: [
+            TextButton.icon(
+                onPressed: () => chooseDailyGoal(context, store),
+                icon: const Icon(Icons.tune, size: 17),
+                label: const Text('Daily goal')),
+            if (onDetails != null)
+              TextButton(
+                  onPressed: onDetails, child: const Text('Quests & rewards')),
+          ]),
+        ]));
+  }
+}
+
 class LearningWeek extends StatelessWidget {
   const LearningWeek({super.key, required this.stats});
   final LearningStats stats;
