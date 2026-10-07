@@ -5,6 +5,7 @@ import '../data/models.dart';
 import '../data/catalog.dart';
 import '../data/learning_activity.dart';
 import '../widgets/learning_rewards.dart';
+import '../widgets/lesson_video.dart';
 import '../data/learning_store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -359,6 +360,10 @@ class _LessonScreenState extends State<LessonScreen> {
           Text(lesson.title, style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 14),
           Text(lesson.summary, style: Theme.of(context).textTheme.bodyLarge),
+          if (lesson.hasVideo) ...[
+            const SizedBox(height: 24),
+            LessonVideo(youtubeId: lesson.youtubeId, title: lesson.title),
+          ],
           const SizedBox(height: 32),
           if (widget.practice)
             const Padding(
