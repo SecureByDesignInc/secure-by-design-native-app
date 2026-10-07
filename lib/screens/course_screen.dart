@@ -3,6 +3,7 @@ import '../data/learning_store.dart';
 import '../data/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/lesson_video.dart';
 import '../widgets/training_share.dart';
 import 'path_screen.dart';
 
@@ -83,6 +84,13 @@ class _CourseScreenState extends State<CourseScreen> {
                   onSelectionChanged: (v) => _selectTab(v.first)),
               const SizedBox(height: 24),
               if (_tab == 0) ...[
+                if (path.hasTrailer) ...[
+                  LessonVideo(
+                      youtubeId: path.trailerYoutubeId,
+                      title: '${path.title} trailer',
+                      kicker: 'Course trailer'),
+                  const SizedBox(height: 24),
+                ],
                 Text(path.description,
                     style: Theme.of(context).textTheme.bodyLarge),
                 const SizedBox(height: 24),
@@ -174,8 +182,8 @@ class _CourseScreenState extends State<CourseScreen> {
                                         done
                                             ? 'Completed · ${lesson.minutes} min'
                                             : current
-                                                ? 'Up next · ${lesson.minutes} min'
-                                                : '${lesson.minutes} min',
+                                                ? 'Up next · ${lesson.minutes} min${lesson.hasVideo ? ' · Video' : ''}'
+                                                : '${lesson.minutes} min${lesson.hasVideo ? ' · Video' : ''}',
                                         style: const TextStyle(
                                             color: SbdColors.muted,
                                             height: 1.5,

@@ -17,6 +17,7 @@ class Lesson {
     required this.explanation,
     required this.sourceUrl,
     required this.sourceLabel,
+    this.youtubeId = '',
   });
   final String id;
   final String title;
@@ -29,6 +30,10 @@ class Lesson {
   final String explanation;
   final String sourceUrl;
   final String sourceLabel;
+
+  /// YouTube video id for the lesson walkthrough; empty means text-only.
+  final String youtubeId;
+  bool get hasVideo => youtubeId.isNotEmpty;
 }
 
 class LearningPath {
@@ -45,6 +50,7 @@ class LearningPath {
     this.topics = 0,
     this.materials = const [],
     this.number = '',
+    this.trailerYoutubeId = '',
   });
   final String id;
   final String title;
@@ -58,6 +64,10 @@ class LearningPath {
   final int topics;
   final List<LearningResource> materials;
   final String number;
+
+  /// YouTube video id for the course trailer; empty means no trailer yet.
+  final String trailerYoutubeId;
+  bool get hasTrailer => trailerYoutubeId.isNotEmpty;
   int get minutes => lessons.fold(0, (sum, lesson) => sum + lesson.minutes);
 }
 
