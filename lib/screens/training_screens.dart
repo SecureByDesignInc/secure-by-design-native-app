@@ -89,7 +89,7 @@ class TrainingHome extends StatelessWidget {
                       if (started) {
                         Navigator.of(context).push(MaterialPageRoute<void>(
                             builder: (_) => LessonScreen(
-                                store: store, lesson: next!, path: path)));
+                                store: store, lesson: next, path: path)));
                       } else {
                         openLearningPath(context, store, path);
                       }
