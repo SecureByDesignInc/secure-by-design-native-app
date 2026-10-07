@@ -85,11 +85,6 @@ class _TrainingCardState extends State<TrainingCard> {
                                     style: TextStyle(color: done == path.lessons.length
                                         ? SbdColors.success : SbdColors.muted)),
                                 const SizedBox(height: 14),
-                                const Wrap(spacing: 12, runSpacing: 6, children: [
-                                  Text('Training ready', style: TextStyle(color: SbdColors.cyan)),
-                                  Text('Video coming soon'),
-                                ]),
-                                const SizedBox(height: 14),
                                 Text(_expanded ? 'Hide lessons' : 'Show lessons',
                                     style: const TextStyle(color: SbdColors.cyan,
                                         fontWeight: FontWeight.w600)),

@@ -48,7 +48,7 @@ class CreatorNote extends StatelessWidget {
           Text(
               'We built Secure By Design to help you connect what you learn to the systems you build and protect.\n\n'
               'You don’t need to know everything before you start. Pick one lesson, try the idea, and keep going at your own pace.\n\n'
-              'If something here helps you, pay us back by sharing our content with someone who could use it.\n\n'
+              'If something here helps you, help someone else find it — share it with someone who could use it.\n\n'
               'We’re glad you’re here.',
               style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 24),
@@ -141,8 +141,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   List<Widget> _content() => switch (_step) {
         0 => [
-            const Brand(compact: true),
-            const SizedBox(height: 28),
+            if (widget.firstRun) ...[
+              Center(
+                  child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Image.asset('assets/brand/brand-mark.png',
+                          width: 92, height: 92))),
+              const SizedBox(height: 18),
+              const Center(
+                  child: Kicker('Cybersecurity starts with curiosity')),
+              const SizedBox(height: 10),
+              Center(
+                  child: Text('Learn security by building it.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium)),
+              const SizedBox(height: 30),
+            ] else ...[
+              const Brand(compact: true),
+              const SizedBox(height: 28),
+            ],
             _heading('What would you like to learn?',
                 'Choose one or more goals. We’ll help you find a useful place to begin.'),
             for (final goal in LearningGoal.values)
@@ -201,6 +218,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 22),
             for (final id in _profile.pathIds) _recommendation(id),
             const Text('Learn one idea, check your understanding, then save a useful reference.'),
+            const SizedBox(height: 24),
+            Text('Set a daily goal',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 6),
+            const Text(
+                'Small and steady beats cramming. You can change this anytime.'),
+            const SizedBox(height: 12),
+            AnimatedBuilder(
+                animation: widget.store,
+                builder: (context, _) =>
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      for (final goal in const {
+                        10: 'Gentle · 10 XP',
+                        20: 'Steady · 20 XP',
+                        40: 'Focused · 40 XP'
+                      }.entries)
+                        ChoiceChip(
+                            label: Text(goal.value),
+                            selected: widget.store.dailyGoal == goal.key,
+                            onSelected: (_) async {
+                              try {
+                                await widget.store.setDailyGoal(goal.key);
+                                widget.store.haptics.selectionChanged();
+                              } catch (_) {
+                                if (context.mounted) {
+                                  showNotice(context,
+                                      'Your goal could not be saved. Try again.');
+                                }
+                              }
+                            }),
+                    ])),
             const SizedBox(height: 16),
             const ExpansionTile(
                 tilePadding: EdgeInsets.zero,

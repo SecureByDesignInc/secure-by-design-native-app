@@ -188,7 +188,9 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
               const SizedBox(width: 16),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                Text(account.signedIn ? 'Welcome back.' : 'Your learning space',
+                Text(account.signedIn
+                        ? 'Welcome back.'
+                        : 'Save your progress everywhere',
                     style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 6),
                 Text(account.signedIn ? account.email! : 'Learning on this device'),
@@ -201,7 +203,27 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                       fontWeight: FontWeight.w600))]),
             const SizedBox(height: 10),
             Text(store.storageLabel, style: const TextStyle(fontSize: 13)),
-            const SizedBox(height: 14),
+            // Sell sign-in on what it does for the learner, not on the form.
+            if (!account.signedIn) ...[
+              const SizedBox(height: 16),
+              for (final benefit in const [
+                'Your lessons and bookmarks sync across devices',
+                'Your streak and XP follow you',
+                'Pick up on the web right where you stopped',
+              ])
+                Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.check_rounded,
+                              size: 18, color: SbdColors.cyan),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text(benefit, style: const TextStyle(
+                              color: SbdColors.muted, height: 1.4))),
+                        ])),
+              const SizedBox(height: 4),
+            ] else
+              const SizedBox(height: 14),
             Wrap(spacing: 10, runSpacing: 10, children: [
               if (!account.signedIn)
                 FilledButton.icon(onPressed: () => Navigator.push(context,
@@ -211,19 +233,30 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                   icon: const Icon(Icons.layers_outlined),
                   label: const Text('View membership options')),
             ]),
+            if (!account.signedIn) ...[
+              const SizedBox(height: 12),
+              const Text('You can keep learning on this device either way.',
+                  style: TextStyle(fontSize: 12, color: SbdColors.muted)),
+            ],
           ])),
           const SizedBox(height: 20),
-          LayoutBuilder(builder: (context, constraints) {
-            final oneColumn = constraints.maxWidth < 300 ||
-                MediaQuery.textScalerOf(context).scale(16) > 21;
-            final width = oneColumn ? constraints.maxWidth : (constraints.maxWidth - 20) / 3;
-            return Wrap(spacing: 10, runSpacing: 10, children: [
-              _AccountStat(width: width, value: '${store.completed.length}', label: 'Lessons'),
-              _AccountStat(width: width, value: '${stats.streak}', label: 'Day streak'),
-              _AccountStat(width: width, value: '${stats.totalXp}', label: 'Total XP'),
-            ]);
-          }),
-          const SizedBox(height: 24),
+          // Zeros demotivate: the stat row appears once there is something
+          // real to show.
+          if (store.completed.isNotEmpty ||
+              stats.streak > 0 ||
+              stats.totalXp > 0) ...[
+            LayoutBuilder(builder: (context, constraints) {
+              final oneColumn = constraints.maxWidth < 300 ||
+                  MediaQuery.textScalerOf(context).scale(16) > 21;
+              final width = oneColumn ? constraints.maxWidth : (constraints.maxWidth - 20) / 3;
+              return Wrap(spacing: 10, runSpacing: 10, children: [
+                _AccountStat(width: width, value: '${store.completed.length}', label: 'Lessons'),
+                _AccountStat(width: width, value: '${stats.streak}', label: 'Day streak'),
+                _AccountStat(width: width, value: '${stats.totalXp}', label: 'Total XP'),
+              ]);
+            }),
+            const SizedBox(height: 24),
+          ],
           Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Kicker('Continue learning'),
             const SizedBox(height: 12),

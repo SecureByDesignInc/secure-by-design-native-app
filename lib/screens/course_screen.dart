@@ -59,9 +59,10 @@ class _CourseScreenState extends State<CourseScreen> {
               const SizedBox(height: 18),
               Wrap(spacing: 10, runSpacing: 8, children: [
                 Chip(label: Text(path.studyTime)),
-                const Chip(
-                    avatar: Icon(Icons.videocam_outlined, size: 18),
-                    label: Text('Video coming soon'))
+                Chip(
+                    avatar: const Icon(Icons.folder_open_outlined, size: 18),
+                    label: Text(
+                        '${path.materials.length} training materials')),
               ]),
               const SizedBox(height: 16),
               ProgressLine(value: store.progressIn(path)),
@@ -112,38 +113,77 @@ class _CourseScreenState extends State<CourseScreen> {
                     label: const Text('View training materials')),
               ],
               if (_tab == 1)
-                for (final lesson in path.lessons)
+                // One path, shown in order: done, up next, still ahead.
+                for (var i = 0; i < path.lessons.length; i++)
                   Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Panel(
-                          padding: const EdgeInsets.all(16),
-                          onTap: () => _open(lesson),
-                          child: Row(children: [
-                            Icon(
-                                store.isCompleted(lesson.id)
-                                    ? Icons.check_circle_outline
-                                    : Icons.menu_book_outlined,
-                                color: SbdColors.cyan),
-                            const SizedBox(width: 14),
-                            Expanded(
-                                child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                  Text(lesson.title,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                      store.isCompleted(lesson.id)
-                                          ? 'Completed'
-                                          : 'Read, practice, and check your understanding',
-                                      style: const TextStyle(
-                                          color: SbdColors.muted, height: 1.5))
-                                ])),
-                            const Icon(Icons.chevron_right),
-                          ]))),
+                      child: Builder(builder: (context) {
+                        final lesson = path.lessons[i];
+                        final done = store.isCompleted(lesson.id);
+                        final current = next != null && lesson.id == next.id;
+                        return Panel(
+                            padding: const EdgeInsets.all(16),
+                            onTap: () => _open(lesson),
+                            child: Row(children: [
+                              Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: current
+                                          ? SbdColors.cyan
+                                              .withValues(alpha: 0.14)
+                                          : SbdColors.surface,
+                                      border: Border.all(
+                                          color: done
+                                              ? SbdColors.success
+                                                  .withValues(alpha: 0.5)
+                                              : current
+                                                  ? SbdColors.cyan
+                                                  : SbdColors.border)),
+                                  child: Center(
+                                      child: done
+                                          ? const Icon(Icons.check_rounded,
+                                              color: SbdColors.success,
+                                              size: 20)
+                                          : current
+                                              ? const Icon(
+                                                  Icons.play_arrow_rounded,
+                                                  color: SbdColors.cyan,
+                                                  size: 22)
+                                              : Text('${i + 1}'.padLeft(2, '0'),
+                                                  style: const TextStyle(
+                                                      color: SbdColors.muted,
+                                                      fontSize: 13)))),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                    Text(lesson.title,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                                color: done || current
+                                                    ? SbdColors.ink
+                                                    : SbdColors.muted)),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                        done
+                                            ? 'Completed · ${lesson.minutes} min'
+                                            : current
+                                                ? 'Up next · ${lesson.minutes} min'
+                                                : '${lesson.minutes} min',
+                                        style: const TextStyle(
+                                            color: SbdColors.muted,
+                                            height: 1.5,
+                                            fontSize: 13))
+                                  ])),
+                              const Icon(Icons.chevron_right),
+                            ]));
+                      })),
               if (_tab == 2) ...[
                 const Text(
                     'Your guides, workbooks, and templates. Open a resource to view or download it.',

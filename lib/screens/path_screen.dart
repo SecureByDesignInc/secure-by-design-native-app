@@ -156,6 +156,7 @@ class PathScreen extends StatelessWidget {
                     index: i,
                     lesson: path.lessons[i],
                     completed: store.isCompleted(path.lessons[i].id),
+                    current: next != null && path.lessons[i].id == next.id,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => LessonScreen(
@@ -190,10 +191,12 @@ class _LessonRow extends StatelessWidget {
     required this.lesson,
     required this.completed,
     required this.onTap,
+    this.current = false,
   });
   final int index;
   final Lesson lesson;
   final bool completed;
+  final bool current;
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => Panel(
@@ -206,7 +209,16 @@ class _LessonRow extends StatelessWidget {
               height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: SbdColors.surface,
+                color: current
+                    ? SbdColors.cyan.withValues(alpha: 0.14)
+                    : SbdColors.surface,
+                border: Border.all(
+                  color: completed
+                      ? SbdColors.success.withValues(alpha: 0.5)
+                      : current
+                          ? SbdColors.cyan
+                          : SbdColors.border,
+                ),
               ),
               child: Center(
                 child: completed
@@ -215,10 +227,16 @@ class _LessonRow extends StatelessWidget {
                         color: SbdColors.success,
                         size: 21,
                       )
-                    : Text(
-                        '${index + 1}'.padLeft(2, '0'),
-                        style: const TextStyle(color: SbdColors.cyan),
-                      ),
+                    : current
+                        ? const Icon(
+                            Icons.play_arrow_rounded,
+                            color: SbdColors.cyan,
+                            size: 22,
+                          )
+                        : Text(
+                            '${index + 1}'.padLeft(2, '0'),
+                            style: const TextStyle(color: SbdColors.muted),
+                          ),
               ),
             ),
             const SizedBox(width: 14),
@@ -228,8 +246,10 @@ class _LessonRow extends StatelessWidget {
                 children: [
                   Text(
                     lesson.title,
-                    style: const TextStyle(
-                      color: SbdColors.ink,
+                    style: TextStyle(
+                      color: completed || current
+                          ? SbdColors.ink
+                          : SbdColors.muted,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -238,7 +258,9 @@ class _LessonRow extends StatelessWidget {
                   Text(
                     completed
                         ? 'Completed · ${lesson.minutes} min'
-                        : '${lesson.minutes} min · Read & reflect',
+                        : current
+                            ? 'Up next · ${lesson.minutes} min'
+                            : '${lesson.minutes} min · Read & reflect',
                     style: const TextStyle(
                       color: SbdColors.muted,
                       fontSize: 13,

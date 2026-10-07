@@ -53,10 +53,10 @@ class TrainingShare extends StatelessWidget {
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Kicker('Learn it. Share it. Pay it forward.'),
         const SizedBox(height: 12),
-        Text('Pay us back by sharing our content.',
+        Text('If this helped you, help someone else find it.',
             style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 10),
-        const Text('Your recommendation is our reward.',
+        const Text('Pass it on to someone who could use it.',
             style: TextStyle(color: SbdColors.muted)),
         const SizedBox(height: 16),
         Builder(
