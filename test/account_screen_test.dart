@@ -34,7 +34,10 @@ void main() {
     final account = AccountStore(transport: transport);
     await tester.pumpWidget(MaterialApp(
         theme: buildTheme(), home: AccountScreen(account: account)));
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Sign in'));
+    final signIn = find.widgetWithText(OutlinedButton, 'Sign in');
+    await tester.ensureVisible(signIn);
+    await tester.pumpAndSettle();
+    await tester.tap(signIn);
     await tester.pumpAndSettle();
     expect(find.text('Enter your email address.'), findsOneWidget);
     expect(find.text('Enter your password.'), findsOneWidget);
