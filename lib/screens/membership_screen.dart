@@ -111,9 +111,10 @@ class _MembershipSectionState extends State<MembershipSection> {
                 }),
           ]),
           const SizedBox(height: 10),
-          const Text(
-              'Annual savings apply to Builder. Guided is monthly. All prices are in USD.',
-              style: TextStyle(color: SbdColors.muted, height: 1.6)),
+          Text(
+              catalog.billingNote ??
+                  'Annual savings apply to Builder. Guided is billed monthly or quarterly. All prices are in USD.',
+              style: const TextStyle(color: SbdColors.muted, height: 1.6)),
           const SizedBox(height: 20),
           LayoutBuilder(builder: (context, constraints) {
             final wide = constraints.maxWidth >= 900 &&
@@ -137,17 +138,17 @@ class _MembershipSectionState extends State<MembershipSection> {
                         style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 12),
                     Text(
-                        plan.available
-                            ? 'Keep learning with the current courses and tools. Sharing is always optional. No subscription or automatic charges.'
-                            : plan.id == 'builder'
-                                ? '${yearly ? 'Pay \$180 for 12 months and save \$60 compared with 12 monthly payments.' : 'Planned price: \$20 for one month of Builder access.'} Your own lab hardware, software and hosting are separate.'
-                                : 'Includes Builder, one 30-minute coaching call and one project review each month. Enrollment opens when coaching appointments are available.',
+                        (yearly ? plan.detailAnnual : plan.detailMonthly) ??
+                            (plan.available
+                                ? 'Keep learning with the current courses and tools. Sharing is always optional. No subscription or automatic charges.'
+                                : 'Planned price: \$$amount${yearly ? ' per year' : ' per month'}. Your own lab hardware, software and hosting are separate.'),
                         style: const TextStyle(
                             color: SbdColors.muted, height: 1.6)),
                     if (!plan.available) ...[
                       const SizedBox(height: 12),
                       Text(
-                          'Planned billing: renews at \$$amount/${yearly ? 'year' : 'month'}. Cancel before renewal; access continues through the paid period. Community access and saved progress remain.',
+                          (yearly ? plan.renewAnnual : plan.renewMonthly) ??
+                              'Planned billing: renews at \$$amount/${yearly ? 'year' : 'month'}. Cancel before renewal; access continues through the paid period. Community access and saved progress remain.',
                           style: const TextStyle(
                               color: SbdColors.muted, height: 1.6)),
                     ],
@@ -182,10 +183,17 @@ class _MembershipSectionState extends State<MembershipSection> {
         gradient: _selected == plan.id,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(
-              plan.available
-                  ? 'Available now'
-                  : 'Coming soon · planned benefits',
+              plan.status ??
+                  (plan.available
+                      ? 'Available now'
+                      : 'Coming soon · planned benefits'),
               style: const TextStyle(color: SbdColors.cyan, height: 1.5)),
+          if (plan.badge != null) ...[
+            const SizedBox(height: 8),
+            Text(plan.badge!,
+                style: const TextStyle(
+                    color: SbdColors.cyan, fontWeight: FontWeight.w600)),
+          ],
           const SizedBox(height: 14),
           Text(plan.name, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
@@ -199,9 +207,10 @@ class _MembershipSectionState extends State<MembershipSection> {
           Text(
               plan.available
                   ? 'No payment details required.'
-                  : yearly
-                      ? '\$180 billed yearly · \$15/month equivalent.'
-                      : '\$${plan.monthlyPrice} billed monthly when available.',
+                  : (yearly ? plan.chargeAnnual : plan.chargeMonthly) ??
+                      (yearly
+                          ? '\$${plan.annualPrice} billed yearly.'
+                          : '\$${plan.monthlyPrice} billed monthly when available.'),
               style: const TextStyle(color: SbdColors.muted, height: 1.5)),
           const SizedBox(height: 18),
           for (final feature in plan.features)

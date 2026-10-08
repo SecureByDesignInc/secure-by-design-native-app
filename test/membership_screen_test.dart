@@ -57,7 +57,10 @@ void main() {
           Navigator.of(tester.element(find.byType(MyLearningScreen))).canPop(),
           isFalse);
       expect(find.text('Community'), findsOneWidget);
-      expect(find.text('Coming soon · planned benefits'), findsNWidgets(2));
+      expect(find.text('Coming soon · founding pricing for the first 100 members'),
+          findsOneWidget);
+      expect(find.text('Coming soon · limited seats'), findsOneWidget);
+      expect(find.text('Recommended'), findsOneWidget);
       await tester.ensureVisible(find.text('Annual · save 25%'));
       await tester.tap(find.text('Annual · save 25%'));
       await tester.pumpAndSettle();
