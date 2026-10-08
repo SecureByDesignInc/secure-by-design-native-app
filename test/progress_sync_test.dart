@@ -125,7 +125,7 @@ void main() {
     await next.disconnectAccount();
     expect(next.completed, {'ad-2'});
   });
-  test('materials the website does not catalog yet stay saved on this device',
+  test('course workbooks the website now catalogs sync with the account',
       () async {
     final cloud = Cloud();
     final auth = AccountStore(transport: cloud);
@@ -140,7 +140,7 @@ void main() {
     await settled(store);
     expect(store.syncError, isNull);
     expect(cloud.bookmarks['alice']!['harden-guide'], true);
-    expect(cloud.bookmarks['alice']!.containsKey('harden-baseline-pdf'), isFalse);
+    expect(cloud.bookmarks['alice']!['harden-baseline-pdf'], true);
     expect(store.saved, {'harden-baseline-pdf', 'harden-guide'});
     await store.sync();
     expect(store.saved, {'harden-baseline-pdf', 'harden-guide'});
