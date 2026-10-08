@@ -3,14 +3,12 @@ on:
   push:
     branches: [feature/sign-in-methods]
 permissions:
-  contents: read
+  contents: write
 jobs:
   lock:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
           flutter-version: '3.47.6'
@@ -18,8 +16,11 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: git diff --stat pubspec.lock
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: pubspec-lock
-          path: pubspec.lock
-          retention-days: 1
+      - name: Commit the refreshed lockfile
+        run: |
+          if git diff --quiet pubspec.lock; then echo "Lockfile already current"; exit 0; fi
+          git config user.name "Secure By Design"
+          git config user.email "w6wvbp4yjn@privaterelay.appleid.com"
+          git add pubspec.lock
+          git commit -m "Refresh pubspec.lock for sign-in packages"
+          git push origin HEAD:feature/sign-in-methods
