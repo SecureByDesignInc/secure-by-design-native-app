@@ -37,8 +37,23 @@ void main() {
     for (final path in publishedPaths) {
       expect(trainingCategories.where((category) => category.contains(path)).length, 1);
     }
-    expect(categoryFor(publishedPaths[2]).title, 'Certificates & Trust');
-    expect(publishedPaths[2].category, 'Network build');
+    String titleFor(String id) =>
+        categoryFor(publishedPaths.firstWhere((path) => path.id == id)).title;
+    for (final id in ['two-tier-pki', 'pki-services']) {
+      expect(titleFor(id), 'Certificates & Trust');
+      expect(publishedPaths.firstWhere((path) => path.id == id).category, 'Network build');
+    }
+    for (final id in ['dc01-dc02', 'dns-configuration', 'harden-baseline', 'prove-recovery']) {
+      expect(titleFor(id), 'Network Foundations');
+    }
+    for (final id in ['rmf-boe-ato', 'rmf-body-of-evidence', 'rmf-authorization-to-operate']) {
+      expect(titleFor(id), 'Network Authorization');
+    }
+    // Categories list courses in the website's order.
+    for (final category in trainingCategories) {
+      final order = publishedPaths.where(category.contains).map((path) => path.id).toList();
+      expect(category.pathIds, order);
+    }
   });
 
   for (final scale in [1.0, 2.0]) {
@@ -67,7 +82,7 @@ void main() {
       await tester.tap(toggle);
       await tester.pumpAndSettle();
       expect(find.descendant(of: card, matching: find.text('Hide lessons')), findsOneWidget);
-      final lesson = publishedPaths[1].lessons.first;
+      final lesson = publishedPaths.firstWhere((path) => path.id == 'dns-configuration').lessons.first;
       await tester.ensureVisible(find.text(lesson.title));
       await tester.pumpAndSettle();
       if (scale == 1) await capture(tester, boundary, 'expanded-training');

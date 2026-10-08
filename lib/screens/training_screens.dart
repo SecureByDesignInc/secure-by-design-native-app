@@ -305,7 +305,7 @@ class ExploreScreen extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
                   const Text(
-                      'Walk the systems, services, and six traffic flows behind every lesson.',
+                      'Walk the systems, traffic processes, what-ifs, and policy rules behind every lesson.',
                       style: TextStyle(color: SbdColors.muted, height: 1.6)),
                   const SizedBox(height: 18),
                   FilledButton.icon(

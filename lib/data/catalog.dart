@@ -330,7 +330,13 @@ const foundationResources = <LearningResource>[
 ];
 
 const learningPaths = <LearningPath>[...publishedPaths, ...foundationPaths];
+
+/// Official references first, then each course's materials once. Course parts
+/// that share a material (the RMF guide and catalog) list the same ID.
 final resources = <LearningResource>[
-  for (final path in publishedPaths) ...path.materials,
   ...foundationResources.where((resource) => resource.id != 'journal'),
+  ...{
+    for (final path in publishedPaths)
+      for (final material in path.materials) material.id: material
+  }.values,
 ];

@@ -301,11 +301,16 @@ class _LessonScreenState extends State<LessonScreen> {
     widget.store.startLesson(widget.lesson.id).catchError((Object _) {});
   }
 
-  int? _answer;
+  late final List<QuizQuestion> _questions = widget.lesson.questions;
+  late final List<int?> _answers = List.filled(_questions.length, null);
   bool _saving = false;
   bool _madeMistake = false;
   LearningReward? _reward;
-  bool get _correct => _answer == widget.lesson.correctAnswer;
+  bool _isCorrect(int q) => _answers[q] == _questions[q].correctAnswer;
+
+  /// Every knowledge check must be answered correctly before completion.
+  bool get _correct =>
+      Iterable<int>.generate(_questions.length).every(_isCorrect);
 
   Future<void> _complete() async {
     setState(() => _saving = true);
@@ -328,6 +333,89 @@ class _LessonScreenState extends State<LessonScreen> {
         showNotice(context, 'Progress could not be saved. Please try again.');
       }
     }
+  }
+
+  Widget _question(BuildContext context, Lesson lesson, int q) {
+    final question = _questions[q], answer = _answers[q];
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Kicker(_questions.length == 1
+              ? 'Pause & reflect'
+              : 'Check ${q + 1} of ${_questions.length}'),
+          const SizedBox(height: 14),
+          Text(
+            question.question,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 20),
+          for (var i = 0; i < question.answers.length; i++) ...[
+            Semantics(
+              selected: answer == i,
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _saving
+                      ? null
+                      : () {
+                          if (answer == i) return;
+                          setState(() {
+                            _answers[q] = i;
+                            if (!_isCorrect(q)) _madeMistake = true;
+                          });
+                          widget.store.haptics.selectionChanged();
+                          widget.store.analytics.knowledgeCheckSubmitted(
+                            lesson.id,
+                            i == question.correctAnswer,
+                          );
+                        },
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    side: BorderSide(
+                      color: answer == i ? SbdColors.cyan : SbdColors.border,
+                    ),
+                    backgroundColor: answer == i
+                        ? SbdColors.cyan.withValues(alpha: 0.08)
+                        : Colors.transparent,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        answer == i
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        size: 19,
+                        color: answer == i ? SbdColors.cyan : SbdColors.muted,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(question.answers[i])),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (answer != null)
+            Semantics(
+              liveRegion: true,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _isCorrect(q)
+                      ? question.explanation
+                      : 'Try again. Revisit the explanation above and choose another answer.',
+                  style: TextStyle(
+                    color: _isCorrect(q) ? SbdColors.success : SbdColors.muted,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -364,6 +452,18 @@ class _LessonScreenState extends State<LessonScreen> {
             const SizedBox(height: 24),
             LessonVideo(youtubeId: lesson.youtubeId, title: lesson.title),
           ],
+          if (!widget.practice && lesson.objectives.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Panel(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  const Kicker('In this lesson you will'),
+                  const SizedBox(height: 12),
+                  for (final objective in lesson.objectives)
+                    _Bullet(objective),
+                ])),
+          ],
           const SizedBox(height: 32),
           if (widget.practice)
             const Padding(
@@ -380,87 +480,31 @@ class _LessonScreenState extends State<LessonScreen> {
               Text(section.body, style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 28),
             ],
-          Panel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Kicker('Pause & reflect'),
-                const SizedBox(height: 14),
-                Text(
-                  lesson.question,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 20),
-                for (var i = 0; i < lesson.answers.length; i++) ...[
-                  Semantics(
-                    selected: _answer == i,
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: _saving
-                            ? null
-                            : () {
-                                if (_answer == i) return;
-                                setState(() {
-                                  _answer = i;
-                                  if (!_correct) _madeMistake = true;
-                                });
-                                widget.store.haptics.selectionChanged();
-                                widget.store.analytics.knowledgeCheckSubmitted(
-                                  lesson.id,
-                                  i == lesson.correctAnswer,
-                                );
-                              },
-                        style: OutlinedButton.styleFrom(
-                          alignment: Alignment.centerLeft,
-                          side: BorderSide(
-                            color: _answer == i
-                                ? SbdColors.cyan
-                                : SbdColors.border,
-                          ),
-                          backgroundColor: _answer == i
-                              ? SbdColors.cyan.withValues(alpha: 0.08)
-                              : Colors.transparent,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _answer == i
-                                  ? Icons.radio_button_checked
-                                  : Icons.radio_button_off,
-                              size: 19,
-                              color: _answer == i
-                                  ? SbdColors.cyan
-                                  : SbdColors.muted,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(lesson.answers[i])),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-                if (_answer != null)
-                  Semantics(
-                    liveRegion: true,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        _correct
-                            ? lesson.explanation
-                            : 'Try again. Revisit the explanation above and choose another answer.',
-                        style: TextStyle(
-                          color: _correct ? SbdColors.success : SbdColors.muted,
-                          height: 1.6,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          for (var q = 0; q < _questions.length; q++) ...[
+            if (q > 0) const SizedBox(height: 16),
+            _question(context, lesson, q),
+          ],
+          if (!widget.practice &&
+              (lesson.recap.isNotEmpty || lesson.nextStep.isNotEmpty)) ...[
+            const SizedBox(height: 22),
+            Panel(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  if (lesson.recap.isNotEmpty) ...[
+                    const Kicker('Recap'),
+                    const SizedBox(height: 12),
+                    for (final point in lesson.recap) _Bullet(point),
+                  ],
+                  if (lesson.nextStep.isNotEmpty) ...[
+                    if (lesson.recap.isNotEmpty) const SizedBox(height: 8),
+                    const Kicker('Next step'),
+                    const SizedBox(height: 10),
+                    Text(lesson.nextStep,
+                        style: const TextStyle(height: 1.6)),
+                  ],
+                ])),
+          ],
           const SizedBox(height: 22),
           SizedBox(
             width: double.infinity,
@@ -479,11 +523,13 @@ class _LessonScreenState extends State<LessonScreen> {
             ),
           ),
           if (!_correct)
-            const Padding(
-              padding: EdgeInsets.only(top: 12),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
               child: Text(
-                'Choose the correct answer to complete this lesson.',
-                style: TextStyle(color: SbdColors.muted, fontSize: 13),
+                _questions.length == 1
+                    ? 'Choose the correct answer to complete this lesson.'
+                    : 'Answer all ${_questions.length} questions correctly to complete this lesson.',
+                style: const TextStyle(color: SbdColors.muted, fontSize: 13),
               ),
             ),
           if (widget.practice)
@@ -520,4 +566,21 @@ class _LessonScreenState extends State<LessonScreen> {
       ),
     );
   }
+}
+
+class _Bullet extends StatelessWidget {
+  const _Bullet(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(Icons.check_circle_outline,
+                  size: 18, color: SbdColors.cyan)),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: const TextStyle(height: 1.6))),
+        ]),
+      );
 }

@@ -1,16 +1,16 @@
 # Secure By Design — native app proof of concept
 
-Version 0.7.0 · October 5, 2026
+Version 0.8.0 · October 7, 2026
 
 A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux. Native apps come first. The web app is deferred.
 
 ## What works
 
 - Home, Training, Explore, and My Account with the website's navy/cyan design.
-- Four published courses: DC01/DC02, DNS configuration, two-tier PKI, and Risk Management Framework / Body of Evidence / Authorization to Operate. The app groups them into three training categories.
+- All 15 published Training Library courses: Build the Network 1.1–1.12 (the DC01/DC02 identity build and eleven configuration courses) and Network Authorization 2.1–2.3 (Risk Management Framework, Body of Evidence, and Authorization to Operate). The app groups them into three training categories.
 - Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
 - Bundled course text and knowledge checks, plus the nine original foundation lessons.
-- Inside the Network: six offline traffic walkthroughs and 23 system references; the complete website 3D explorer opens in-app on iOS, Android, and macOS.
+- Inside the Network: seven offline traffic processes, five what-ifs, 23 system references, and the policy register (F01–F20 plus administrative and deny rules); the complete website 3D explorer opens in-app on iOS, Android, and macOS.
 - Saved materials and native homepage sharing: Learn it. Share it. Pay it forward.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
@@ -106,12 +106,11 @@ Import from the current Site checkout, then format and validate:
 
 ```bash
 node tool/import_site_training.mjs /path/to/site
-dart format lib/data/published_catalog.dart
 flutter analyze
 flutter test
 ```
 
-The importer also writes the Site's course progress and material catalogs so both clients keep identical IDs. Preserve those IDs on content edits.
+The importer only reads the Site. The Site maintains `content/training-progress.json` and `content/training-resources.json` itself, and the importer stops if a lesson ID is missing from the Site's progress catalog, because account sync would reject it. Materials the Site's bookmark catalog does not list yet are generated with `syncable: false` and can only be saved on the device; the importer prints them. `--write-site` regenerates both Site catalogs from the app's catalog; it is not part of the normal workflow. Preserve existing lesson and material IDs on content edits.
 
 ## Release workflow
 
@@ -173,3 +172,44 @@ References:
 - https://mobbin.com/screens/72dcf33e-58e8-486f-a178-583a2d411f67
 - https://mobbin.com/screens/b1802d44-e332-4130-bbf4-f195931c7bd1
 - https://mobbin.com/screens/83aeb4be-08be-4066-8f85-510daf0ecf8a
+
+## Course catalog update (0.8.0)
+
+The bundled content now matches the website's Training Library and Inside the
+Network as of October 7, 2026. Membership, onboarding, account sync endpoints,
+and existing lesson, course, and material IDs are unchanged.
+
+- **15 courses in site order.** Build the Network 1.1–1.12 adds Harden the
+  baseline, Connect and segment the network, Finish the PKI services,
+  Addressing and tiered administration, the logging pipeline, Bring in the
+  fleet, Patch, protect, and watch for weakness, Stand up the business
+  services, and Prove you can recover.
+  PKI courses 1.4 and 1.6 sit in Certificates & Trust; the rest of 1.x in
+  Network Foundations. Cards and course pages show the course number.
+- **Network Authorization in three parts.** 2.1 Risk Management Framework
+  (modules 01–04), 2.2 Body of Evidence (05–09), and 2.3 Authorization to
+  Operate (10–12 and the capstone) mirror the website's tiles. Lesson IDs stay
+  `training:rmf-boe-ato:<module>`, and the first part keeps the
+  `rmf-boe-ato` course ID, so saved progress and onboarding recommendations
+  carry over. The interactive course and Word catalog appear in each part.
+- **Lessons.** Configuration lessons open with “In this lesson you will”
+  objectives and end with a recap and the next step. Every knowledge check from
+  the website is included (three or four per configuration lesson). All must be
+  answered correctly to complete the lesson. Rewards are unchanged: one lesson
+  completion earns 20 XP (10 for a review), and the 5 XP first-try bonus
+  requires every check in that lesson to be right on the first attempt.
+- **Materials.** Configuration courses list the interactive guide, workbook PDF
+  and Word files, the printable checklist, and the Markdown checklist.
+  Materials the website's bookmark catalog does not list yet (the new
+  workbooks and checklists) can be saved on this device but are not sent to
+  account sync, which would otherwise reject the update. They sync once the
+  website adds them and the catalog is re-imported.
+- **Inside the Network.** Adds the seventh process, “Use a web app”, the five
+  what-ifs (DC01 is down, certificate expired, a PC tries SQL, PC-to-PC remote
+  desktop, and the attack drill), each step's policy decision, and the policy
+  register rules for the selected system. Counts in the screen copy are derived
+  from the bundled data.
+- **Importer.** `tool/import_site_training.mjs` reads the current course
+  format (`quizzes`, `objectives`, `recap`, `next`, workbooks, checklist page,
+  RMF parts) and no longer writes Site files unless `--write-site` is passed.
+

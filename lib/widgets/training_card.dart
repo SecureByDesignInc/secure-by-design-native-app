@@ -65,7 +65,10 @@ class _TrainingCardState extends State<TrainingCard> {
                                   TopicBadge(path.icon, size: 38),
                                   const SizedBox(width: 12),
                                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                    Text(categoryFor(path).title, style: const TextStyle(
+                                    Text(path.number.isEmpty
+                                        ? categoryFor(path).title
+                                        : '${path.number} · ${categoryFor(path).title}',
+                                        style: const TextStyle(
                                         color: SbdColors.cyan, fontSize: 12)),
                                     const SizedBox(height: 4),
                                     Text(path.title, style: Theme.of(context).textTheme.titleMedium),

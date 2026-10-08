@@ -125,6 +125,26 @@ void main() {
     await next.disconnectAccount();
     expect(next.completed, {'ad-2'});
   });
+  test('materials the website does not catalog yet stay saved on this device',
+      () async {
+    final cloud = Cloud();
+    final auth = AccountStore(transport: cloud);
+    addTearDown(auth.dispose);
+    await auth.signIn('alice@example.invalid', 'test');
+    final store = await LearningStore.load();
+    addTearDown(store.dispose);
+    await store.connectAccount(auth);
+    await store.toggleSaved('harden-baseline-pdf');
+    await settled(store);
+    await store.toggleSaved('harden-guide');
+    await settled(store);
+    expect(store.syncError, isNull);
+    expect(cloud.bookmarks['alice']!['harden-guide'], true);
+    expect(cloud.bookmarks['alice']!.containsKey('harden-baseline-pdf'), isFalse);
+    expect(store.saved, {'harden-baseline-pdf', 'harden-guide'});
+    await store.sync();
+    expect(store.saved, {'harden-baseline-pdf', 'harden-guide'});
+  });
   test('account switching and late responses never mix learner records',
       () async {
     final cloud = Cloud(), store = await LearningStore.load();
