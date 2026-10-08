@@ -12,7 +12,7 @@ concurrency:
 jobs:
   flutter-checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       CI: true
       FLUTTER_SUPPRESS_ANALYTICS: true
@@ -33,6 +33,13 @@ jobs:
       - name: Run app tests
         shell: bash
         run: flutter test 2>&1 | tee test-output.txt
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build the Android app bundle (debug-signed check build)
+        shell: bash
+        run: flutter build appbundle --release 2>&1 | tee android-output.txt
       - name: Report failure details on the pull request
         if: failure() && github.event_name == 'pull_request'
         env:
@@ -44,6 +51,12 @@ jobs:
               echo '#### flutter analyze (last 80 lines)'
               echo '```'
               tail -n 80 analyze-output.txt
+              echo '```'
+            fi
+            if [ -f android-output.txt ]; then
+              echo '#### flutter build appbundle (last 60 lines)'
+              echo '```'
+              tail -n 60 android-output.txt
               echo '```'
             fi
             if [ -f test-output.txt ]; then
