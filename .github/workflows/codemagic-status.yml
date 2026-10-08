@@ -14,6 +14,10 @@ on:
         description: Codemagic app id (required for trigger)
         required: false
         default: ''
+      build_id:
+        description: Optional Codemagic build id to show in detail
+        required: false
+        default: ''
 permissions:
   contents: read
   pull-requests: write
@@ -57,6 +61,19 @@ jobs:
                   f"workflow `{b.get('workflowId')}` · branch `{b.get('branch')}` · commit `{commit}` · "
                   f"status: **{b.get('status')}**")
           open('comment.md', 'w').write('\n'.join(lines) + '\n')
+          PY
+      - name: Build detail
+        if: ${{ inputs.build_id != '' }}
+        run: |
+          set -euo pipefail
+          curl -sS -H "x-auth-token: $CM_TOKEN" https://api.codemagic.io/builds/${{ inputs.build_id }} > build.json
+          python3 - <<'PY'
+          import json
+          b = json.load(open('build.json')).get('build', {})
+          keep = {k: b.get(k) for k in ('status', 'message', 'workflowId', 'instanceType', 'createdAt', 'startedAt', 'finishedAt', 'branch', 'index')}
+          steps = [{'name': a.get('name'), 'status': a.get('status')} for a in (b.get('buildActions') or [])]
+          with open('comment.md', 'a') as f:
+              f.write('\n#### Build ${{ inputs.build_id }}\n```json\n' + json.dumps(keep, indent=1) + '\n' + json.dumps(steps, indent=1) + '\n```\n')
           PY
       - name: Trigger TestFlight workflow
         if: ${{ inputs.mode == 'trigger' && inputs.app_id != '' }}
