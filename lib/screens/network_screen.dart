@@ -22,9 +22,12 @@ class _NetworkScreenState extends State<NetworkScreen> {
   @override
   void initState() {
     super.initState();
-    _data = rootBundle
-        .loadString('assets/training/network.json')
-        .then((s) => Map<String, dynamic>.from(jsonDecode(s) as Map));
+    // Decode on this isolate: loadString hands assets over 50 KB to a
+    // background isolate, which the reference does not need.
+    _data = rootBundle.load('assets/training/network.json').then((bytes) =>
+        Map<String, dynamic>.from(jsonDecode(utf8.decode(
+                bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes)))
+            as Map));
   }
 
   @override
