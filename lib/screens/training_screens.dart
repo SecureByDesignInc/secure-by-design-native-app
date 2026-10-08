@@ -104,6 +104,18 @@ class TrainingHome extends StatelessWidget {
                             : 'Start learning'))),
           ])),
       const SizedBox(height: 14),
+      if (store.stats.earnBack != null)
+        EarnBackCard(
+            store: store,
+            onLearn: () {
+              if (next != null) {
+                Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) =>
+                        LessonScreen(store: store, lesson: next, path: path)));
+              } else {
+                openPractice(context, store);
+              }
+            }),
       DailyStrip(store: store, onDetails: () => _openQuests(context)),
       const SizedBox(height: 24),
       if (upNext.isNotEmpty) ...[

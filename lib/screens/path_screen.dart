@@ -325,7 +325,11 @@ class _LessonScreenState extends State<LessonScreen> {
             'Your account changed. Complete this lesson for the current learner.');
         return;
       }
-      widget.store.haptics.lessonCompleted();
+      if (reward.milestone != null) {
+        widget.store.haptics.milestoneReached();
+      } else {
+        widget.store.haptics.lessonCompleted();
+      }
       setState(() => _reward = reward);
     } catch (_) {
       if (mounted) {

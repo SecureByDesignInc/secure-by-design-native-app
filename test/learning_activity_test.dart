@@ -44,22 +44,28 @@ void main() {
         [activity('2026-10-05', review: true)], DateTime(2026, 10, 5), 40);
     expect(stats.streak, 1);
     expect(stats.todayXp, 10);
-    expect(stats.freezes, 1);
+    expect(stats.freezes, 2);
     expect(stats.quests.where((q) => q.complete), isEmpty);
   });
 
-  test('freeze covers a missed day, does not add a day, and exhaustion resets',
+  test(
+      'two starting freezes cover missed days, add no day, and exhaustion resets',
       () {
     final events = [activity('2026-10-01')];
-    expect(LearningStats(events, DateTime(2026, 10, 2, 23, 59), 20).freezes, 1);
+    expect(LearningStats(events, DateTime(2026, 10, 2, 23, 59), 20).freezes, 2);
     final protected = LearningStats(events, DateTime(2026, 10, 3), 20);
     expect(protected.streak, 1);
     expect(protected.frozenDays, {'2026-10-02'});
-    expect(protected.freezes, 0);
+    expect(protected.freezes, 1);
     expect(protected.totalXp, 30);
-    final lost = LearningStats(events, DateTime(2026, 10, 4), 20);
+    final both = LearningStats(events, DateTime(2026, 10, 4), 20);
+    expect(both.streak, 1);
+    expect(both.frozenDays, {'2026-10-02', '2026-10-03'});
+    expect(both.freezes, 0);
+    final lost = LearningStats(events, DateTime(2026, 10, 5), 20);
     expect(lost.streak, 0);
     expect(lost.longestStreak, 1);
+    expect(lost.earnBack, isNull, reason: 'a 1-day streak just restarts');
     expect(
         LearningStats(
                 [...events, activity('2026-10-03')], DateTime(2026, 10, 3), 20)
@@ -68,6 +74,11 @@ void main() {
     expect(
         LearningStats(
                 [...events, activity('2026-10-04')], DateTime(2026, 10, 4), 20)
+            .streak,
+        2);
+    expect(
+        LearningStats(
+                [...events, activity('2026-10-05')], DateTime(2026, 10, 5), 20)
             .streak,
         1);
   });
@@ -89,6 +100,83 @@ void main() {
         LearningStats([activity('2026-10-06')], DateTime(2026, 10, 5), 20)
             .totalXp,
         0);
+  });
+
+  test('a missed day without freezes can be earned back with two lessons',
+      () {
+    final run = [
+      for (var i = 1; i <= 5; i++) activity('2026-10-0$i'),
+    ];
+    // Oct 6 and 7 use both freezes; Oct 8 is the first unprotected miss.
+    final offer = LearningStats(run, DateTime(2026, 10, 9), 20);
+    expect(offer.streak, 0);
+    expect(offer.frozenDays, {'2026-10-06', '2026-10-07'});
+    expect(offer.earnBack, isNotNull);
+    expect(offer.earnBack!.streak, 5);
+    expect(offer.earnBack!.done, 0);
+    expect(offer.earnBack!.remaining, 2);
+    expect(offer.earnBack!.deadline, '2026-10-10');
+
+    final halfway =
+        LearningStats([...run, activity('2026-10-09')], DateTime(2026, 10, 9), 20);
+    expect(halfway.streak, 1);
+    expect(halfway.earnBack!.done, 1);
+
+    final restored = LearningStats([
+      ...run,
+      activity('2026-10-09'),
+      activity('2026-10-09', id: 'ad-2'),
+    ], DateTime(2026, 10, 9), 20);
+    expect(restored.earnBack, isNull);
+    expect(restored.streak, 6);
+    expect(restored.repairedDays, {'2026-10-08'});
+    expect(restored.longestStreak, 6);
+
+    final acrossTwoDays = LearningStats([
+      ...run,
+      activity('2026-10-09'),
+      activity('2026-10-10'),
+    ], DateTime(2026, 10, 10), 20);
+    expect(acrossTwoDays.streak, 7);
+    expect(acrossTwoDays.earnBack, isNull);
+
+    final lastChance = LearningStats(run, DateTime(2026, 10, 10), 20);
+    expect(lastChance.earnBack!.deadline, '2026-10-10');
+    expect(lastChance.earnBack!.done, 0);
+
+    final expired = LearningStats(run, DateTime(2026, 10, 11), 20);
+    expect(expired.streak, 0);
+    expect(expired.earnBack, isNull);
+    final tooLate =
+        LearningStats([...run, activity('2026-10-11')], DateTime(2026, 10, 11), 20);
+    expect(tooLate.streak, 1);
+    expect(tooLate.earnBack, isNull);
+  });
+
+  test('milestones, earn-back and freeze rewards reach the celebration',
+      () async {
+    var now = DateTime(2026, 10, 1);
+    final store = await LearningStore.load(clock: () => now);
+    addTearDown(store.dispose);
+    LearningReward? reward;
+    for (var i = 0; i < 7; i++) {
+      reward = await store.finishLesson('ad-1');
+      if (i < 6) {
+        expect(reward!.milestone, isNull);
+        now = now.add(const Duration(days: 1));
+      }
+    }
+    expect(reward!.milestone, 7);
+    expect(store.stats.nextMilestone, 30);
+    // Three missed days: two freezes, then one day to earn back.
+    now = DateTime(2026, 10, 11);
+    expect(store.stats.earnBack!.streak, 7);
+    final first = await store.finishLesson('ad-1');
+    expect(first!.restoredStreak, false);
+    final second = await store.finishLesson('ad-2');
+    expect(second!.restoredStreak, true);
+    expect(store.stats.streak, 8);
+    expect(store.stats.earnBack, isNull);
   });
 
   test('daily quests award once and monthly progress resets with the calendar',

@@ -44,6 +44,9 @@ class AppHaptics extends ChangeNotifier {
   void lessonCompleted() =>
       unawaited(_play(HapticFeedback.successNotification));
 
+  /// A firmer tap reserved for streak milestones (7, 30, 100, 365 days).
+  void milestoneReached() => unawaited(_play(HapticFeedback.heavyImpact));
+
   Future<void> _play(Future<void> Function() feedback) async {
     final state = WidgetsBinding.instance.lifecycleState;
     if (_disposed ||

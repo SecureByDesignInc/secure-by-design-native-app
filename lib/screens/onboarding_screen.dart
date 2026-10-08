@@ -112,6 +112,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       await widget.store.gettingStarted
           .finishWelcome(profile: skip ? null : _profile);
+      widget.store.analytics
+          .onboardingFinished(skipped: skip, startedLesson: startLesson);
       if (mounted) Navigator.pop(context, startLesson);
     } catch (_) {
       if (mounted) {
@@ -249,6 +251,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               }
                             }),
                     ])),
+            const SizedBox(height: 24),
+            _AnalyticsChoice(store: widget.store),
             const SizedBox(height: 16),
             const ExpansionTile(
                 tilePadding: EdgeInsets.zero,
@@ -421,3 +425,77 @@ class _Choice extends StatelessWidget {
       );
 }
 
+/// An honest, optional ask at the moment it makes sense. Neither answer is
+/// preselected and the learner can continue without choosing.
+class _AnalyticsChoice extends StatefulWidget {
+  const _AnalyticsChoice({required this.store});
+  final LearningStore store;
+  @override
+  State<_AnalyticsChoice> createState() => _AnalyticsChoiceState();
+}
+
+class _AnalyticsChoiceState extends State<_AnalyticsChoice> {
+  bool _declined = false;
+
+  Future<void> _set(bool value) async {
+    final analytics = widget.store.analytics;
+    widget.store.haptics.selectionChanged();
+    try {
+      await analytics.setEnabled(value);
+      if (mounted) setState(() => _declined = !value);
+    } catch (_) {
+      if (mounted) {
+        showNotice(context, 'Could not save this choice. Please try again.');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+      animation: widget.store.analytics,
+      builder: (context, _) {
+        final analytics = widget.store.analytics;
+        return Panel(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Kicker('Optional'),
+          const SizedBox(height: 10),
+          Text('Help us improve the app?',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const Text(
+              'Share anonymous usage, like lessons finished and streak milestones, '
+              'so we can see what helps. No name, email, or answer text. '
+              'Change it anytime in My Account.',
+              style: TextStyle(color: SbdColors.muted, height: 1.55)),
+          const SizedBox(height: 14),
+          if (analytics.enabled)
+            Row(children: [
+              const Icon(Icons.check_circle_rounded, color: SbdColors.cyan),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Thanks. Sharing is on.')),
+              TextButton(
+                  onPressed: analytics.changing ? null : () => _set(false),
+                  child: const Text('Turn off')),
+            ])
+          else if (_declined)
+            Row(children: [
+              const Expanded(
+                  child: Text('Not sharing.',
+                      style: TextStyle(color: SbdColors.muted))),
+              TextButton(
+                  onPressed: analytics.changing ? null : () => _set(true),
+                  child: const Text('Share instead')),
+            ])
+          else
+            Wrap(spacing: 10, runSpacing: 10, children: [
+              FilledButton.tonal(
+                  onPressed: analytics.changing ? null : () => _set(true),
+                  child: const Text('Yes, share anonymously')),
+              OutlinedButton(
+                  onPressed: analytics.changing ? null : () => _set(false),
+                  child: const Text('No thanks')),
+            ]),
+        ]));
+      });
+}
