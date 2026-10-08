@@ -76,3 +76,68 @@ workflows:
       app_store_connect:
         auth: integration
 
+
+  # Android: build a release app bundle signed with the Google Play upload key.
+  # Start manually. Upload the .aab from this build to Play Console by hand the first time
+  # (Google Play requires the first version of a new app to be uploaded manually).
+  android-release-bundle:
+    name: Secure By Design - Android app bundle
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.47.6
+      java: 17
+      android_signing:
+        - sbd_upload_key
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+    scripts: &android_scripts
+      - name: Restore Flutter packages
+        script: flutter pub get
+      - name: Analyze source
+        script: flutter analyze
+      - name: Run tests
+        script: flutter test
+      - name: Build signed app bundle
+        # Version codes must always increase on Google Play; minutes since 1970 do, across workflows.
+        script: >-
+          flutter build appbundle --release
+          --build-number=$(( $(date +%s) / 60 ))
+      - name: Confirm the upload key signed the bundle
+        script: |
+          if keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -q "CN=Android Debug"; then
+            echo "The bundle is signed with the debug key. Check the sbd_upload_key keystore in Codemagic." >&2
+            exit 1
+          fi
+    artifacts: &android_artifacts
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/mapping/release/mapping.txt
+      - previews/*.png
+
+  # Android: same build, then upload to the Google Play internal testing track as a draft.
+  # Needs the google_play environment group with GCLOUD_SERVICE_ACCOUNT_CREDENTIALS, and the
+  # app must already exist in Play Console with its first bundle uploaded.
+  android-play-internal:
+    name: Secure By Design - Google Play internal testing
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: 3.47.6
+      java: 17
+      android_signing:
+        - sbd_upload_key
+      groups:
+        - google_play
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+    scripts: *android_scripts
+    artifacts: *android_artifacts
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
