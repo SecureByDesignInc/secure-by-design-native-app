@@ -62,9 +62,10 @@ jobs:
         if: ${{ inputs.mode == 'trigger' && inputs.app_id != '' }}
         run: |
           set -euo pipefail
-          curl -sS --fail -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" \
+          code=$(curl -sS -o trigger.json -w '%{http_code}' -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" \
             -d "{\"appId\": \"${{ inputs.app_id }}\", \"workflowId\": \"ios-testflight\", \"branch\": \"main\"}" \
-            https://api.codemagic.io/builds > trigger.json
+            https://api.codemagic.io/builds)
+          echo "HTTP $code" >> trigger.json
           {
             echo ''
             echo '#### Build trigger response'
@@ -74,6 +75,7 @@ jobs:
             echo '```'
           } >> comment.md
       - name: Post results on PR 14
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr comment 14 --repo "$GITHUB_REPOSITORY" --body-file comment.md
