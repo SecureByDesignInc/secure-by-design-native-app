@@ -82,12 +82,13 @@ void main() {
         expect(lesson.questions.length, greaterThanOrEqualTo(3), reason: lesson.id);
       }
     }
-    // Existing material IDs keep syncing; IDs the website does not list yet stay on the device.
+    // The website lists every material the app offers, so every bookmark syncs.
     for (final id in ['dc-guide', 'dc-pdf', 'dns-configuration-guide', 'two-tier-pki-checklist',
-        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide', 'connect-guide']) {
+        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide', 'connect-guide',
+        'harden-baseline-pdf']) {
       expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
     }
-    expect(resources.firstWhere((resource) => resource.id == 'harden-baseline-pdf').syncable, isFalse);
+    expect(resources.every((resource) => resource.syncable), isTrue);
   });
 
   testWidgets('a configuration lesson needs every check right and keeps XP once per lesson',
