@@ -135,6 +135,35 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
     ],
   ]);
 
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete your account?'),
+        content: const Text(
+            'This permanently deletes your Secure By Design account, sign-in methods, saved progress, saved materials, learning activity, Community membership, and email preferences on the website and in the app. It can’t be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              key: const ValueKey('confirm-delete-account'),
+              style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete account')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final deleted = await account.deleteAccount();
+    if (deleted && store.cloudConnected) await store.disconnectAccount();
+    if (context.mounted) {
+      showNotice(context, deleted
+          ? 'Your account was deleted. Learning on this device is still here.'
+          : account.error ?? 'Your account could not be deleted. Try again.');
+    }
+  }
+
   Widget _accountAndSecurity(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start, children: [
     if (account.signedIn) ...[
@@ -156,8 +185,12 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
         subtitle: 'What we collect and how to control it',
         onTap: () => openResource(context, 'https://securebydesigninc.com/privacy')),
     _AccountRow(icon: Icons.delete_outline, title: 'Delete your account',
-        subtitle: 'Request deletion of your account and its data',
-        onTap: () => openResource(context, 'https://securebydesigninc.com/privacy#delete-account')),
+        subtitle: account.signedIn
+            ? 'Permanently delete your account and its data'
+            : 'Sign in first, or see how to request deletion',
+        onTap: () => account.signedIn
+            ? _confirmDelete(context)
+            : openResource(context, 'https://securebydesigninc.com/privacy#delete-account')),
     const Divider(height: 32),
     AnalyticsSetting(analytics: store.analytics),
     const SizedBox(height: 24),

@@ -59,6 +59,36 @@ class _AccountScreenState extends State<AccountScreen> {
                         style: TextStyle(color: SbdColors.muted, height: 1.6),
                       ),
                       const SizedBox(height: 24),
+                      if (!account.signedIn) ...[
+                        FilledButton.icon(
+                          key: const ValueKey('browser-sign-in'),
+                          onPressed: account.busy
+                              ? null
+                              : () => account.signInWithBrowser(),
+                          icon: const Icon(Icons.key_outlined),
+                          label: const Text(
+                            'Continue with Apple, Google, Microsoft, or a passkey',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Opens a secure Secure By Design sign-in page, then returns here.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.5),
+                        ),
+                        const SizedBox(height: 20),
+                        const Row(children: [
+                          Expanded(child: Divider()),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('or use your email and password',
+                                style: TextStyle(color: SbdColors.muted, fontSize: 13)),
+                          ),
+                          Expanded(child: Divider()),
+                        ]),
+                        const SizedBox(height: 20),
+                      ],
                       if (!account.signedIn)
                         Form(
                           key: _form,
@@ -113,7 +143,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                         : 'Enter your password.',
                               ),
                               const SizedBox(height: 24),
-                              FilledButton(
+                              OutlinedButton(
                                 onPressed: account.busy ? null : _signIn,
                                 child: Text(
                                   account.busy ? 'Signing in…' : 'Sign in',
