@@ -2,30 +2,129 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:secure_by_design_app/data/catalog.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
+import 'package:secure_by_design_app/data/models.dart';
 import 'package:secure_by_design_app/data/published_catalog.dart';
 import 'package:secure_by_design_app/screens/course_screen.dart';
 import 'package:secure_by_design_app/screens/training_screens.dart';
 import 'package:secure_by_design_app/screens/network_screen.dart';
+import 'package:secure_by_design_app/screens/path_screen.dart';
 import 'package:secure_by_design_app/widgets/training_share.dart';
 import 'package:secure_by_design_app/theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
-  test('DNS and two-tier PKI belong to the build category with stable progress IDs', () {
-    expect(publishedPaths.map((path) => path.id),
-        ['dc01-dc02', 'dns-configuration', 'two-tier-pki', 'rmf-boe-ato']);
+  LearningPath course(String id) =>
+      publishedPaths.firstWhere((path) => path.id == id);
+
+  test('the app carries every website course in site order with stable progress IDs', () {
+    expect(publishedPaths.map((path) => path.id), [
+      'dc01-dc02', 'dns-configuration', 'harden-baseline', 'two-tier-pki',
+      'connect-segment', 'pki-services', 'tiered-admin', 'logging-pipeline',
+      'workstation-fleet', 'patch-protect', 'business-services',
+      'prove-recovery', 'rmf-boe-ato', 'rmf-body-of-evidence',
+      'rmf-authorization-to-operate',
+    ]);
+    expect(publishedPaths.map((path) => path.number), [
+      for (var i = 1; i <= 12; i++) '1.$i',
+      for (var i = 1; i <= 3; i++) '2.$i',
+    ]);
     final build = publishedPaths.where((path) => path.category == 'Network build');
-    expect(build.length, 3);
-    expect(publishedPaths[1].lessons.length, 5);
-    expect(publishedPaths[2].lessons.length, 6);
+    expect(build.length, 12);
+    expect(course('dns-configuration').lessons.length, 5);
+    expect(course('two-tier-pki').lessons.length, 6);
     final ids = publishedPaths.expand((path) => path.lessons).map((lesson) => lesson.id).toList();
+    expect(ids.length, 82);
     expect(ids.toSet().length, ids.length);
     expect(ids, contains('training:two-tier-pki:sign'));
-    expect(publishedPaths[2].lessons[3].sourceUrl,
+    expect(ids, contains('training:prove-recovery:record'));
+    expect(course('two-tier-pki').lessons[3].sourceUrl,
         'https://securebydesigninc.com/training/two-tier-pki#sign');
+    for (final path in publishedPaths) {
+      for (final lesson in path.lessons) {
+        for (final question in lesson.questions) {
+          expect(question.correctAnswer, inInclusiveRange(0, question.answers.length - 1));
+        }
+      }
+    }
   });
+
+  test('the authorization course keeps one set of module IDs across three parts', () {
+    final parts = publishedPaths.where((path) => path.category == 'Network authorization').toList();
+    expect(parts.map((path) => path.title),
+        ['Risk Management Framework', 'Body of Evidence', 'Authorization to Operate']);
+    expect(parts.expand((path) => path.lessons).map((lesson) => lesson.id), [
+      for (var i = 1; i <= 12; i++) 'training:rmf-boe-ato:${'$i'.padLeft(2, '0')}',
+    ]);
+    expect(parts.map((path) => path.lessons.length), [4, 5, 3]);
+    expect(parts.map((path) => path.topics).fold(0, (a, b) => a + b), 36);
+    for (final part in parts) {
+      expect(part.materials.map((material) => material.id), containsAll(['rmf-guide', 'rmf-word']));
+    }
+    expect(parts[1].materials.map((material) => material.id), contains('rmf-evidence'));
+    expect(parts[2].materials.map((material) => material.id), contains('rmf-capstone'));
+    expect(resources.where((resource) => resource.id == 'rmf-word').length, 1);
+  });
+
+  test('configuration courses carry workbooks, checklists, objectives, recaps, and every knowledge check', () {
+    for (final path in publishedPaths.where((path) =>
+        path.category == 'Network build' && path.id != 'dc01-dc02')) {
+      final urls = path.materials.map((material) => material.url).toList();
+      expect(urls.where((url) => url.endsWith('-Workbook.pdf')).length, 1, reason: path.id);
+      expect(urls.where((url) => url.endsWith('-Workbook.docx')).length, 1, reason: path.id);
+      expect(urls, contains('https://securebydesigninc.com/training/${path.id}/checklist'));
+      for (final lesson in path.lessons) {
+        expect(lesson.objectives, isNotEmpty, reason: lesson.id);
+        expect(lesson.recap, isNotEmpty, reason: lesson.id);
+        expect(lesson.nextStep, isNotEmpty, reason: lesson.id);
+        expect(lesson.questions.length, greaterThanOrEqualTo(3), reason: lesson.id);
+      }
+    }
+    // Existing material IDs keep syncing; IDs the website does not list yet stay on the device.
+    for (final id in ['dc-guide', 'dc-pdf', 'dns-configuration-guide', 'two-tier-pki-checklist',
+        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide', 'connect-guide']) {
+      expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
+    }
+    expect(resources.firstWhere((resource) => resource.id == 'harden-baseline-pdf').syncable, isFalse);
+  });
+
+  testWidgets('a configuration lesson needs every check right and keeps XP once per lesson',
+      (tester) async {
+    final store = await LearningStore.load(clock: () => DateTime(2026, 10, 7));
+    addTearDown(store.dispose);
+    final path = course('dns-configuration'), lesson = path.lessons.first;
+    await tester.pumpWidget(MaterialApp(theme: buildTheme(),
+        home: LessonScreen(store: store, path: path, lesson: lesson)));
+    await tester.pumpAndSettle();
+    expect(find.text('IN THIS LESSON YOU WILL'), findsOneWidget);
+    expect(find.text(lesson.objectives.first), findsOneWidget);
+    expect(find.text('RECAP'), findsOneWidget);
+    expect(find.text(lesson.nextStep), findsOneWidget);
+    final complete = find.widgetWithText(FilledButton, 'Complete lesson');
+    Future<void> choose(String answer) async {
+      await tester.ensureVisible(find.text(answer).last);
+      await tester.tap(find.text(answer).last);
+      await tester.pumpAndSettle();
+    }
+    final questions = lesson.questions;
+    expect(questions.length, 3);
+    final first = questions.first;
+    await choose(first.answers[(first.correctAnswer + 1) % first.answers.length]);
+    for (var i = 0; i < questions.length; i++) {
+      await choose(questions[i].answers[questions[i].correctAnswer]);
+      expect(tester.widget<FilledButton>(complete).onPressed,
+          i == questions.length - 1 ? isNotNull : isNull);
+    }
+    await tester.ensureVisible(complete);
+    await tester.tap(complete);
+    await tester.pumpAndSettle();
+    expect(store.isCompleted(lesson.id), isTrue);
+    expect(find.text('+30 XP'), findsOneWidget);
+    expect(store.stats.quests.last.complete, isFalse);
+  });
+
   testWidgets('library categories combine with search and show related courses', (tester) async {
     final store = await LearningStore.load();
     addTearDown(store.dispose);
@@ -35,7 +134,7 @@ void main() {
     await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.pumpAndSettle();
-    expect(find.byType(TrainingCard), findsOneWidget);
+    expect(find.byType(TrainingCard), findsNWidgets(3));
     expect(find.text('Configure DNS'), findsNothing);
     await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
@@ -114,6 +213,26 @@ void main() {
     await tester.tap(find.text('SBD-ROOTCA01').first);
     await tester.pumpAndSettle();
     expect(find.textContaining('Offline'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('offline network reference includes the web process, what-ifs, and policy decisions',
+      (tester) async {
+    await tester.pumpWidget(
+        MaterialApp(theme: buildTheme(), home: const NetworkScreen()));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('7 traffic processes, 5 what-ifs, 23 systems'), findsOneWidget);
+    expect(find.text('Use a web app'), findsOneWidget);
+    await tester.ensureVisible(find.text('PC-to-PC remote desktop'));
+    await tester.tap(find.text('PC-to-PC remote desktop'));
+    await tester.pumpAndSettle();
+    expect(find.text('D02 · Denied by policy'), findsOneWidget);
+    await tester.ensureVisible(find.text('Use a web app'));
+    await tester.tap(find.text('Use a web app'));
+    await tester.pumpAndSettle();
+    expect(find.text('F01 · Permitted by policy'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('POLICY REGISTER'), 300,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.textContaining('F01 · DNS'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets('sharing passes the fixed homepage and an iPad anchor',

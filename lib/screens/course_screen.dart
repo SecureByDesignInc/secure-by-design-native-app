@@ -20,6 +20,14 @@ class CourseScreen extends StatefulWidget {
   State<CourseScreen> createState() => _CourseScreenState();
 }
 
+/// The DC01/DC02 guide has chapters, the authorization course has modules,
+/// and the configuration courses have lessons.
+String _unit(LearningPath path) => path.id == 'dc01-dc02'
+    ? 'chapters'
+    : path.lessons.every((l) => l.id.startsWith('training:rmf-boe-ato:'))
+        ? 'modules'
+        : 'lessons';
+
 class _CourseScreenState extends State<CourseScreen> {
   late int _tab;
   @override
@@ -50,7 +58,9 @@ class _CourseScreenState extends State<CourseScreen> {
             appBar: AppBar(title: const Text('Training Library')),
             body: SafeArea(
                 child: PageContent(maxWidth: 820, children: [
-              Kicker(path.category),
+              Kicker(path.number.isEmpty
+                  ? path.category
+                  : 'Course ${path.number} · ${path.category}'),
               const SizedBox(height: 12),
               Text(path.title,
                   style: Theme.of(context).textTheme.headlineMedium),
@@ -69,7 +79,7 @@ class _CourseScreenState extends State<CourseScreen> {
               ProgressLine(value: store.progressIn(path)),
               const SizedBox(height: 8),
               Text(
-                  '${store.completedIn(path)} of ${path.lessons.length} ${path.id == 'dc01-dc02' ? 'chapters' : 'modules'} complete'),
+                  '${store.completedIn(path)} of ${path.lessons.length} ${_unit(path)} complete'),
               const SizedBox(height: 22),
               SegmentedButton<int>(
                   segments: const [

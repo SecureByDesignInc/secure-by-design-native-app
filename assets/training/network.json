@@ -69,22 +69,25 @@
     {
       "id": "dhcp",
       "name": "SBD-DHCP01",
-      "role": "DHCP server",
+      "role": "DHCP server + NPS (802.1X)",
       "zone": "v20",
       "controls": [
         "CM-6",
         "AC-6",
-        "AU-12"
+        "AU-12",
+        "IA-3"
       ],
-      "known": "Dynamic Host Configuration Protocol server. Scopes, failover, and cross-subnet relay configuration are not provided.",
+      "known": "Windows Server with two roles: DHCP for the VLAN 80 pool, and Network Policy Server for 802.1X port admission (EAP-TLS with machine certificates). NPS handles port admission only; router logins stay named local accounts.",
       "design": [
         "Define approved scopes, reservations, DNS options, and lease policy.",
         "Restrict administrative changes and monitor lease events.",
-        "Plan relay behavior explicitly if clients occupy separate VLANs."
+        "Plan relay behavior explicitly if clients occupy separate VLANs.",
+        "Require machine certificates from the issuing CA; no password-based EAP. Unknown devices go to quarantine VLAN 90."
       ],
       "evidence": [
         "Approved DHCP settings and administrative access review.",
-        "Lease logs and client addressing tests."
+        "Lease logs and client addressing tests.",
+        "Network policy export and admission tests: enrolled PC admitted, unknown device quarantined."
       ],
       "address": "10.0.20.10"
     },
@@ -180,7 +183,7 @@
     {
       "id": "audit",
       "name": "SBD-AUDIT01",
-      "role": "Audit log repository",
+      "role": "Audit log repository · Windows, domain-joined",
       "zone": "v50",
       "controls": [
         "AU-9",
@@ -267,17 +270,17 @@
     {
       "id": "jump",
       "name": "AdminJumpBox01",
-      "role": "Identity / PKI administration only",
+      "role": "Tier 0 administration only",
       "zone": "v60",
       "controls": [
         "AC-6",
         "IA-2(1)",
         "SC-7(15)"
       ],
-      "known": "Dedicated Tier 0 administrative host for AD, DNS, and PKI; no server or endpoint administration.",
+      "known": "Dedicated Tier 0 administrative host for AD, DNS, PKI, and every system that can control them: the core switch, the hypervisor hosts, and the DC-facing scopes of WSUS, ePO, Nessus, and Splunk. No member-server or endpoint administration.",
       "design": [
-        "Use separate identity/PKI admin accounts and offline-compatible MFA.",
-        "Restrict targets to DCs, issuing CA, and template administration; root CA ceremonies remain local."
+        "Use separate Tier 0 admin accounts and offline-compatible MFA.",
+        "Restrict targets to Tier 0 systems and scopes; root CA ceremonies remain local."
       ],
       "evidence": [
         "Privileged target allowlist and account reviews.",
@@ -525,7 +528,9 @@
         "AC-6",
         "IA-2",
         "SC-7",
-        "CP-9"
+        "CP-9",
+        "SC-22",
+        "SC-23"
       ],
       "boundary": "Restrict directory administration; allow only documented identity and DNS dependencies."
     },
@@ -549,7 +554,8 @@
         "DHCP scopes and reservations",
         "Central log collection",
         "Offline Windows update distribution",
-        "Internal authoritative time"
+        "Internal authoritative time",
+        "802.1X port admission (NPS role on SBD-DHCP01)"
       ],
       "controls": [
         "CM-6",
@@ -643,7 +649,8 @@
         "AU-11",
         "RA-5",
         "SI-3",
-        "SI-4"
+        "SI-4",
+        "SI-4(4)"
       ],
       "boundary": "Scope scanners and agents explicitly. Protect audit records and separate security administration."
     },
@@ -721,14 +728,17 @@
       "functions": [
         "50 Windows 11 endpoints",
         "Internal identity, files, and approved updates",
-        "Host firewall blocks peer management"
+        "Host firewall blocks peer management",
+        "802.1X port admission; unknown devices go to quarantine VLAN 90"
       ],
       "controls": [
         "AC-3",
         "AC-6",
         "CM-6",
         "CM-7",
-        "SC-7"
+        "SC-7",
+        "IA-2(2)",
+        "IA-3"
       ],
       "boundary": "Dedicated client segment. Block peer SMB/RDP and direct administrative access; allow documented identity and resource dependencies only."
     }
@@ -742,14 +752,17 @@
         "SC-7",
         "SC-7(5)",
         "AC-4",
-        "CM-6"
+        "CM-6",
+        "AC-6",
+        "AU-12"
       ],
       "detail": "Internal Layer 3 switching and inter-VLAN routing. Access control lists enforce documented exceptions; segmentation alone does not establish enforcement.",
       "items": [
         "Default deny between VLANs; explicit source, destination, service, purpose, and owner for exceptions.",
         "Host firewalls also enforce isolation within VLANs 40, 50, 60, and 80.",
         "VLAN 80 DHCP relay is a proposed core function; verify relay and scope settings.",
-        "Test allowed sessions and blocked lateral movement; back up approved rules."
+        "Test allowed sessions and blocked lateral movement; back up approved rules.",
+        "Management plane: switch management only on VLAN 100 from AdminJumpBox01, named administrator accounts, switch syslog (including denies) to SBD-SYSLOG01, and versioned configuration backups."
       ]
     },
     {
@@ -780,14 +793,18 @@
         "CP-9",
         "CP-9(1)",
         "CP-10",
-        "MP-4"
+        "MP-4",
+        "CA-5",
+        "PL-2"
       ],
       "detail": "Keep protected offline copies of required information, system configurations, and recovery material. Define retention, custody, recovery priorities, and restoration responsibilities.",
       "items": [
         "Test restoration of AD/DNS, PKI, files, SQL, and network configuration.",
         "Splunk, Tenable/Nessus, and Trellix ePO/DLP each remain one server: no cluster or standby.",
         "Protect each platform’s configuration, required data, keys, and recovery material; validate vendor-supported recovery.",
-        "Define downtime, recovery point and recovery time targets; rehearse loss of each platform."
+        "Define downtime, recovery point and recovery time targets; rehearse loss of each platform.",
+        "Backup path: each server writes to a protected local backup volume; custodians carry DC, CA, and audit backups here under the media custody procedure. There is no network path to this facility.",
+        "Record the single-instance decision as a risk acceptance (PL-2): one server each suits the small network and modest resource needs. Backups are the mitigation; track gaps in the POA&M (CA-5)."
       ]
     }
   ],
@@ -817,7 +834,15 @@
           "source": "dhcp",
           "transport": "UDP",
           "initiation": "Client / relay",
-          "detail": "Server 67 · client 68"
+          "detail": "Server 67 · client 68",
+          "stream": "udp",
+          "protection": "none",
+          "wire": "No encryption",
+          "policy": {
+            "kind": "pending",
+            "rule": "F04",
+            "label": "F04 · Blocked pending design validation"
+          }
         },
         {
           "title": "Locate directory services",
@@ -830,7 +855,15 @@
           "source": "dns",
           "transport": "TCP / UDP",
           "initiation": "Workstation",
-          "detail": "Destination 53"
+          "detail": "Destination 53",
+          "stream": "either",
+          "protection": "none",
+          "wire": "No encryption",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F01",
+            "label": "F01 · Permitted by policy"
+          }
         },
         {
           "title": "Authenticate to the domain",
@@ -843,7 +876,15 @@
           "source": "auth",
           "transport": "TCP / UDP",
           "initiation": "Workstation",
-          "detail": "Destination 88"
+          "detail": "Destination 88",
+          "stream": "either",
+          "protection": "none",
+          "wire": "Kerberos encrypts tickets and key material",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F02",
+            "label": "F02 · Permitted by policy"
+          }
         },
         {
           "title": "Read directory information",
@@ -851,12 +892,20 @@
           "from": "workstations",
           "to": "dc1",
           "protocol": "LDAP · TCP 389 / LDAPS · TCP 636",
-          "description": "Directory clients retrieve the information they need from Active Directory. Protection and binding behavior depend on the client and server configuration.",
-          "note": "Choose the required directory binding and apply signing, channel binding, and TLS where applicable.",
+          "description": "The workstation reads its computer and policy objects from Active Directory, then fetches Group Policy from SYSVOL over SMB. Rule F03 permits the full directory profile for domain members.",
+          "note": "LDAP signing and channel binding are required. A Kerberos (SASL) bind lets Windows sign and seal the session; LDAPS uses TLS instead.",
           "source": "ad",
           "transport": "TCP",
           "initiation": "Directory client",
-          "detail": "Verify chosen binding"
+          "detail": "Destination 389 / 636",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Signed and sealed with the Kerberos session key",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F03",
+            "label": "F03 · Permitted by policy"
+          }
         }
       ]
     },
@@ -885,7 +934,15 @@
           "source": "dns",
           "transport": "TCP / UDP",
           "initiation": "Workstation",
-          "detail": "Destination 53"
+          "detail": "Destination 53",
+          "stream": "either",
+          "protection": "none",
+          "wire": "No encryption",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F01",
+            "label": "F01 · Permitted by policy"
+          }
         },
         {
           "title": "Request a service ticket",
@@ -898,7 +955,15 @@
           "source": "auth",
           "transport": "TCP / UDP",
           "initiation": "Workstation",
-          "detail": "Destination 88"
+          "detail": "Destination 88",
+          "stream": "either",
+          "protection": "none",
+          "wire": "Kerberos encrypts tickets and key material",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F02",
+            "label": "F02 · Permitted by policy"
+          }
         },
         {
           "title": "Open the approved share",
@@ -907,11 +972,19 @@
           "to": "fs",
           "protocol": "SMB · TCP 445",
           "description": "The client requests a file over SMB. The server applies the relevant share and filesystem permissions before allowing access.",
-          "note": "The animation represents a request; replies return on the established session. Share names, data classification, and encryption settings remain undefined.",
+          "note": "Replies return on the same session. Share names, data classification, and encryption settings remain undefined.",
           "source": "ad",
           "transport": "TCP",
           "initiation": "Workstation",
-          "detail": "Destination 445"
+          "detail": "Destination 445",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "SMB signing or encryption per data policy",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F05",
+            "label": "F05 · Permitted by policy"
+          }
         }
       ]
     },
@@ -940,7 +1013,16 @@
           "manual": true,
           "transport": "Approved media",
           "initiation": "Authorized operator",
-          "detail": "No network port"
+          "detail": "No network port",
+          "walk": [
+            "media",
+            "wsus"
+          ],
+          "policy": {
+            "kind": "manual",
+            "rule": null,
+            "label": "Offline process · no network session"
+          }
         },
         {
           "title": "Check update metadata",
@@ -953,7 +1035,15 @@
           "source": "wsus",
           "transport": "HTTPS",
           "initiation": "Workstation",
-          "detail": "Port 8531"
+          "detail": "Port 8531",
+          "stream": "tcp",
+          "protection": "tls",
+          "wire": "TLS-encrypted",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F06",
+            "label": "F06 · Permitted by policy"
+          }
         },
         {
           "title": "Retrieve signed update content",
@@ -962,11 +1052,19 @@
           "to": "wsus",
           "protocol": "HTTP · TCP 8530",
           "description": "WSUS uses its HTTP connection for update payloads, with signatures protecting payload authenticity. TLS is used for metadata rather than every WSUS path.",
-          "note": "The arrow shows the client request; the content response travels back. Validate content signatures and approved deployment settings.",
+          "note": "Requests travel to WSUS; content travels back. Validate content signatures and approved deployment settings.",
           "source": "wsus",
           "transport": "HTTP + signed payload",
           "initiation": "Workstation",
-          "detail": "Port 8530"
+          "detail": "Port 8530",
+          "stream": "tcp",
+          "protection": "signed",
+          "wire": "Signed payloads · not encrypted",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F06",
+            "label": "F06 · Permitted by policy"
+          }
         }
       ]
     },
@@ -974,16 +1072,40 @@
       "id": "logs",
       "label": "Follow a log",
       "title": "Turn an event into useful evidence.",
-      "caption": "From a Linux source to collection, analysis, and retention.",
+      "caption": "From Windows and Linux sources to collection, analysis, and retention.",
       "color": "#c1a6ff",
       "dependencies": [
+        "dc1",
         "repo",
         "syslog",
         "splunk",
         "audit"
       ],
-      "assumption": "Events move through collection, Splunk analysis, and protected archive retention. Select the ingestion and archive transports.",
+      "assumption": "Windows events arrive by event forwarding and Linux events by syslog over TLS. The collector forwards to Splunk for analysis and archives a protected copy on SBD-AUDIT01.",
       "steps": [
+        {
+          "title": "Forward a domain controller event",
+          "short": "Forward",
+          "from": "dc1",
+          "to": "syslog",
+          "protocol": "EVENT FORWARDING · WinRM TCP 5985",
+          "description": "SBD-DC01 pushes the subscribed security events to the collector. The collector never reaches into the source: the subscription is source-initiated, set by Group Policy.",
+          "note": "Kerberos authenticates both ends and encrypts the message body, even on port 5985. Rule F17 permits every domain member to forward.",
+          "source": "wef",
+          "transport": "HTTP (WS-Management)",
+          "initiation": "Event source",
+          "detail": "Port 5985",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Kerberos-encrypted message body",
+          "service": "Event forwarding",
+          "reply": false,
+          "policy": {
+            "kind": "traffic",
+            "rule": "F17",
+            "label": "F17 · Permitted by policy"
+          }
+        },
         {
           "title": "Deliver a source event",
           "short": "Collect",
@@ -995,35 +1117,62 @@
           "source": "syslog",
           "transport": "TLS over TCP",
           "initiation": "Log sender",
-          "detail": "Port 6514"
+          "detail": "Port 6514",
+          "stream": "tcp",
+          "protection": "tls",
+          "wire": "TLS-encrypted",
+          "reply": false,
+          "policy": {
+            "kind": "traffic",
+            "rule": "F07",
+            "label": "F07 · Permitted by policy"
+          }
         },
         {
           "title": "Ingest for investigation",
           "short": "Analyze",
           "from": "syslog",
           "to": "splunk",
-          "protocol": "INTEGRATION · TRANSPORT TO DEFINE",
-          "description": "The collection layer supplies events to Splunk for indexing and investigation. The exact forwarder, API, or input method must be chosen.",
-          "note": "Select the forwarding method and listener, define event coverage, and test detection rules.",
-          "source": null,
-          "transport": "Not yet defined",
-          "initiation": "Integration-dependent",
-          "detail": "No port assumed",
-          "unverified": true
+          "protocol": "SPLUNK FORWARDER · TCP 9997 + TLS",
+          "description": "The forwarder on the collector sends the Windows events and syslog intake to Splunk for indexing, searches, and alerts.",
+          "note": "Rule F10. The forwarder queues events while Splunk is down and replays them afterwards; alert on a stopped source.",
+          "source": "splunk",
+          "transport": "TLS over TCP",
+          "initiation": "Forwarder",
+          "detail": "Port 9997",
+          "stream": "tcp",
+          "protection": "tls",
+          "wire": "TLS-encrypted",
+          "service": "Log ingestion",
+          "reply": false,
+          "policy": {
+            "kind": "traffic",
+            "rule": "F10",
+            "label": "F10 · Permitted by policy"
+          }
         },
         {
           "title": "Retain an audit copy",
           "short": "Retain",
           "from": "syslog",
           "to": "audit",
-          "protocol": "ARCHIVE DELIVERY · METHOD TO DEFINE",
-          "description": "An approved archive process preserves the records needed for review and retention. This is a proposed collector-to-repository relationship.",
-          "note": "Define ingestion, integrity protection, retention duration, access controls, and restoration.",
-          "source": null,
-          "transport": "Not yet defined",
-          "initiation": "Process-dependent",
-          "detail": "No port assumed",
-          "unverified": true
+          "protocol": "ARCHIVE · SMB 3 · TCP 445",
+          "description": "On schedule, the collector writes dated archive files to the repository share on SBD-AUDIT01. Each archive is hashed and cataloged on arrival.",
+          "note": "Rule F11. The archival account can write but not delete; only the audit custodian’s separate accounts manage retention.",
+          "source": "services",
+          "transport": "SMB 3 with encryption",
+          "initiation": "Archival job",
+          "detail": "Port 445",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "SMB 3 encryption",
+          "service": "Audit archive",
+          "reply": false,
+          "policy": {
+            "kind": "traffic",
+            "rule": "F11",
+            "label": "F11 · Permitted by policy"
+          }
         }
       ]
     },
@@ -1051,7 +1200,15 @@
           "transport": "Vendor-specific",
           "initiation": "Client request",
           "detail": "No port assumed",
-          "unverified": true
+          "unverified": true,
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Vendor-specific",
+          "policy": {
+            "kind": "pending",
+            "rule": "F12",
+            "label": "F12 · Blocked pending design validation"
+          }
         }
       ]
     },
@@ -1079,7 +1236,16 @@
           "manual": true,
           "transport": "Controlled artifacts",
           "initiation": "CA administrators",
-          "detail": "No network port"
+          "detail": "No network port",
+          "walk": [
+            "subca",
+            "media"
+          ],
+          "policy": {
+            "kind": "manual",
+            "rule": null,
+            "label": "Offline process · no network session"
+          }
         },
         {
           "title": "Use the offline root",
@@ -1093,7 +1259,16 @@
           "manual": true,
           "transport": "Offline operation",
           "initiation": "Authorized operators",
-          "detail": "No network port"
+          "detail": "No network port",
+          "walk": [
+            "media",
+            "root"
+          ],
+          "policy": {
+            "kind": "manual",
+            "rule": null,
+            "label": "Offline process · no network session"
+          }
         },
         {
           "title": "Return publication artifacts",
@@ -1107,9 +1282,1032 @@
           "manual": true,
           "transport": "Approved media",
           "initiation": "Authorized operators",
-          "detail": "No network port"
+          "detail": "No network port",
+          "walk": [
+            "root",
+            "subca"
+          ],
+          "policy": {
+            "kind": "manual",
+            "rule": null,
+            "label": "Offline process · no network session"
+          }
         }
       ]
+    },
+    {
+      "id": "web",
+      "label": "Use a web app",
+      "title": "A browser trusts the internal web service.",
+      "caption": "Name resolution, certificate trust, revocation, and an encrypted session.",
+      "color": "#ff9f87",
+      "dependencies": [
+        "workstations",
+        "dc1",
+        "dc2",
+        "web",
+        "templates"
+      ],
+      "assumption": "A domain workstation opens an approved internal web application on SBD-WEB01 under rule F13. Clients already trust the internal root certificate and check revocation at pki.sbd.test (F18).",
+      "steps": [
+        {
+          "title": "Resolve the web server",
+          "short": "Resolve the name",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "DNS · TCP / UDP 53",
+          "description": "The browser resolves the web service’s internal name before connecting. DNS returns SBD-WEB01’s address on VLAN 40.",
+          "note": "DC02 also provides DNS. Publish the service name in internal DNS and keep it consistent with the name on the server certificate.",
+          "source": "dns",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 53",
+          "stream": "either",
+          "protection": "none",
+          "wire": "No encryption",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F01",
+            "label": "F01 · Permitted by policy"
+          }
+        },
+        {
+          "title": "Verify the server certificate",
+          "short": "Verify trust",
+          "from": "workstations",
+          "to": "web",
+          "protocol": "HTTPS · TCP 443",
+          "description": "The browser opens a TLS session. SBD-WEB01 presents a certificate from the internal issuing CA, and the client checks the name, validity dates, and chain to the trusted offline root.",
+          "note": "Trust comes from the root certificate already distributed to clients, not from a network path to the root. Next, the client checks whether the certificate has been revoked.",
+          "source": "pkix",
+          "transport": "TLS over TCP",
+          "initiation": "Workstation",
+          "detail": "Destination 443",
+          "stream": "tcp",
+          "protection": "tls",
+          "wire": "TLS-encrypted",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F13",
+            "label": "F13 · Permitted by policy"
+          }
+        },
+        {
+          "title": "Check revocation",
+          "short": "Check revocation",
+          "from": "workstations",
+          "to": "templates",
+          "protocol": "CRL / AIA · HTTP TCP 80",
+          "description": "The client follows the CRL distribution point in the certificate to pki.sbd.test on SBD-PKI-MGMT01 and downloads the issuing CA’s current revocation list.",
+          "note": "Rule F18. The CRL is signed by the issuing CA, so plain HTTP is the standard transport: tampering is detected, and nothing secret is sent.",
+          "source": "pkix",
+          "transport": "HTTP",
+          "initiation": "Workstation",
+          "detail": "Destination 80",
+          "stream": "tcp",
+          "protection": "signed",
+          "wire": "Signed CRL · not encrypted",
+          "service": "PKI publication",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F18",
+            "label": "F18 · Permitted by policy"
+          }
+        },
+        {
+          "title": "Request the application",
+          "short": "Use the app",
+          "from": "workstations",
+          "to": "web",
+          "protocol": "HTTPS · TCP 443",
+          "description": "Inside the encrypted session, the browser sends HTTP requests and receives the application’s responses. The application decides what the signed-in user may see.",
+          "note": "TLS protects the connection; the application still authenticates and authorizes each user. The unconfirmed web-to-SQL dependency stays blocked.",
+          "source": "https",
+          "transport": "HTTP over TLS",
+          "initiation": "Workstation",
+          "detail": "Destination 443",
+          "stream": "tcp",
+          "protection": "tls",
+          "wire": "TLS-encrypted",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F13",
+            "label": "F13 · Permitted by policy"
+          }
+        }
+      ]
+    }
+  ],
+  "whatIfs": [
+    {
+      "id": "dc-down",
+      "whatIf": true,
+      "label": "DC01 is down",
+      "title": "One domain controller fails.",
+      "caption": "The client turns to SBD-DC02 for DNS and authentication.",
+      "color": "#64dff2",
+      "dependencies": [
+        "workstations",
+        "dc1",
+        "dc2"
+      ],
+      "assumption": "SBD-DC01 is offline. Clients list both domain controllers as DNS servers, and SBD-DC02 provides DNS and Kerberos for the domain.",
+      "steps": [
+        {
+          "title": "Query SBD-DC01",
+          "short": "No answer",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "DNS · TCP / UDP 53",
+          "description": "The workstation sends its DNS query to its first configured DNS server. SBD-DC01 is offline, so no reply comes back.",
+          "note": "The request is permitted (F01), but a server that is down cannot answer. The client waits for its timeout.",
+          "source": "dns",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 53",
+          "stream": "either",
+          "protection": "none",
+          "wire": "No encryption",
+          "outcome": "unreachable",
+          "policy": {
+            "kind": "unreachable",
+            "rule": "F01",
+            "label": "F01 · Permitted, but no response"
+          }
+        },
+        {
+          "title": "Retry with SBD-DC02",
+          "short": "Next DNS server",
+          "from": "workstations",
+          "to": "dc2",
+          "protocol": "DNS · TCP / UDP 53",
+          "description": "The client retries with its next configured DNS server. SBD-DC02 also provides DNS for the domain and answers.",
+          "note": "This works only if clients list both domain controllers as DNS servers and the DNS zone replicates to both.",
+          "source": "dns",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 53",
+          "stream": "either",
+          "protection": "none",
+          "wire": "No encryption",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F01",
+            "label": "F01 · Permitted by policy"
+          }
+        },
+        {
+          "title": "Authenticate with SBD-DC02",
+          "short": "Authenticate",
+          "from": "workstations",
+          "to": "dc2",
+          "protocol": "Kerberos · TCP / UDP 88",
+          "description": "DNS service records list both domain controllers, and the client’s domain controller locator finds SBD-DC02 responding. SBD-DC02’s Key Distribution Center issues the ticket-granting ticket.",
+          "note": "The locator ping (LDAP over UDP 389) and the rest of the directory profile, including Group Policy and SYSVOL, use rule F03 against SBD-DC02 as well. After the outage, restore SBD-DC01 and confirm replication.",
+          "source": "auth",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 88",
+          "stream": "either",
+          "protection": "none",
+          "wire": "Kerberos encrypts tickets and key material",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F02",
+            "label": "F02 · Permitted by policy"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cert-expired",
+      "whatIf": true,
+      "label": "Certificate expired",
+      "title": "The browser refuses an expired certificate.",
+      "caption": "Trust checks fail before any application data is sent.",
+      "color": "#ff9f87",
+      "dependencies": [
+        "workstations",
+        "dc1",
+        "web"
+      ],
+      "assumption": "SBD-WEB01’s server certificate has passed its validity end date. The network path is unchanged and still permitted by rule F13.",
+      "steps": [
+        {
+          "title": "Resolve the web server",
+          "short": "Resolve the name",
+          "from": "workstations",
+          "to": "dc1",
+          "protocol": "DNS · TCP / UDP 53",
+          "description": "The browser resolves the web service’s internal name, exactly as on a normal day.",
+          "note": "Name resolution is unaffected by certificate problems.",
+          "source": "dns",
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 53",
+          "stream": "either",
+          "protection": "none",
+          "wire": "No encryption",
+          "policy": {
+            "kind": "traffic",
+            "rule": "F01",
+            "label": "F01 · Permitted by policy"
+          }
+        },
+        {
+          "title": "Present an expired certificate",
+          "short": "Trust check fails",
+          "from": "workstations",
+          "to": "web",
+          "protocol": "HTTPS · TCP 443",
+          "description": "SBD-WEB01 presents a certificate whose validity period has ended. The browser checks the dates, stops the connection, and shows a certificate error.",
+          "note": "The network permitted the session (F13); the failure is in certificate validation on the client. Renew server certificates through the issuing CA before they expire.",
+          "source": "pkix",
+          "transport": "TLS over TCP",
+          "initiation": "Workstation",
+          "detail": "Destination 443",
+          "stream": "tcp",
+          "protection": "tls",
+          "wire": "TLS handshake stops",
+          "outcome": "rejected",
+          "policy": {
+            "kind": "rejected",
+            "rule": "F13",
+            "label": "F13 · Permitted, then refused by the client"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pc-to-sql",
+      "whatIf": true,
+      "label": "A PC tries SQL",
+      "title": "Default deny stops a direct database connection.",
+      "caption": "No exception exists for workstation-to-SQL traffic.",
+      "color": "#ee9294",
+      "dependencies": [
+        "workstations",
+        "sql"
+      ],
+      "assumption": "A user workstation attempts a direct connection to SBD-SQL01. The policy register has no workstation-to-SQL exception.",
+      "steps": [
+        {
+          "title": "Connect straight to SBD-SQL01",
+          "short": "Blocked at the core",
+          "from": "workstations",
+          "to": "sql",
+          "protocol": "SQL · TCP 1433",
+          "description": "A workstation tries to reach the database server directly. The core finds no matching exception, so default deny drops the session.",
+          "note": "Clients reach data through approved applications, not direct database connections. This denial is one of the boundary acceptance tests.",
+          "source": "sql",
+          "transport": "TCP",
+          "initiation": "Workstation",
+          "detail": "Destination 1433",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "policy": {
+            "kind": "deny",
+            "rule": "DEFAULT-DENY",
+            "label": "Default deny · Denied by policy"
+          }
+        }
+      ]
+    },
+    {
+      "id": "peer-rdp",
+      "whatIf": true,
+      "label": "PC-to-PC remote desktop",
+      "title": "Host firewalls stop lateral movement.",
+      "caption": "One workstation tries remote desktop to another.",
+      "color": "#ee9294",
+      "dependencies": [
+        "workstations"
+      ],
+      "assumption": "Two user workstations share VLAN 80. Traffic between them is switched within the VLAN and never crosses the core’s routed boundary, so each workstation’s host firewall enforces the policy.",
+      "steps": [
+        {
+          "title": "Open remote desktop to another PC",
+          "short": "Blocked by the host",
+          "from": "workstations",
+          "to": "workstations",
+          "protocol": "RDP · TCP / UDP 3389",
+          "description": "A workstation tries a remote desktop session to a peer on the same VLAN. The destination’s host firewall refuses it.",
+          "note": "Rule D02 denies peer RDP and D01 denies peer SMB. Attackers use these paths to move from one compromised PC to the next.",
+          "source": null,
+          "transport": "TCP / UDP",
+          "initiation": "Workstation",
+          "detail": "Destination 3389",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "policy": {
+            "kind": "deny",
+            "rule": "D02",
+            "label": "D02 · Denied by policy"
+          }
+        }
+      ]
+    },
+    {
+      "id": "drill",
+      "whatIf": true,
+      "drill": true,
+      "label": "Attack drill",
+      "title": "An intruder tests every boundary.",
+      "caption": "Six moves an intruder might try, from one compromised PC to a stolen admin session. Each is checked against the rules.",
+      "color": "#ee9294",
+      "dependencies": [
+        "workstations",
+        "sql",
+        "splunk",
+        "web",
+        "jump2",
+        "dc1"
+      ],
+      "assumption": "One user workstation is compromised. Each step replays an acceptance test from the security design against the same policy register as the rest of the model. Management protocols and product ports still need validation.",
+      "steps": [
+        {
+          "title": "A compromised PC tries the database",
+          "short": "PC → SQL",
+          "from": "workstations",
+          "to": "sql",
+          "protocol": "SQL · TCP 1433",
+          "description": "Malware on one workstation reaches straight for SBD-SQL01. No exception exists for workstation-to-SQL traffic, so the core drops the attempt.",
+          "note": "Clients reach data through approved applications, never directly.",
+          "source": "sql",
+          "transport": "TCP",
+          "initiation": "Attacker on a compromised host",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "detail": "Destination 1433",
+          "test": "Client-to-SQL, client-to-management, and peer SMB/RDP fail.",
+          "policy": {
+            "kind": "deny",
+            "rule": "DEFAULT-DENY",
+            "label": "Default deny · Denied by policy"
+          }
+        },
+        {
+          "title": "It looks for the security tools",
+          "short": "PC → Splunk",
+          "from": "workstations",
+          "to": "splunk",
+          "protocol": "MANAGEMENT · Splunk Web · TCP 8000",
+          "description": "Taking over a security tool would blind the defenders. The PC tries Splunk’s web interface. No rule lets user workstations reach security-tool management, so default deny drops it.",
+          "note": "Port 8000 is the Splunk Web default; confirm the configured port. The same rule applies to the Nessus and ePO consoles.",
+          "source": null,
+          "transport": "TCP",
+          "initiation": "Attacker on a compromised host",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "detail": "Destination 8000 (Splunk Web default)",
+          "test": "A compromised client cannot reach security-tool management interfaces.",
+          "policy": {
+            "kind": "deny",
+            "rule": "DEFAULT-DENY",
+            "label": "Default deny · Denied by policy"
+          }
+        },
+        {
+          "title": "It tries a neighbour’s file shares",
+          "short": "Peer SMB",
+          "from": "workstations",
+          "to": "workstations",
+          "protocol": "SMB · TCP 445",
+          "description": "Next, the PC tries the shares on another workstation in VLAN 80. The traffic never crosses the core, so the neighbour’s host firewall refuses it.",
+          "note": "Rule D01 denies peer SMB. Attackers use administrative shares to copy tools from one PC to the next.",
+          "source": "ad",
+          "transport": "TCP",
+          "initiation": "Attacker on a compromised host",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "detail": "Destination 445",
+          "test": "Client-to-SQL, client-to-management, and peer SMB/RDP fail.",
+          "policy": {
+            "kind": "deny",
+            "rule": "D01",
+            "label": "D01 · Denied by policy"
+          }
+        },
+        {
+          "title": "It tries remote desktop to a neighbour",
+          "short": "Peer RDP",
+          "from": "workstations",
+          "to": "workstations",
+          "protocol": "RDP · TCP / UDP 3389",
+          "description": "The PC tries a remote desktop session to a peer. The destination’s host firewall refuses it.",
+          "note": "Rule D02 denies peer RDP. Host firewalls matter here because traffic inside a VLAN never reaches the core.",
+          "source": null,
+          "transport": "TCP / UDP",
+          "initiation": "Attacker on a compromised host",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "detail": "Destination 3389",
+          "test": "Client-to-SQL, client-to-management, and peer SMB/RDP fail.",
+          "policy": {
+            "kind": "deny",
+            "rule": "D02",
+            "label": "D02 · Denied by policy"
+          }
+        },
+        {
+          "title": "A compromised web server reaches for the database",
+          "short": "Web → SQL",
+          "from": "web",
+          "to": "sql",
+          "protocol": "SQL · TCP 1433",
+          "description": "If SBD-WEB01 were taken over, SBD-SQL01 would be the next target. They share VLAN 40, so the core never sees this traffic. SBD-SQL01’s host firewall keeps it blocked.",
+          "note": "Rule F14 stays pending until a real application dependency and listener are approved.",
+          "source": "sql",
+          "transport": "TCP",
+          "initiation": "Attacker on a compromised host",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "detail": "Destination 1433",
+          "test": "The web server cannot access SQL before an approved dependency exists.",
+          "policy": {
+            "kind": "pending",
+            "rule": "F14",
+            "label": "F14 · Blocked pending design validation"
+          }
+        },
+        {
+          "title": "A stolen admin session aims at a domain controller",
+          "short": "Admin PC → DC",
+          "from": "jump2",
+          "to": "dc1",
+          "protocol": "MANAGEMENT · REMOTE ADMINISTRATION",
+          "description": "With an endpoint administrator’s stolen session on SBD-ADMIN-PC01, the attacker aims at SBD-DC01. That host manages user endpoints only. No rule lets it manage a domain controller, so default deny drops it.",
+          "note": "Tiered administration keeps one stolen account from reaching every tier. Exact management protocols still need validation.",
+          "source": null,
+          "transport": "TCP",
+          "initiation": "Stolen endpoint-admin session",
+          "stream": "tcp",
+          "protection": "none",
+          "wire": "Never established",
+          "detail": "Management protocol to validate",
+          "test": "An endpoint administrator cannot manage a DC, issuing CA, or member server.",
+          "policy": {
+            "kind": "deny",
+            "rule": "DEFAULT-DENY",
+            "label": "Default deny · Denied by policy"
+          }
+        }
+      ]
+    }
+  ],
+  "policy": [
+    {
+      "id": "F01",
+      "from": [
+        "dc1",
+        "dc2",
+        "dhcp",
+        "syslog",
+        "wsus",
+        "time",
+        "subca",
+        "templates",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "epo",
+        "audit",
+        "jump",
+        "jump1",
+        "jump2",
+        "management",
+        "workstations",
+        "splunk",
+        "nessus",
+        "repo"
+      ],
+      "to": [
+        "dc1",
+        "dc2"
+      ],
+      "service": "DNS",
+      "transport": "TCP/UDP 53",
+      "purpose": "Internal name resolution for every networked system",
+      "owner": "Identity owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F02",
+      "from": [
+        "dc1",
+        "dc2",
+        "dhcp",
+        "syslog",
+        "wsus",
+        "time",
+        "subca",
+        "templates",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "epo",
+        "audit",
+        "jump",
+        "jump1",
+        "jump2",
+        "management",
+        "workstations",
+        "splunk",
+        "nessus"
+      ],
+      "to": [
+        "dc1",
+        "dc2"
+      ],
+      "service": "Kerberos",
+      "transport": "TCP/UDP 88 · password change TCP/UDP 464",
+      "purpose": "Domain authentication for every domain member",
+      "owner": "Identity owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F03",
+      "from": [
+        "dc1",
+        "dc2",
+        "dhcp",
+        "syslog",
+        "wsus",
+        "time",
+        "subca",
+        "templates",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "epo",
+        "audit",
+        "jump",
+        "jump1",
+        "jump2",
+        "management",
+        "workstations",
+        "splunk",
+        "nessus"
+      ],
+      "to": [
+        "dc1",
+        "dc2"
+      ],
+      "service": "Directory",
+      "transport": "LDAP TCP/UDP 389 · LDAPS 636 · GC 3268/3269 · SMB 445 (SYSVOL, Group Policy) · RPC 135 + 49152–65535 (NetLogon)",
+      "purpose": "Directory, Group Policy, and domain operations; LDAP signing and channel binding required. Linux members (SSSD) use DNS, Kerberos, and LDAP",
+      "owner": "Identity owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F04",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "dhcp"
+      ],
+      "service": "DHCP",
+      "transport": "UDP 67/68 through approved core relay",
+      "purpose": "Address leases for VLAN 80; relay/source rules required",
+      "owner": "Network owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "F05",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "fs"
+      ],
+      "service": "SMB",
+      "transport": "TCP 445; signing/encryption per data policy",
+      "purpose": "Approved share access; filesystem authorization still applies",
+      "owner": "Data owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F06",
+      "from": [
+        "dc1",
+        "dc2",
+        "dhcp",
+        "syslog",
+        "time",
+        "subca",
+        "templates",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "epo",
+        "audit",
+        "jump",
+        "jump1",
+        "jump2",
+        "management",
+        "workstations"
+      ],
+      "to": [
+        "wsus"
+      ],
+      "service": "WSUS",
+      "transport": "TLS 8531 metadata; 8530 signed payloads",
+      "purpose": "Approved Windows updates by ring: pilot, workstations, member servers, then domain controllers",
+      "owner": "Patch owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F07",
+      "from": [
+        "repo",
+        "splunk",
+        "nessus"
+      ],
+      "to": [
+        "syslog"
+      ],
+      "service": "Syslog TLS",
+      "transport": "TCP 6514; mutual trust and sender allowlist",
+      "purpose": "Linux event collection from SBD-REPO01, SBD-SPLUNK01, and SBD-NESSUS01",
+      "owner": "Logging owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F08",
+      "from": [
+        "dc1"
+      ],
+      "to": [
+        "time"
+      ],
+      "service": "Time",
+      "transport": "UDP 123; proposed domain time authority is DC01",
+      "purpose": "Internal reference time; verify FSMO/PDC role before activation",
+      "owner": "Identity owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "F09",
+      "from": [
+        "workstations",
+        "dc2"
+      ],
+      "to": [
+        "dc1"
+      ],
+      "service": "Time",
+      "transport": "Domain hierarchy / UDP 123",
+      "purpose": "Domain time; validate actual hierarchy",
+      "owner": "Identity owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "F10",
+      "from": [
+        "syslog"
+      ],
+      "to": [
+        "splunk"
+      ],
+      "service": "Log ingestion",
+      "transport": "Splunk forwarder · TCP 9997 with TLS",
+      "purpose": "Single-instance Splunk ingestion of forwarded events and router syslog",
+      "owner": "SIEM owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F11",
+      "from": [
+        "syslog"
+      ],
+      "to": [
+        "audit"
+      ],
+      "service": "Audit archive",
+      "transport": "SMB 445 with encryption to the repository share; write-only archival account",
+      "purpose": "Independent retained audit copy; hashes cataloged on arrival",
+      "owner": "Audit custodian",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F12",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "apps"
+      ],
+      "service": "Licensing",
+      "transport": "Vendor protocol to select",
+      "purpose": "Approved license clients only",
+      "owner": "Application owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "F13",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "web"
+      ],
+      "service": "HTTPS",
+      "transport": "TCP 443 with trusted internal certificate",
+      "purpose": "Approved internal web service",
+      "owner": "Application owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F14",
+      "from": [
+        "web"
+      ],
+      "to": [
+        "sql"
+      ],
+      "service": "SQL",
+      "transport": "No application dependency established",
+      "purpose": "Blocked until consumer and listener are justified",
+      "owner": "Database owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "F15",
+      "from": [
+        "nessus"
+      ],
+      "to": [
+        "dc1",
+        "dc2",
+        "dhcp",
+        "syslog",
+        "wsus",
+        "time",
+        "subca",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "splunk",
+        "epo",
+        "management",
+        "repo",
+        "workstations"
+      ],
+      "service": "Scanning",
+      "transport": "Target/service allowlist and scan window to approve",
+      "purpose": "Single Nessus instance; no blanket port exception",
+      "owner": "Vulnerability owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "F16",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "epo"
+      ],
+      "service": "Endpoint policy",
+      "transport": "Product/module-specific transports to verify",
+      "purpose": "One Trellix ePO/DLP instance; validate agent reachability",
+      "owner": "Endpoint security owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "F17",
+      "from": [
+        "dc1",
+        "dc2",
+        "dhcp",
+        "wsus",
+        "time",
+        "subca",
+        "templates",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "epo",
+        "audit",
+        "jump",
+        "jump1",
+        "jump2",
+        "management",
+        "workstations"
+      ],
+      "to": [
+        "syslog"
+      ],
+      "service": "Event forwarding",
+      "transport": "WinRM HTTP 5985, Kerberos-encrypted · source-initiated subscription",
+      "purpose": "Windows Event Forwarding of the designed security events (AU-2) to the collector",
+      "owner": "Logging owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F18",
+      "from": [
+        "dc1",
+        "dc2",
+        "dhcp",
+        "syslog",
+        "wsus",
+        "time",
+        "subca",
+        "templates",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "epo",
+        "audit",
+        "jump",
+        "jump1",
+        "jump2",
+        "management",
+        "workstations",
+        "splunk",
+        "nessus"
+      ],
+      "to": [
+        "templates"
+      ],
+      "service": "PKI publication",
+      "transport": "HTTP 80 · CRL and AIA at pki.sbd.test",
+      "purpose": "Certificate chain and revocation checking; CRLs are signed, so plain HTTP is the standard transport",
+      "owner": "PKI custodian",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F19",
+      "from": [
+        "splunk",
+        "nessus"
+      ],
+      "to": [
+        "repo"
+      ],
+      "service": "Linux packages",
+      "transport": "HTTP 80; GPG-signed packages and repository metadata",
+      "purpose": "Approved Linux updates for the domain-joined Linux servers from SBD-REPO01",
+      "owner": "Patch owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F20",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "dhcp"
+      ],
+      "service": "Network access",
+      "transport": "802.1X EAP-TLS; the access switch relays RADIUS UDP 1812/1813 to the NPS role on SBD-DHCP01",
+      "purpose": "Port admission with machine certificates; failed or unknown devices land in quarantine VLAN 90, which has no routes",
+      "owner": "Network owner",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "A01",
+      "from": [
+        "jump"
+      ],
+      "to": [
+        "dc1",
+        "dc2",
+        "subca",
+        "templates",
+        "wsus",
+        "epo",
+        "nessus",
+        "splunk"
+      ],
+      "service": "Management",
+      "transport": "Approved management protocol, MFA, identity and target binding required",
+      "purpose": "Tier 0 · identity, PKI, and what controls them administration: Tier 0 operators with separate task permissions. Includes the DC-facing administration of WSUS (DC update ring), ePO (DC agent policy), Nessus (DC scan credentials), and Splunk (DC monitoring), plus the core switch and the hypervisor hosts and their console",
+      "owner": "Privileged-access owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "A02",
+      "from": [
+        "jump1"
+      ],
+      "to": [
+        "dhcp",
+        "syslog",
+        "wsus",
+        "time",
+        "fs",
+        "sql",
+        "apps",
+        "web",
+        "splunk",
+        "nessus",
+        "epo",
+        "management",
+        "repo"
+      ],
+      "service": "Management",
+      "transport": "Approved management protocol, MFA, identity and target binding required",
+      "purpose": "Member servers administration: Named role limited to assigned servers; separate security-tool operators with member-server and endpoint scope only",
+      "owner": "Privileged-access owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "A03",
+      "from": [
+        "jump2"
+      ],
+      "to": [
+        "workstations"
+      ],
+      "service": "Management",
+      "transport": "Approved management protocol, MFA, identity and target binding required",
+      "purpose": "User endpoints administration: Endpoint-only operator; scoped local credentials",
+      "owner": "Privileged-access owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "A04",
+      "from": [
+        "jump1"
+      ],
+      "to": [
+        "audit"
+      ],
+      "service": "Management",
+      "transport": "Approved management protocol, MFA, identity and target binding required",
+      "purpose": "Audit custody administration: Separate audit custodian accounts and a separate session on SBD-ADMIN-SRV01; protected retention changes require independent approval",
+      "owner": "Privileged-access owner",
+      "status": "pending",
+      "statusLabel": "Blocked pending design validation"
+    },
+    {
+      "id": "D01",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "workstations"
+      ],
+      "service": "SMB",
+      "transport": "TCP 445",
+      "purpose": "Block peer file/administrative shares",
+      "owner": "Endpoint owner",
+      "status": "deny",
+      "statusLabel": "Denied by policy"
+    },
+    {
+      "id": "D02",
+      "from": [
+        "workstations"
+      ],
+      "to": [
+        "workstations"
+      ],
+      "service": "RDP",
+      "transport": "TCP/UDP 3389",
+      "purpose": "Block peer remote desktop",
+      "owner": "Endpoint owner",
+      "status": "deny",
+      "statusLabel": "Denied by policy"
     }
   ],
   "technical": {
@@ -1124,12 +2322,37 @@
         {
           "name": "Kerberos KDC",
           "port": "TCP / UDP 88",
-          "note": ""
+          "note": "Password changes use TCP / UDP 464."
         },
         {
           "name": "Directory access",
-          "port": "LDAP 389 / LDAPS 636",
-          "note": "Client and protection settings determine the binding."
+          "port": "LDAP TCP / UDP 389 · LDAPS TCP 636",
+          "note": "UDP 389 carries the domain controller locator ping. Client and protection settings determine the binding."
+        },
+        {
+          "name": "Global catalog",
+          "port": "TCP 3268 · TLS TCP 3269",
+          "note": ""
+        },
+        {
+          "name": "Group Policy and SYSVOL",
+          "port": "SMB · TCP 445",
+          "note": ""
+        },
+        {
+          "name": "RPC services",
+          "port": "TCP 135 · dynamic TCP 49152–65535",
+          "note": "NetLogon, LSA, and SAM use the dynamic range after the endpoint mapper."
+        },
+        {
+          "name": "Domain time",
+          "port": "W32Time · UDP 123",
+          "note": "Members follow the domain time hierarchy."
+        },
+        {
+          "name": "AD Web Services",
+          "port": "TCP 9389",
+          "note": "Used by Active Directory PowerShell and Administrative Center from administration hosts, not user workstations."
         }
       ],
       "depends": [
@@ -1153,12 +2376,37 @@
         {
           "name": "Kerberos KDC",
           "port": "TCP / UDP 88",
-          "note": ""
+          "note": "Password changes use TCP / UDP 464."
         },
         {
           "name": "Directory access",
-          "port": "LDAP 389 / LDAPS 636",
+          "port": "LDAP TCP / UDP 389 · LDAPS TCP 636",
+          "note": "UDP 389 carries the domain controller locator ping. Client and protection settings determine the binding."
+        },
+        {
+          "name": "Global catalog",
+          "port": "TCP 3268 · TLS TCP 3269",
           "note": ""
+        },
+        {
+          "name": "Group Policy and SYSVOL",
+          "port": "SMB · TCP 445",
+          "note": ""
+        },
+        {
+          "name": "RPC services",
+          "port": "TCP 135 · dynamic TCP 49152–65535",
+          "note": "NetLogon, LSA, and SAM use the dynamic range after the endpoint mapper."
+        },
+        {
+          "name": "Domain time",
+          "port": "W32Time · UDP 123",
+          "note": "Members follow the domain time hierarchy."
+        },
+        {
+          "name": "AD Web Services",
+          "port": "TCP 9389",
+          "note": "Used by Active Directory PowerShell and Administrative Center from administration hosts, not user workstations."
         }
       ],
       "depends": [
@@ -1172,16 +2420,30 @@
       "source": "ad"
     },
     "dhcp": {
-      "purpose": "Provide client lease settings for the approved address space.",
+      "purpose": "Provide client lease settings for the approved address space, and admit devices to VLAN 80 ports with 802.1X.",
       "services": [
         {
           "name": "DHCPv4",
           "port": "UDP 67 server / 68 client",
           "note": "An initial broadcast may require a relay across subnets."
+        },
+        {
+          "name": "RADIUS (NPS role)",
+          "port": "UDP 1812 authentication · 1813 accounting",
+          "note": "Only the VLAN 80 access switch is a RADIUS client."
+        },
+        {
+          "name": "802.1X EAP-TLS",
+          "port": "Machine certificates",
+          "note": "No password-based EAP methods."
         }
       ],
-      "depends": [],
-      "dependencyText": "Scopes, address options, leases, relay placement, and failover need an explicit design.",
+      "depends": [
+        "dc1",
+        "dc2",
+        "subca"
+      ],
+      "dependencyText": "Scopes, address options, leases, relay placement, and failover need an explicit design. The NPS role checks machine certificates from the issuing CA and computer accounts in AD; unknown devices go to quarantine VLAN 90, which has no routes.",
       "verify": [
         "Lease acquisition and renewal.",
         "Configured DNS options and relay behavior."
@@ -1267,7 +2529,7 @@
       "source": "syslog"
     },
     "splunk": {
-      "purpose": "Single server instance; no cluster or standby. Index and investigate the security events that are actually collected.",
+      "purpose": "Linux, domain-joined. Single server instance, sized for a small network; no cluster or standby. Index and investigate the security events that are actually collected.",
       "services": [
         {
           "name": "Splunk ingestion",
@@ -1285,18 +2547,18 @@
       ]
     },
     "audit": {
-      "purpose": "Retain security records under the approved retention policy.",
+      "purpose": "Windows, domain-joined. Retain security records under the approved retention policy.",
       "services": [
         {
-          "name": "Audit ingestion",
-          "port": "Method to define",
-          "note": "No listener, storage protocol, or immutable mode is assumed."
+          "name": "Audit archive",
+          "port": "SMB 3 · TCP 445 with encryption",
+          "note": "Write-only archival account from the collector (F11); hashes cataloged on arrival."
         }
       ],
       "depends": [
         "syslog"
       ],
-      "dependencyText": "An archive copy is proposed from the collector. Retention, integrity, access separation, and backup design must be established.",
+      "dependencyText": "The collector writes dated archives to the repository share. Only the audit custodian’s separate accounts manage retention; offline copies follow the recovery practice.",
       "verify": [
         "Record retrieval across the retention period.",
         "Unauthorized-change prevention and recovery."
@@ -1327,7 +2589,7 @@
       "source": "wsus"
     },
     "repo": {
-      "purpose": "Single Trellix ePO/DLP server instance; no cluster or standby. Serve the approved Linux package collection.",
+      "purpose": "Serve the approved Linux package collection.",
       "services": [
         {
           "name": "Package repository",
@@ -1394,7 +2656,7 @@
       ]
     },
     "epo": {
-      "purpose": "Single Trellix ePO/DLP server instance; no cluster or standby. Manage the chosen endpoint protection and DLP policies.",
+      "purpose": "Single Trellix ePO/DLP server instance, sized for a small network; no cluster or standby. Manage the chosen endpoint protection and DLP policies.",
       "services": [
         {
           "name": "Agent management / policy",
@@ -1412,7 +2674,7 @@
       ]
     },
     "nessus": {
-      "purpose": "Single Tenable/Nessus server instance; no cluster or standby. Assess authorized targets for known vulnerabilities.",
+      "purpose": "Linux, domain-joined. Single Tenable/Nessus server instance, sized for a small network; no cluster or standby. Assess authorized targets for known vulnerabilities.",
       "services": [
         {
           "name": "Scanning / agents",
@@ -1427,8 +2689,29 @@
         "Finding validation and remediation rescan."
       ]
     },
+    "web": {
+      "purpose": "Serve approved internal web applications over HTTPS.",
+      "services": [
+        {
+          "name": "HTTPS",
+          "port": "TCP 443",
+          "note": "Server certificate issued by the internal issuing CA."
+        }
+      ],
+      "depends": [
+        "dc1",
+        "dc2",
+        "subca"
+      ],
+      "dependencyText": "Clients find the service through internal DNS and trust its certificate through the internal PKI. No database dependency is approved; web-to-SQL traffic stays blocked until a consumer and listener are justified.",
+      "verify": [
+        "HTTPS from approved clients with a trusted, unexpired certificate.",
+        "Blocked access from unapproved sources and to SQL01."
+      ],
+      "source": "https"
+    },
     "jump": {
-      "purpose": "Provide dedicated identity and PKI administration from the Tier 0 host.",
+      "purpose": "Provide dedicated Tier 0 administration: identity, PKI, and every system that can control them.",
       "services": [
         {
           "name": "Remote management",
@@ -1437,7 +2720,7 @@
         }
       ],
       "depends": [],
-      "dependencyText": "Targets are DC01, DC02, the issuing CA, and PKI template administration. Separate ADMIN-SRV01 and ADMIN-PC01 hosts handle member servers and clients. Host firewalls and scoped accounts deny cross-tier access; exact management protocols require validation.",
+      "dependencyText": "Targets are DC01, DC02, the issuing CA, PKI template administration, the core switch, the hypervisor hosts, and the DC-facing scopes of WSUS, ePO, Nessus, and Splunk. Separate ADMIN-SRV01 and ADMIN-PC01 hosts handle member servers and clients. Host firewalls and scoped accounts deny cross-tier access; exact management protocols require validation.",
       "verify": [
         "Approved target list and privileged identities.",
         "Session controls and administrative audit trail."

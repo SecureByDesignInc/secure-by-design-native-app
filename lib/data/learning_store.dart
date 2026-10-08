@@ -86,6 +86,12 @@ class LearningStore extends ChangeNotifier {
       learningPaths.expand((p) => p.lessons).map((l) => l.id).toSet();
   Set<String> get _resourceIds =>
       {...resources.map((r) => r.id), ...foundationResources.map((r) => r.id)};
+
+  /// Materials the website's bookmark catalog does not list yet stay saved on
+  /// this device; uploading them would make the server reject the batch.
+  Set<String> get _deviceOnlyResourceIds =>
+      resources.where((r) => !r.syncable).map((r) => r.id).toSet();
+  bool _syncsBookmark(String id) => !_deviceOnlyResourceIds.contains(id);
   String _key(String suffix) =>
       _scope == null ? 'sbd.$suffix.v1' : 'sbd.account.$_scope.$suffix.v1';
   bool get cloudConnected => _scope != null;
@@ -177,7 +183,8 @@ class LearningStore extends ChangeNotifier {
     _pendingRecords.removeWhere((id, status) =>
         !_lessonIds.contains(id) ||
         !['completed', 'in_progress'].contains(status));
-    _pendingBookmarks.removeWhere((id, _) => !_resourceIds.contains(id));
+    _pendingBookmarks.removeWhere(
+        (id, _) => !_resourceIds.contains(id) || !_syncsBookmark(id));
   }
 
   Future<void> _persist() async {
@@ -309,7 +316,9 @@ class LearningStore extends ChangeNotifier {
       if (epoch != _epoch) return;
       if (!_resourceIds.contains(id)) throw ArgumentError.value(id);
       _saved.contains(id) ? _saved.remove(id) : _saved.add(id);
-      if (cloudConnected) _pendingBookmarks[id] = _saved.contains(id);
+      if (cloudConnected && _syncsBookmark(id)) {
+        _pendingBookmarks[id] = _saved.contains(id);
+      }
       await _persist();
       if (_saved.contains(id)) analytics.resourceSaved(id);
       _notify();
@@ -368,7 +377,7 @@ class LearningStore extends ChangeNotifier {
           <String>[]) {
         if (_resourceIds.contains(id)) {
           _saved.add(id);
-          _pendingBookmarks[id] = true;
+          if (_syncsBookmark(id)) _pendingBookmarks[id] = true;
         }
       }
       for (final raw in guest['activity'] is List ? guest['activity'] : []) {
@@ -445,14 +454,17 @@ class LearningStore extends ChangeNotifier {
             .where((e) => e.value == 'completed')
             .map((e) => e.key)
             .toSet();
+        final deviceOnly = _saved.where((id) => !_syncsBookmark(id)).toSet();
         _saved = (data['bookmarks'] as List)
             .whereType<Map>()
             .where((r) =>
                 r['saved'] == true &&
                 r['id'] is String &&
-                _resourceIds.contains(r['id']))
+                _resourceIds.contains(r['id']) &&
+                _syncsBookmark(r['id'] as String))
             .map((r) => r['id'] as String)
-            .toSet();
+            .toSet()
+          ..addAll(deviceOnly);
         for (final e in _pendingBookmarks.entries) {
           e.value ? _saved.add(e.key) : _saved.remove(e.key);
         }

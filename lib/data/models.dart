@@ -4,6 +4,16 @@ class LessonSection {
   final String body;
 }
 
+/// One knowledge check: a question, its answers, and why the answer is right.
+class QuizQuestion {
+  const QuizQuestion(
+      this.question, this.answers, this.correctAnswer, this.explanation);
+  final String question;
+  final List<String> answers;
+  final int correctAnswer;
+  final String explanation;
+}
+
 class Lesson {
   const Lesson({
     required this.id,
@@ -18,6 +28,10 @@ class Lesson {
     required this.sourceUrl,
     required this.sourceLabel,
     this.youtubeId = '',
+    this.objectives = const [],
+    this.moreQuestions = const [],
+    this.recap = const [],
+    this.nextStep = '',
   });
   final String id;
   final String title;
@@ -34,6 +48,23 @@ class Lesson {
   /// YouTube video id for the lesson walkthrough; empty means text-only.
   final String youtubeId;
   bool get hasVideo => youtubeId.isNotEmpty;
+
+  /// What the learner will be able to do after this lesson.
+  final List<String> objectives;
+
+  /// Knowledge checks after the first one ([question] … [explanation]).
+  final List<QuizQuestion> moreQuestions;
+
+  /// Key points to remember and the step that follows this lesson.
+  final List<String> recap;
+  final String nextStep;
+
+  /// Every knowledge check in order. All must be answered correctly to
+  /// complete the lesson; rewards are still earned once per lesson.
+  List<QuizQuestion> get questions => [
+        QuizQuestion(question, answers, correctAnswer, explanation),
+        ...moreQuestions,
+      ];
 }
 
 class LearningPath {
@@ -80,6 +111,7 @@ class LearningResource {
     required this.url,
     required this.category,
     required this.icon,
+    this.syncable = true,
   });
   final String id;
   final String title;
@@ -88,4 +120,8 @@ class LearningResource {
   final String url;
   final String category;
   final String icon;
+
+  /// False when the website's bookmark catalog does not list this material
+  /// yet. It can still be saved, but only on this device.
+  final bool syncable;
 }
