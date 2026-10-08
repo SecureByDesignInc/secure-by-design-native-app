@@ -34,11 +34,37 @@ void main() {
     final account = AccountStore(transport: transport);
     await tester.pumpWidget(MaterialApp(
         theme: buildTheme(), home: AccountScreen(account: account)));
-    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    final signIn = find.widgetWithText(OutlinedButton, 'Sign in');
+    await tester.ensureVisible(signIn);
+    await tester.pumpAndSettle();
+    await tester.tap(signIn);
     await tester.pumpAndSettle();
     expect(find.text('Enter your email address.'), findsOneWidget);
     expect(find.text('Enter your password.'), findsOneWidget);
     expect(transport.calls, isEmpty);
+    await tester.pumpWidget(const SizedBox());
+    account.dispose();
+  });
+
+  testWidgets('browser sign-in button opens the sign-in page', (tester) async {
+    final transport = FakeAccountTransport();
+    Uri? opened;
+    final account = AccountStore(
+      transport: transport,
+      browser: (url, _) async {
+        opened = url;
+        return 'securebydesign://auth?code=one-time-code';
+      },
+    );
+    await tester.pumpWidget(MaterialApp(
+        theme: buildTheme(), home: AccountScreen(account: account)));
+    final button = find.byKey(const ValueKey('browser-sign-in'));
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(opened?.path, '/app-sign-in');
+    expect(account.signedIn, true);
+    expect(transport.calls.single['path'], '/api/native-auth/exchange');
     await tester.pumpWidget(const SizedBox());
     account.dispose();
   });

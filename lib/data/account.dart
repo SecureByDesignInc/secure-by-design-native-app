@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 class AccountFailure implements Exception {
   const AccountFailure(this.message, {this.status = 0});
@@ -82,12 +86,24 @@ class NativeAccountTransport implements AccountTransport {
   }
 }
 
+/// Opens [url] in the system's secure sign-in browser and returns the URL it
+/// redirected to (with [callbackScheme]).
+typedef BrowserAuthenticator = Future<String> Function(
+    Uri url, String callbackScheme);
+
+Future<String> systemBrowserSignIn(Uri url, String callbackScheme) =>
+    FlutterWebAuth2.authenticate(
+        url: url.toString(), callbackUrlScheme: callbackScheme);
+
 /// This preview keeps the session in memory only. No password, token, or email
 /// is written to preferences, analytics, crash logs, or an exported progress file.
 class AccountStore extends ChangeNotifier {
-  AccountStore({AccountTransport? transport})
-      : _transport = transport ?? NativeAccountTransport();
+  AccountStore({AccountTransport? transport, BrowserAuthenticator? browser})
+      : _transport = transport ?? NativeAccountTransport(),
+        _browser = browser ?? systemBrowserSignIn;
   final AccountTransport _transport;
+  final BrowserAuthenticator _browser;
+  static const callbackScheme = 'securebydesign';
   String? _token;
   String? email;
   String? accountId;
@@ -120,32 +136,117 @@ class AccountStore extends ChangeNotifier {
         body: {'email': emailAddress.trim(), 'password': password},
       );
       if (_disposed) return;
-      final token = data['token'];
-      final expiry = DateTime.tryParse(data['expiresAt']?.toString() ?? '');
-      final user = data['user'];
-      if (token is! String ||
-          !RegExp(r'^[a-f0-9]{64}$').hasMatch(token) ||
-          expiry == null ||
-          !expiry.isAfter(DateTime.now()) ||
-          user is! Map ||
-          user['email'] is! String) {
-        throw const AccountFailure(
-          'The sign-in response was incomplete. Try again.',
-        );
-      }
-      _clear();
-      _token = token;
-      email = user['email'] as String;
-      accountId = user['id'] is String ? user['id'] as String : null;
-      _expiry = Timer(expiry.difference(DateTime.now()), () {
-        _clear();
-        error = 'Your session ended. Sign in again when you are ready.';
-        _notify();
-      });
+      _accept(data);
     } on AccountFailure catch (failure) {
       error = failure.message;
     } catch (_) {
       error = 'Sign-in is temporarily unavailable. Try again.';
+    } finally {
+      busy = false;
+      _notify();
+    }
+  }
+
+  void _accept(Map<String, dynamic> data) {
+    final token = data['token'];
+    final expiry = DateTime.tryParse(data['expiresAt']?.toString() ?? '');
+    final user = data['user'];
+    if (token is! String ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(token) ||
+        expiry == null ||
+        !expiry.isAfter(DateTime.now()) ||
+        user is! Map ||
+        user['email'] is! String) {
+      throw const AccountFailure(
+        'The sign-in response was incomplete. Try again.',
+      );
+    }
+    _clear();
+    _token = token;
+    email = user['email'] as String;
+    accountId = user['id'] is String ? user['id'] as String : null;
+    _expiry = Timer(expiry.difference(DateTime.now()), () {
+      _clear();
+      error = 'Your session ended. Sign in again when you are ready.';
+      _notify();
+    });
+  }
+
+  /// Signs in with Apple, Google, Microsoft, a passkey, or a website password.
+  /// The website returns a one-time code; only this app holds the PKCE
+  /// verifier that turns it into a session.
+  Future<void> signInWithBrowser() async {
+    if (busy || _disposed) return;
+    busy = true;
+    error = null;
+    _notify();
+    try {
+      final random = Random.secure();
+      final verifier = base64Url
+          .encode(List<int>.generate(48, (_) => random.nextInt(256)))
+          .replaceAll('=', '');
+      final challenge = base64Url
+          .encode(sha256.convert(ascii.encode(verifier)).bytes)
+          .replaceAll('=', '');
+      final result = await _browser(
+        Uri.https('securebydesigninc.com', '/app-sign-in',
+            {'challenge': challenge}),
+        callbackScheme,
+      );
+      if (_disposed) return;
+      final returned = Uri.tryParse(result);
+      final code = returned?.queryParameters['code'];
+      if (returned == null ||
+          returned.scheme != callbackScheme ||
+          returned.host != 'auth' ||
+          code == null ||
+          code.isEmpty) {
+        throw const AccountFailure('Sign-in did not finish. Try again.');
+      }
+      final data = await _transport.request(
+        'POST',
+        '/api/native-auth/exchange',
+        body: {'code': code, 'verifier': verifier},
+      );
+      if (_disposed) return;
+      _accept(data);
+    } on PlatformException catch (failure) {
+      // Closing the sign-in sheet is not an error.
+      if (failure.code != 'CANCELED') {
+        error = 'Sign-in did not finish. Try again.';
+      }
+    } on AccountFailure catch (failure) {
+      error = failure.message;
+    } catch (_) {
+      error = 'Sign-in is temporarily unavailable. Try again.';
+    } finally {
+      busy = false;
+      _notify();
+    }
+  }
+
+  /// Permanently deletes the signed-in account and its data on the server.
+  Future<bool> deleteAccount() async {
+    final token = _token;
+    if (token == null || busy || _disposed) return false;
+    busy = true;
+    error = null;
+    _notify();
+    try {
+      await _transport.request(
+        'POST',
+        '/api/native-auth/delete-account',
+        token: token,
+        body: {'confirm': 'DELETE'},
+      );
+      _clear();
+      return true;
+    } on AccountFailure catch (failure) {
+      error = failure.message;
+      return false;
+    } catch (_) {
+      error = 'Your account could not be deleted. Try again.';
+      return false;
     } finally {
       busy = false;
       _notify();
