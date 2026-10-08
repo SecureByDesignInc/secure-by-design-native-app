@@ -7,7 +7,7 @@ on:
         required: false
         default: ''
       mode:
-        description: status (list apps and recent builds) or trigger (start the TestFlight workflow)
+        description: status (list apps and recent builds), trigger (start the TestFlight workflow) or cancel (cancel build_id)
         required: false
         default: status
       app_id:
@@ -75,6 +75,11 @@ jobs:
           with open('comment.md', 'a') as f:
               f.write('\n#### Build ${{ inputs.build_id }}\n```json\n' + json.dumps(keep, indent=1) + '\n' + json.dumps(steps, indent=1) + '\n```\n')
           PY
+      - name: Cancel a build
+        if: ${{ inputs.mode == 'cancel' && inputs.build_id != '' }}
+        run: |
+          code=$(curl -sS -o cancel.json -w '%{http_code}' -X POST -H "x-auth-token: $CM_TOKEN" https://api.codemagic.io/builds/${{ inputs.build_id }}/cancel)
+          { echo ''; echo '#### Cancel response'; echo '```'; cat cancel.json; echo " HTTP $code"; echo '```'; } >> comment.md
       - name: Trigger TestFlight workflow
         if: ${{ inputs.mode == 'trigger' && inputs.app_id != '' }}
         run: |
