@@ -231,4 +231,7 @@ restructured the Build the Network path. It now runs 1.1–1.10.
   their new IDs; the website migrates account progress the same way.
 - The import also brought `assets/training/network.json` up to the website's
   current Inside the Network reference.
+- **SBD-TIME01 removed.** Learners use the domain controller as the NTP
+  source: course 1.2's time lesson is now “Make SBD-DC01 the domain's time
+  source”, and the network reference no longer lists TIME01 or rule F08.
 

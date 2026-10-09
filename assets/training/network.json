@@ -8,17 +8,22 @@
       "controls": [
         "AC-2",
         "IA-2",
-        "AC-6"
+        "AC-6",
+        "AU-8",
+        "SC-45"
       ],
-      "known": "Primary domain controller with AD and DNS. In this design it holds the PDC emulator role, so it alone takes time from SBD-TIME01 (F08).",
+      "known": "Primary domain controller with AD and DNS. In this design it holds the PDC emulator role, so it is the domain's authoritative time source: it serves time from its own clock, and every other member follows the domain hierarchy (F09).",
       "design": [
         "Protect identity administration from lower-trust workstation sessions.",
         "Restrict directory and DNS changes; monitor privileged changes.",
-        "Test directory recovery and replication health."
+        "Test directory recovery and replication health.",
+        "Serve domain time as the reliable source from its own clock; turn off hypervisor time synchronization for the domain controller VMs.",
+        "Define how the clock is checked against an approved reference and corrected, its drift threshold, and its fallback, without an external network connection."
       ],
       "evidence": [
         "Account and privilege reviews; AD/DNS configuration.",
-        "Replication checks, audited changes, and recovery exercise records."
+        "Replication checks, audited changes, and recovery exercise records.",
+        "Time design, scheduled drift checks and corrections, and time hierarchy test results."
       ],
       "address": "10.0.10.10"
     },
@@ -441,26 +446,6 @@
       "address": "10.0.70.10"
     },
     {
-      "id": "time",
-      "name": "SBD-TIME01",
-      "role": "Internal authoritative time",
-      "controls": [
-        "AU-8",
-        "SC-45"
-      ],
-      "known": "Internal reference clock. Source accuracy, fallback, and drift thresholds must be approved without adding an external network connection.",
-      "design": [
-        "Only the PDC emulator, SBD-DC01, syncs from TIME01 (F08); every other member follows domain time from the domain controllers (F09).",
-        "Monitor drift and loss of synchronization."
-      ],
-      "evidence": [
-        "Time hierarchy and approved reference source.",
-        "Clock drift and source-failure test results."
-      ],
-      "zone": "v20",
-      "address": "10.0.20.40"
-    },
-    {
       "id": "jump1",
       "name": "SBD-ADMIN-SRV01",
       "role": "Server administration only",
@@ -549,14 +534,12 @@
       "ids": [
         "dhcp",
         "syslog",
-        "wsus",
-        "time"
+        "wsus"
       ],
       "functions": [
         "DHCP scopes and reservations",
         "Central log collection",
         "Offline Windows update distribution",
-        "Internal authoritative time",
         "802.1X port admission (NPS role on SBD-DHCP01)"
       ],
       "controls": [
@@ -1775,7 +1758,6 @@
         "dhcp",
         "syslog",
         "wsus",
-        "time",
         "subca",
         "templates",
         "fs",
@@ -1812,7 +1794,6 @@
         "dhcp",
         "syslog",
         "wsus",
-        "time",
         "subca",
         "templates",
         "fs",
@@ -1848,7 +1829,6 @@
         "dhcp",
         "syslog",
         "wsus",
-        "time",
         "subca",
         "templates",
         "fs",
@@ -1913,7 +1893,6 @@
         "dc2",
         "dhcp",
         "syslog",
-        "time",
         "subca",
         "templates",
         "fs",
@@ -1952,21 +1931,6 @@
       "transport": "TCP 6514; mutual trust and sender allowlist",
       "purpose": "Linux event collection from SBD-REPO01, SBD-SPLUNK01, SBD-NESSUS01, and SBD-WEB01",
       "owner": "Logging owner",
-      "status": "permit",
-      "statusLabel": "Permitted by policy"
-    },
-    {
-      "id": "F08",
-      "from": [
-        "dc1"
-      ],
-      "to": [
-        "time"
-      ],
-      "service": "Time",
-      "transport": "UDP 123 · SBD-DC01 holds the PDC emulator role",
-      "purpose": "Only the PDC emulator takes time from the internal reference clock; every other system follows the domain hierarchy",
-      "owner": "Identity owner",
       "status": "permit",
       "statusLabel": "Permitted by policy"
     },
@@ -2090,7 +2054,6 @@
         "dhcp",
         "syslog",
         "wsus",
-        "time",
         "subca",
         "fs",
         "sql",
@@ -2117,7 +2080,6 @@
         "dhcp",
         "syslog",
         "wsus",
-        "time",
         "subca",
         "templates",
         "fs",
@@ -2147,7 +2109,6 @@
         "dc2",
         "dhcp",
         "wsus",
-        "time",
         "subca",
         "templates",
         "fs",
@@ -2179,7 +2140,6 @@
         "dhcp",
         "syslog",
         "wsus",
-        "time",
         "subca",
         "templates",
         "fs",
@@ -2299,7 +2259,6 @@
         "dhcp",
         "syslog",
         "wsus",
-        "time",
         "fs",
         "sql",
         "apps",
@@ -2426,7 +2385,7 @@
       "depends": [
         "dc2"
       ],
-      "dependencyText": "Check DNS, time, replication, and recovery design together. SBD-DC01 holds the PDC emulator role in this design: it alone syncs from SBD-TIME01 (F08), and every other domain member syncs from the domain controllers (F09).",
+      "dependencyText": "Check DNS, time, replication, and recovery design together. SBD-DC01 holds the PDC emulator role in this design: it is the domain's authoritative time source, serving time from its own clock, and every other domain member syncs from the domain controllers (F09).",
       "verify": [
         "DNS and directory discovery from a client.",
         "Replication health and protected restore procedures."
