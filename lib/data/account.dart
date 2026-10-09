@@ -91,18 +91,47 @@ class NativeAccountTransport implements AccountTransport {
 typedef BrowserAuthenticator = Future<String> Function(
     Uri url, String callbackScheme);
 
+/// The HTTPS address the website returns sign-in codes to on iOS 17.4 and
+/// later. The app claims it through Associated Domains (webcredentials), so
+/// only this app's sign-in session can receive it.
+const appCallbackHost = 'securebydesigninc.com';
+const appCallbackPath = '/app-auth/callback';
+
 Future<String> systemBrowserSignIn(Uri url, String callbackScheme) =>
     FlutterWebAuth2.authenticate(
-        url: url.toString(), callbackUrlScheme: callbackScheme);
+      url: url.toString(),
+      callbackUrlScheme: callbackScheme,
+      options: callbackScheme == 'https'
+          ? const FlutterWebAuth2Options(
+              httpsHost: appCallbackHost, httpsPath: appCallbackPath)
+          : const FlutterWebAuth2Options(),
+    );
+
+/// HTTPS sign-in callbacks need iOS 17.4 or later; other systems use the
+/// app's custom scheme.
+bool supportsHttpsCallback() {
+  if (!Platform.isIOS) return false;
+  final match =
+      RegExp(r'(\d+)\.(\d+)').firstMatch(Platform.operatingSystemVersion);
+  if (match == null) return false;
+  final major = int.parse(match.group(1)!);
+  final minor = int.parse(match.group(2)!);
+  return major > 17 || (major == 17 && minor >= 4);
+}
 
 /// This preview keeps the session in memory only. No password, token, or email
 /// is written to preferences, analytics, crash logs, or an exported progress file.
 class AccountStore extends ChangeNotifier {
-  AccountStore({AccountTransport? transport, BrowserAuthenticator? browser})
+  AccountStore(
+      {AccountTransport? transport,
+      BrowserAuthenticator? browser,
+      bool? httpsCallback})
       : _transport = transport ?? NativeAccountTransport(),
-        _browser = browser ?? systemBrowserSignIn;
+        _browser = browser ?? systemBrowserSignIn,
+        _httpsCallback = httpsCallback ?? supportsHttpsCallback();
   final AccountTransport _transport;
   final BrowserAuthenticator _browser;
+  final bool _httpsCallback;
   static const callbackScheme = 'securebydesign';
   String? _token;
   String? email;
@@ -188,19 +217,26 @@ class AccountStore extends ChangeNotifier {
       final challenge = base64Url
           .encode(sha256.convert(ascii.encode(verifier)).bytes)
           .replaceAll('=', '');
+      final https = _httpsCallback;
       final result = await _browser(
-        Uri.https('securebydesigninc.com', '/app-sign-in',
-            {'challenge': challenge}),
-        callbackScheme,
+        Uri.https('securebydesigninc.com', '/app-sign-in', {
+          'challenge': challenge,
+          if (https) 'callback': 'https',
+        }),
+        https ? 'https' : callbackScheme,
       );
       if (_disposed) return;
       final returned = Uri.tryParse(result);
       final code = returned?.queryParameters['code'];
-      if (returned == null ||
-          returned.scheme != callbackScheme ||
-          returned.host != 'auth' ||
-          code == null ||
-          code.isEmpty) {
+      final fromScheme = returned != null &&
+          returned.scheme == callbackScheme &&
+          returned.host == 'auth';
+      final fromHttps = https &&
+          returned != null &&
+          returned.scheme == 'https' &&
+          returned.host == appCallbackHost &&
+          returned.path == appCallbackPath;
+      if (!(fromScheme || fromHttps) || code == null || code.isEmpty) {
         throw const AccountFailure('Sign-in did not finish. Try again.');
       }
       final data = await _transport.request(

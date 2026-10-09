@@ -136,6 +136,47 @@ void main() {
       }
     });
 
+    test('iOS 17.4+ receives the code on the app\'s HTTPS callback', () async {
+      final transport = FakeAccountTransport();
+      late Uri opened;
+      late String scheme;
+      final account = AccountStore(
+        transport: transport,
+        httpsCallback: true,
+        browser: (url, callbackScheme) async {
+          opened = url;
+          scheme = callbackScheme;
+          return 'https://securebydesigninc.com/app-auth/callback?code=one-time-code';
+        },
+      );
+      addTearDown(account.dispose);
+      await account.signInWithBrowser();
+      expect(account.signedIn, true);
+      expect(scheme, 'https');
+      expect(opened.queryParameters['callback'], 'https');
+      final body = transport.calls.single['body'] as Map<String, Object>;
+      expect(body['code'], 'one-time-code');
+    });
+
+    test('an HTTPS callback on another host or path is refused', () async {
+      for (final returned in [
+        'https://evil.example/app-auth/callback?code=x',
+        'https://securebydesigninc.com/other?code=x',
+        'http://securebydesigninc.com/app-auth/callback?code=x',
+      ]) {
+        final transport = FakeAccountTransport();
+        final account = AccountStore(
+          transport: transport,
+          httpsCallback: true,
+          browser: (_, __) async => returned,
+        );
+        await account.signInWithBrowser();
+        expect(account.signedIn, false, reason: returned);
+        expect(transport.calls, isEmpty, reason: returned);
+        account.dispose();
+      }
+    });
+
     test('closing the sign-in sheet is not reported as an error', () async {
       final transport = FakeAccountTransport();
       final account = AccountStore(
