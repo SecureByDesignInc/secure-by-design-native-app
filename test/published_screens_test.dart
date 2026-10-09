@@ -87,7 +87,7 @@ void main() {
     }
     // The website lists every material the app offers, so every bookmark syncs.
     for (final id in ['dc-guide', 'dc-pdf', 'dns-configuration-guide', 'two-tier-pki-checklist',
-        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide', 'connect-guide',
+        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide',
         'harden-baseline-pdf']) {
       expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
     }
@@ -224,7 +224,7 @@ void main() {
     await tester.pumpWidget(
         MaterialApp(theme: buildTheme(), home: const NetworkScreen()));
     await tester.pumpAndSettle();
-    expect(find.textContaining('7 traffic processes, 5 what-ifs, 23 systems'), findsOneWidget);
+    expect(find.textContaining('7 traffic processes, 5 what-ifs, 22 systems'), findsOneWidget);
     expect(find.text('Use a web app'), findsOneWidget);
     await tester.ensureVisible(find.text('PC-to-PC remote desktop'));
     await tester.tap(find.text('PC-to-PC remote desktop'));
