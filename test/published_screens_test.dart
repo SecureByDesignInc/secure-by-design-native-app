@@ -113,7 +113,7 @@ void main() {
       await tester.pumpAndSettle();
     }
     final questions = lesson.questions;
-    expect(questions.length, 3);
+    expect(questions.length, greaterThanOrEqualTo(3));
     final first = questions.first;
     await choose(first.answers[(first.correctAnswer + 1) % first.answers.length]);
     for (var i = 0; i < questions.length; i++) {

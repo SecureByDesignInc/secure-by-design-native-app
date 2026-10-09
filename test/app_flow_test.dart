@@ -53,17 +53,17 @@ void main() {
       final complete = find.widgetWithText(FilledButton, 'Complete lesson');
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
       await tester.scrollUntilVisible(
-        find.text('A public DNS resolver'),
+        find.text('Promotion assigns a name and address automatically'),
         260,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.text('A public DNS resolver'));
+      await tester.tap(find.text('Promotion assigns a name and address automatically'));
       await tester.pumpAndSettle();
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
-      await tester.tap(find.text('A public DNS resolver'));
+      await tester.tap(find.text('Promotion assigns a name and address automatically'));
       await tester.pumpAndSettle();
       expect(pulses, ['HapticFeedbackType.selectionClick']);
-      await tester.tap(find.text('DC01, once its domain DNS is available'));
+      await tester.tap(find.text('Changing them on a domain controller later is a separate procedure'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(complete);
       await tester.tap(complete);
