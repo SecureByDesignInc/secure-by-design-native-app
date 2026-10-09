@@ -1,6 +1,7 @@
 name: Codemagic build details (temporary)
 
-# Diagnostic helper (not for main): shows each step of the latest Codemagic build and the end of the failed step's log.
+# Diagnostic helper (not for main): starts the TestFlight workflow on the branch named below, waits for it, and shows
+# each step and, if it fails, the end of the failed step's log.
 on:
   push:
     branches: ['diag/codemagic']
@@ -11,22 +12,22 @@ permissions:
 jobs:
   details:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
     env:
       CM_TOKEN: ${{ secrets.CM_API_TOKEN }}
     steps:
-      - name: Start a TestFlight build of this branch and wait
+      - name: Start a TestFlight build of main and wait
         run: |
           set -uo pipefail
           app=6ac115f2b13f02f748819eff
-          id=$(curl -sS -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" -d "{\"appId\":\"$app\",\"workflowId\":\"ios-testflight\",\"branch\":\"diag/codemagic\"}" https://api.codemagic.io/builds | jq -r '.buildId')
+          id=$(curl -sS -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" -d "{\"appId\":\"$app\",\"workflowId\":\"ios-testflight\",\"branch\":\"main\"}" https://api.codemagic.io/builds | jq -r '.buildId')
           echo "BUILD_ID=$id" >> "$GITHUB_ENV"
-          for i in $(seq 1 100); do
+          for i in $(seq 1 180); do
             st=$(curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$id" | jq -r '.build.status')
             case "$st" in finished|failed|canceled|timeout|skipped) break;; esac
             sleep 15
           done
-          echo "::notice title=Diagnostic build::$id $st"
+          echo "::notice title=TestFlight build (main)::$id $st"
       - name: Build details
         run: |
           set -uo pipefail
