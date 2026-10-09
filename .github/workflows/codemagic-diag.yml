@@ -1,7 +1,7 @@
 name: Codemagic build details (temporary)
 
-# Diagnostic helper (not for main): starts the TestFlight workflow on the branch named below, waits for it, and shows
-# each step and, if it fails, the end of the failed step's log.
+# Diagnostic helper (not for main): downloads the IPA from one finished Codemagic build and prints the version,
+# the signing profile and the entitlements actually signed into the app.
 on:
   push:
     branches: ['diag/codemagic']
@@ -10,50 +10,53 @@ permissions:
   contents: read
 
 jobs:
-  details:
+  inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 10
     env:
       CM_TOKEN: ${{ secrets.CM_API_TOKEN }}
+      BUILD_ID: 6ac867193d46751c93928648
     steps:
-      - name: Start a TestFlight build of main and wait
+      - name: Signed app entitlements
         run: |
           set -uo pipefail
-          app=6ac115f2b13f02f748819eff
-          id=$(curl -sS -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" -d "{\"appId\":\"$app\",\"workflowId\":\"ios-testflight\",\"branch\":\"main\"}" https://api.codemagic.io/builds | jq -r '.buildId')
-          echo "BUILD_ID=$id" >> "$GITHUB_ENV"
-          for i in $(seq 1 180); do
-            st=$(curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$id" | jq -r '.build.status')
-            case "$st" in finished|failed|canceled|timeout|skipped) break;; esac
-            sleep 15
-          done
-          echo "::notice title=TestFlight build (main)::$id $st"
-      - name: Build details
-        run: |
-          set -uo pipefail
-          id=$BUILD_ID
-          curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$id" > build.json
-          echo "::notice title=Build $id::$(jq -r '.build | "\(.status) · workflow \(.workflowId) · commit \(.commit.hash[0:9])"' build.json)"
-          echo "::notice title=Steps::$(jq -r '[.build.buildActions[]? | "\(.name): \(.status)"] | join(" | ")' build.json)"
-          echo "::notice title=Failed action fields::$(jq -c '.build.buildActions[]? | select(.status=="failed") | with_entries(select(.value|type!="array" and type!="object"))' build.json | head -c 1500)"
-          echo "::notice title=Artefacts::$(jq -c '[.build.artefacts[]? | {name, url, type}]' build.json | head -c 1500)"
-          jq -r '.build.buildActions[]? | select(.status=="failed") | (.logUrl // .log_url // .logsUrl // empty)' build.json | head -1 > logurl.txt
-          if [ -s logurl.txt ]; then
-            curl -sS -L -H "x-auth-token: $CM_TOKEN" "$(cat logurl.txt)" -o step.log || true
-            tail -c 3500 step.log | grep -v '^\s*$' | tail -40 | tr '\n' '|' | sed 's/%/%25/g' > tail.txt
-            echo "::warning title=Failed step log (end)::$(cat tail.txt)"
-          else
-            echo "::notice title=No failed step log::$(jq -c '.build.message // .build.statusReason // empty' build.json | head -c 500)"
-          fi
-      - name: Build logs from the artifacts
-        run: |
-          set -uo pipefail
-          url=$(jq -r '[.build.artefacts[]? | select(.type=="bundle") | .url][0] // empty' build.json)
-          [ -z "$url" ] && { echo "::notice title=Artifacts::none"; exit 0; }
-          curl -sS -L -H "x-auth-token: $CM_TOKEN" "$url" -o artifacts.zip
-          mkdir -p a && (cd a && unzip -qo ../artifacts.zip) || { echo "::warning title=Artifacts::could not unzip ($(head -c 200 artifacts.zip))"; exit 0; }
-          echo "::notice title=Artifact files::$(cd a && find . -type f | head -20 | tr '\n' ' ')"
-          for f in $(find a -name '*.log' | head -3); do
-            errs=$(grep -iE "error|provisioning|entitlement|signing|associated|requires|failed" "$f" | grep -v "^ *$" | sort -u | head -25 | tr '\n' '|' | sed 's/%/%25/g' | cut -c1-3500)
-            echo "::warning title=Errors in $(basename $f)::$errs"
-          done
+          curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$BUILD_ID" > build.json
+          url=$(jq -r '[.build.artefacts[]? | select(.type=="ipa") | .url][0] // empty' build.json)
+          [ -z "$url" ] && { echo "::error title=IPA::no IPA artifact on build $BUILD_ID"; exit 1; }
+          curl -sS -L -H "x-auth-token: $CM_TOKEN" "$url" -o app.ipa
+          mkdir x && (cd x && unzip -qo ../app.ipa)
+          app=$(ls -d x/Payload/*.app | head -1)
+          python3 - "$app" <<'PY'
+          import plistlib, re, struct, sys
+          app = sys.argv[1]
+          def note(title, text): print(f"::notice title={title}::" + text.replace('%', '%25').replace('\n', ' | ')[:3800])
+          info = plistlib.load(open(f'{app}/Info.plist', 'rb'))
+          note('App', f"{info.get('CFBundleIdentifier')} version {info.get('CFBundleShortVersionString')} build {info.get('CFBundleVersion')}, minimum iOS {info.get('MinimumOSVersion')}")
+          raw = open(f'{app}/embedded.mobileprovision', 'rb').read()
+          prof = plistlib.loads(raw[raw.index(b'<?xml'):raw.index(b'</plist>') + 8])
+          ent = prof.get('Entitlements', {})
+          note('Signing profile', f"{prof.get('Name')} (team {','.join(prof.get('TeamIdentifier', []))}, created {prof.get('CreationDate')}, expires {prof.get('ExpirationDate')}); associated-domains in profile: {ent.get('com.apple.developer.associated-domains')}")
+          data = open(f"{app}/{info['CFBundleExecutable']}", 'rb').read()
+          if struct.unpack('>I', data[:4])[0] == 0xcafebabe:
+              _, _, off, size, _ = struct.unpack('>iiIII', data[8:28]); data = data[off:off + size]
+          assert struct.unpack('<I', data[:4])[0] == 0xfeedfacf, 'not a 64-bit Mach-O'
+          ncmds = struct.unpack('<I', data[16:20])[0]; off = 32; sig = None
+          for _ in range(ncmds):
+              cmd, size = struct.unpack('<II', data[off:off + 8])
+              if cmd == 0x1d: sig = struct.unpack('<II', data[off + 8:off + 16])
+              off += size
+          blob = data[sig[0]:sig[0] + sig[1]]
+          _, _, count = struct.unpack('>III', blob[:12])
+          signed = None
+          for i in range(count):
+              _, boff = struct.unpack('>II', blob[12 + 8 * i:20 + 8 * i])
+              magic, length = struct.unpack('>II', blob[boff:boff + 8])
+              if magic == 0xfade7171: signed = plistlib.loads(blob[boff + 8:boff + length])
+          if signed is None:
+              print('::error title=Entitlements::none found in the code signature'); sys.exit(1)
+          note('Signed entitlements', '; '.join(f"{k} = {v}" for k, v in sorted(signed.items())))
+          want = {'applinks:securebydesigninc.com', 'webcredentials:securebydesigninc.com'}
+          have = set(signed.get('com.apple.developer.associated-domains', []))
+          if want <= have: note('App links', 'present in the signed app: ' + ', '.join(sorted(want)))
+          else: print(f"::error title=App links::missing from the signed app: {sorted(want - have)}"); sys.exit(1)
+          PY
