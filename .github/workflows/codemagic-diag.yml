@@ -1,0 +1,32 @@
+name: Codemagic build details (temporary)
+
+# Diagnostic helper (not for main): shows each step of the latest Codemagic build and the end of the failed step's log.
+on:
+  push:
+    branches: ['diag/codemagic']
+
+permissions:
+  contents: read
+
+jobs:
+  details:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CM_TOKEN: ${{ secrets.CM_API_TOKEN }}
+    steps:
+      - name: Build details
+        run: |
+          set -uo pipefail
+          id=$(curl -sS -H "x-auth-token: $CM_TOKEN" https://api.codemagic.io/builds | jq -r '.builds[0]._id')
+          curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$id" > build.json
+          echo "::notice title=Build $id::$(jq -r '.build | "\(.status) · workflow \(.workflowId) · commit \(.commit.hash[0:9])"' build.json)"
+          echo "::notice title=Steps::$(jq -r '[.build.buildActions[]? | "\(.name): \(.status)"] | join(" | ")' build.json)"
+          jq -r '.build.buildActions[]? | select(.status=="failed") | .logUrl // empty' build.json | head -1 > logurl.txt
+          if [ -s logurl.txt ]; then
+            curl -sS -L -H "x-auth-token: $CM_TOKEN" "$(cat logurl.txt)" -o step.log || true
+            tail -c 3500 step.log | grep -v '^\s*$' | tail -40 | tr '\n' '|' | sed 's/%/%25/g' > tail.txt
+            echo "::warning title=Failed step log (end)::$(cat tail.txt)"
+          else
+            echo "::notice title=No failed step log::$(jq -c '.build.message // .build.statusReason // empty' build.json | head -c 500)"
+          fi
