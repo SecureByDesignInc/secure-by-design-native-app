@@ -10,19 +10,18 @@ class TrainingCategory {
 }
 
 /// Every published course belongs to exactly one category; within a category
-/// courses keep the website's order (1.1, 1.2, … 1.12, then 2.1–2.3).
+/// courses keep the website's order (1.1, 1.2, … 1.10, then 2.1–2.3).
 const trainingCategories = [
   TrainingCategory(
       'foundations',
       'Network Foundations',
-      'Build identity and DNS, harden and segment the network, then add '
-          'logging, the workstation fleet, patching, business services, '
-          'and proven recovery.',
+      'Build identity, DNS and time, harden the baseline, then add tiered '
+          'administration, logging, the workstation fleet, patching, '
+          'business services, and proven recovery.',
       'directory', [
     'dc01-dc02',
     'dns-configuration',
     'harden-baseline',
-    'connect-segment',
     'tiered-admin',
     'logging-pipeline',
     'workstation-fleet',
@@ -33,10 +32,10 @@ const trainingCategories = [
   TrainingCategory(
       'trust',
       'Certificates & Trust',
-      'Connect an offline Root CA to your subordinate / issuing CA, then '
-          'publish revocation data and certificate templates.',
+      'Build the two-tier PKI: an offline Root CA, the issuing CA, the '
+          'pki.sbd.test publication site, and certificate templates.',
       'risk',
-      ['two-tier-pki', 'pki-services']),
+      ['two-tier-pki']),
   TrainingCategory(
       'authorization',
       'Network Authorization',

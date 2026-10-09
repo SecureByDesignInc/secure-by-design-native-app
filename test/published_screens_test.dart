@@ -22,21 +22,24 @@ void main() {
   test('the app carries every website course in site order with stable progress IDs', () {
     expect(publishedPaths.map((path) => path.id), [
       'dc01-dc02', 'dns-configuration', 'harden-baseline', 'two-tier-pki',
-      'connect-segment', 'pki-services', 'tiered-admin', 'logging-pipeline',
+      'tiered-admin', 'logging-pipeline',
       'workstation-fleet', 'patch-protect', 'business-services',
       'prove-recovery', 'rmf-boe-ato', 'rmf-body-of-evidence',
       'rmf-authorization-to-operate',
     ]);
     expect(publishedPaths.map((path) => path.number), [
-      for (var i = 1; i <= 12; i++) '1.$i',
+      for (var i = 1; i <= 10; i++) '1.$i',
       for (var i = 1; i <= 3; i++) '2.$i',
     ]);
     final build = publishedPaths.where((path) => path.category == 'Network build');
-    expect(build.length, 12);
-    expect(course('dns-configuration').lessons.length, 5);
-    expect(course('two-tier-pki').lessons.length, 6);
+    expect(build.length, 10);
+    expect(course('dns-configuration').lessons.length, 6);
+    expect(course('two-tier-pki').lessons.length, 10);
     final ids = publishedPaths.expand((path) => path.lessons).map((lesson) => lesson.id).toList();
-    expect(ids.length, 82);
+    expect(ids.length, 75);
+    expect(ids, contains('training:dns-configuration:time'));
+    expect(ids, contains('training:two-tier-pki:template-admin'));
+    expect(ids.where((id) => id.contains('connect-segment') || id.contains('pki-services')), isEmpty);
     expect(ids.toSet().length, ids.length);
     expect(ids, contains('training:two-tier-pki:sign'));
     expect(ids, contains('training:prove-recovery:record'));
@@ -84,7 +87,7 @@ void main() {
     }
     // The website lists every material the app offers, so every bookmark syncs.
     for (final id in ['dc-guide', 'dc-pdf', 'dns-configuration-guide', 'two-tier-pki-checklist',
-        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide', 'connect-guide',
+        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide',
         'harden-baseline-pdf']) {
       expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
     }
@@ -136,13 +139,13 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsNWidgets(3));
-    expect(find.text('Configure DNS'), findsNothing);
+    expect(find.text('Configure DNS and time'), findsNothing);
     await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
     await tester.enterText(find.byType(TextField), 'Root CA');
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsOneWidget);
-    expect(find.text('Configure a Root CA & issuing CA'), findsOneWidget);
+    expect(find.text('Configure the two-tier PKI'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'no matching topic');
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsNothing);
@@ -221,7 +224,7 @@ void main() {
     await tester.pumpWidget(
         MaterialApp(theme: buildTheme(), home: const NetworkScreen()));
     await tester.pumpAndSettle();
-    expect(find.textContaining('7 traffic processes, 5 what-ifs, 23 systems'), findsOneWidget);
+    expect(find.textContaining('7 traffic processes, 5 what-ifs, 22 systems'), findsOneWidget);
     expect(find.text('Use a web app'), findsOneWidget);
     await tester.ensureVisible(find.text('PC-to-PC remote desktop'));
     await tester.tap(find.text('PC-to-PC remote desktop'));
