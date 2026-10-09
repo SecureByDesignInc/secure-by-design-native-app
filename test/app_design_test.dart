@@ -39,7 +39,7 @@ void main() {
     }
     String titleFor(String id) =>
         categoryFor(publishedPaths.firstWhere((path) => path.id == id)).title;
-    for (final id in ['two-tier-pki', 'pki-services']) {
+    for (final id in ['two-tier-pki']) {
       expect(titleFor(id), 'Certificates & Trust');
       expect(publishedPaths.firstWhere((path) => path.id == id).category, 'Network build');
     }

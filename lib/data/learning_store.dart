@@ -84,6 +84,34 @@ class LearningStore extends ChangeNotifier {
   Future<void> _writes = Future.value();
   Set<String> get _lessonIds =>
       learningPaths.expand((p) => p.lessons).map((l) => l.id).toSet();
+
+  /// October 2026 library restructure: course 1.5 (connect-segment) was removed
+  /// and its time lesson moved into course 1.2; course 1.6 (pki-services) merged
+  /// into course 1.4. Saved device progress follows the lessons to their new IDs
+  /// (the website migrates account progress the same way).
+  static const _movedLessons = {
+    'training:connect-segment:time': 'training:dns-configuration:time',
+    'training:pki-services:publication': 'training:two-tier-pki:publication',
+    'training:pki-services:publish-trust': 'training:two-tier-pki:publish-trust',
+    'training:pki-services:template-admin': 'training:two-tier-pki:template-admin',
+    'training:pki-services:first-templates': 'training:two-tier-pki:first-templates',
+    'training:pki-services:validate': 'training:two-tier-pki:validate',
+  };
+  static const _movedPaths = {'pki-services': 'two-tier-pki'};
+  Set<String> _carried(Iterable<String> ids) =>
+      ids.map((id) => _movedLessons[id] ?? id).toSet().intersection(_lessonIds);
+  Object? _carriedActivity(Object? raw) => raw is Map &&
+          _movedLessons.containsKey(raw['lessonId'])
+      ? {...raw, 'lessonId': _movedLessons[raw['lessonId']]}
+      : raw;
+  Map<String, String> _carriedRecords(Map<String, String> records) {
+    final carried = <String, String>{};
+    records.forEach((id, status) {
+      final target = _movedLessons[id] ?? id;
+      if (carried[target] != 'completed') carried[target] = status;
+    });
+    return carried;
+  }
   Set<String> get _resourceIds =>
       {...resources.map((r) => r.id), ...foundationResources.map((r) => r.id)};
 
@@ -132,12 +160,8 @@ class LearningStore extends ChangeNotifier {
     _activities = {};
     _pendingActivity = {};
     _dailyGoal = 20;
-    _completed = (_preferences.getStringList(_key('completed')) ?? [])
-        .toSet()
-        .intersection(_lessonIds);
-    _started = (_preferences.getStringList(_key('started')) ?? [])
-        .toSet()
-        .intersection(_lessonIds);
+    _completed = _carried(_preferences.getStringList(_key('completed')) ?? []);
+    _started = _carried(_preferences.getStringList(_key('started')) ?? []);
     _saved = (_preferences.getStringList(_key('saved')) ?? [])
         .toSet()
         .intersection(_resourceIds);
@@ -158,15 +182,15 @@ class LearningStore extends ChangeNotifier {
       final raw = _preferences.getString(_key('state'));
       if (raw != null) {
         final state = jsonDecode(raw) as Map;
-        _completed =
-            Set<String>.from(state['completed']).intersection(_lessonIds);
-        _started = Set<String>.from(state['started']).intersection(_lessonIds);
+        _completed = _carried(Set<String>.from(state['completed']));
+        _started = _carried(Set<String>.from(state['started']));
         _saved = Set<String>.from(state['saved']).intersection(_resourceIds);
         _lastPath = state['lastPath'] as String?;
         _pendingRecords = Map<String, String>.from(state['pendingRecords']);
         _pendingBookmarks = Map<String, bool>.from(state['pendingBookmarks']);
         for (final raw in state['activity'] is List ? state['activity'] : []) {
-          final event = LearningActivity.fromJson(raw, _lessonIds);
+          final event =
+              LearningActivity.fromJson(_carriedActivity(raw), _lessonIds);
           if (event != null) _activities[event.key] = event;
         }
         _pendingActivity = (state['pendingActivity'] is List
@@ -180,6 +204,9 @@ class LearningStore extends ChangeNotifier {
     } catch (_) {
       /* Existing version-one records remain the migration fallback. */
     }
+    final lastPath = _lastPath;
+    if (_movedPaths.containsKey(lastPath)) _lastPath = _movedPaths[lastPath];
+    _pendingRecords = _carriedRecords(_pendingRecords);
     _pendingRecords.removeWhere((id, status) =>
         !_lessonIds.contains(id) ||
         !['completed', 'in_progress'].contains(status));

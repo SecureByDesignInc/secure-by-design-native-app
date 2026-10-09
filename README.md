@@ -7,7 +7,7 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 ## What works
 
 - Home, Training, Explore, and My Account with the website's navy/cyan design.
-- All 15 published Training Library courses: Build the Network 1.1–1.12 (the DC01/DC02 identity build and eleven configuration courses) and Network Authorization 2.1–2.3 (Risk Management Framework, Body of Evidence, and Authorization to Operate). The app groups them into three training categories.
+- All 13 published Training Library courses: Build the Network 1.1–1.10 (the DC01/DC02 identity build and nine configuration courses) and Network Authorization 2.1–2.3 (Risk Management Framework, Body of Evidence, and Authorization to Operate). The app groups them into three training categories.
 - Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
 - Bundled course text and knowledge checks, plus the nine original foundation lessons.
 - Inside the Network: seven offline traffic processes, five what-ifs, 23 system references, and the policy register (F01–F20 plus administrative and deny rules); the complete website 3D explorer opens in-app on iOS, Android, and macOS.
@@ -212,4 +212,23 @@ and existing lesson, course, and material IDs are unchanged.
 - **Importer.** `tool/import_site_training.mjs` reads the current course
   format (`quizzes`, `objectives`, `recap`, `next`, workbooks, checklist page,
   RMF parts) and no longer writes Site files unless `--write-site` is passed.
+
+## Training library restructure (October 8, 2026)
+
+The bundled catalog was re-imported from the website after the owner
+restructured the Build the Network path. It now runs 1.1–1.10.
+
+- **Course 1.5 removed.** “Connect and segment the network” is gone; later
+  courses assume the network's routing and segmentation already exist. Its time
+  lesson moved into course 1.2, now “Configure DNS and time”.
+- **One PKI course.** Former 1.6 “Finish the PKI services” merged into 1.4,
+  now “Configure the two-tier PKI” (10 lessons), the only course in
+  Certificates & Trust.
+- **Renumbered.** Tiered administration is 1.5, logging 1.6, fleet 1.7,
+  patching 1.8, business services 1.9, recovery 1.10. Course IDs are unchanged.
+- **Saved progress.** `LearningStore` carries device progress for the moved
+  lessons (`training:connect-segment:time` and `training:pki-services:*`) to
+  their new IDs; the website migrates account progress the same way.
+- The import also brought `assets/training/network.json` up to the website's
+  current Inside the Network reference.
 

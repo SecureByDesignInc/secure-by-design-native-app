@@ -65,4 +65,25 @@ void main() {
       await expectLater(store.toggleSaved('missing'), throwsArgumentError);
     },
   );
+
+  test(
+    'device progress follows lessons moved by the October 2026 restructure',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'sbd.completed.v1': [
+          'training:connect-segment:time',
+          'training:connect-segment:router',
+          'training:pki-services:template-admin',
+        ],
+        'sbd.started.v1': ['training:pki-services:validate'],
+        'sbd.lastPath.v1': 'pki-services',
+      });
+      final store = await LearningStore.load();
+      expect(store.completed, {
+        'training:dns-configuration:time',
+        'training:two-tier-pki:template-admin',
+      });
+      expect(store.currentPath.id, 'two-tier-pki');
+    },
+  );
 }
