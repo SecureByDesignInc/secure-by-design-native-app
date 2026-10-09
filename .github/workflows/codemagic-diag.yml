@@ -22,7 +22,9 @@ jobs:
           curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$id" > build.json
           echo "::notice title=Build $id::$(jq -r '.build | "\(.status) · workflow \(.workflowId) · commit \(.commit.hash[0:9])"' build.json)"
           echo "::notice title=Steps::$(jq -r '[.build.buildActions[]? | "\(.name): \(.status)"] | join(" | ")' build.json)"
-          jq -r '.build.buildActions[]? | select(.status=="failed") | .logUrl // empty' build.json | head -1 > logurl.txt
+          echo "::notice title=Failed action fields::$(jq -c '.build.buildActions[]? | select(.status=="failed") | with_entries(select(.value|type!="array" and type!="object"))' build.json | head -c 1500)"
+          echo "::notice title=Artefacts::$(jq -c '[.build.artefacts[]? | {name, url, type}]' build.json | head -c 1500)"
+          jq -r '.build.buildActions[]? | select(.status=="failed") | (.logUrl // .log_url // .logsUrl // empty)' build.json | head -1 > logurl.txt
           if [ -s logurl.txt ]; then
             curl -sS -L -H "x-auth-token: $CM_TOKEN" "$(cat logurl.txt)" -o step.log || true
             tail -c 3500 step.log | grep -v '^\s*$' | tail -40 | tr '\n' '|' | sed 's/%/%25/g' > tail.txt
