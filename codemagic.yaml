@@ -64,10 +64,16 @@ workflows:
       - name: Apply Apple signing profiles
         script: xcode-project use-profiles
       - name: Build signed IPA
-        script: >-
-          flutter build ipa --release
-          --build-number=$PROJECT_BUILD_NUMBER
-          --export-options-plist=/Users/builder/export_options.plist
+        script: |
+          set -o pipefail
+          mkdir -p /tmp/xcodebuild_logs
+          for profile in "$HOME/Library/MobileDevice/Provisioning Profiles"/*; do
+            echo "== $profile"
+            security cms -D -i "$profile" | plutil -extract Entitlements xml1 -o - - 2>&1 | head -40
+          done > /tmp/xcodebuild_logs/profiles.log 2>&1 || true
+          flutter build ipa --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist 2>&1 | tee /tmp/xcodebuild_logs/flutter-build-ipa.log
     artifacts:
       - build/ios/ipa/*.ipa
       - previews/*.png

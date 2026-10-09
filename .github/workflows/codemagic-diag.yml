@@ -11,14 +11,26 @@ permissions:
 jobs:
   details:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 40
     env:
       CM_TOKEN: ${{ secrets.CM_API_TOKEN }}
     steps:
+      - name: Start a TestFlight build of this branch and wait
+        run: |
+          set -uo pipefail
+          app=6ac115f2b13f02f748819eff
+          id=$(curl -sS -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" -d "{\"appId\":\"$app\",\"workflowId\":\"ios-testflight\",\"branch\":\"diag/codemagic\"}" https://api.codemagic.io/builds | jq -r '.buildId')
+          echo "BUILD_ID=$id" >> "$GITHUB_ENV"
+          for i in $(seq 1 100); do
+            st=$(curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$id" | jq -r '.build.status')
+            case "$st" in finished|failed|canceled|timeout|skipped) break;; esac
+            sleep 15
+          done
+          echo "::notice title=Diagnostic build::$id $st"
       - name: Build details
         run: |
           set -uo pipefail
-          id=$(curl -sS -H "x-auth-token: $CM_TOKEN" https://api.codemagic.io/builds | jq -r '.builds[0]._id')
+          id=$BUILD_ID
           curl -sS -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/$id" > build.json
           echo "::notice title=Build $id::$(jq -r '.build | "\(.status) · workflow \(.workflowId) · commit \(.commit.hash[0:9])"' build.json)"
           echo "::notice title=Steps::$(jq -r '[.build.buildActions[]? | "\(.name): \(.status)"] | join(" | ")' build.json)"
@@ -41,6 +53,6 @@ jobs:
           mkdir -p a && (cd a && unzip -qo ../artifacts.zip) || { echo "::warning title=Artifacts::could not unzip ($(head -c 200 artifacts.zip))"; exit 0; }
           echo "::notice title=Artifact files::$(cd a && find . -type f | head -20 | tr '\n' ' ')"
           for f in $(find a -name '*.log' | head -3); do
-            errs=$(grep -iE "error:|provisioning|entitlement|Signing|requires a provisioning|doesn't (support|include)" "$f" | grep -v "^ *$" | sort -u | head -15 | tr '\n' '|' | sed 's/%/%25/g' | cut -c1-3500)
+            errs=$(grep -iE "error|provisioning|entitlement|signing|associated|requires|failed" "$f" | grep -v "^ *$" | sort -u | head -25 | tr '\n' '|' | sed 's/%/%25/g' | cut -c1-3500)
             echo "::warning title=Errors in $(basename $f)::$errs"
           done
