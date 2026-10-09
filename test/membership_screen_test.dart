@@ -109,8 +109,8 @@ void main() {
     await tester.tap(find.text('Start the first lesson'));
     await tester.pumpAndSettle();
     await tester
-        .ensureVisible(find.text('DC01, once its domain DNS is available'));
-    await tester.tap(find.text('DC01, once its domain DNS is available'));
+        .ensureVisible(find.text('Changing them on a domain controller later is a separate procedure'));
+    await tester.tap(find.text('Changing them on a domain controller later is a separate procedure'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Complete lesson'));
     await tester.tap(find.text('Complete lesson'));
