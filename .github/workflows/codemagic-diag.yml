@@ -32,3 +32,15 @@ jobs:
           else
             echo "::notice title=No failed step log::$(jq -c '.build.message // .build.statusReason // empty' build.json | head -c 500)"
           fi
+      - name: Build logs from the artifacts
+        run: |
+          set -uo pipefail
+          url=$(jq -r '[.build.artefacts[]? | select(.type=="bundle") | .url][0] // empty' build.json)
+          [ -z "$url" ] && { echo "::notice title=Artifacts::none"; exit 0; }
+          curl -sS -L -H "x-auth-token: $CM_TOKEN" "$url" -o artifacts.zip
+          mkdir -p a && (cd a && unzip -qo ../artifacts.zip) || { echo "::warning title=Artifacts::could not unzip ($(head -c 200 artifacts.zip))"; exit 0; }
+          echo "::notice title=Artifact files::$(cd a && find . -type f | head -20 | tr '\n' ' ')"
+          for f in $(find a -name '*.log' | head -3); do
+            errs=$(grep -iE "error:|provisioning|entitlement|Signing|requires a provisioning|doesn't (support|include)" "$f" | grep -v "^ *$" | sort -u | head -15 | tr '\n' '|' | sed 's/%/%25/g' | cut -c1-3500)
+            echo "::warning title=Errors in $(basename $f)::$errs"
+          done
