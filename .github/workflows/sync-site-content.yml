@@ -1,0 +1,104 @@
+name: Sync website content
+
+# Installed apps read course content straight from https://securebydesigninc.com/app/content/v1.json,
+# so a website deploy reaches them without an app release. This workflow keeps the app's bundled
+# offline copy (assets/training/content.json) in step, so new installs and new builds match too:
+#
+# - Started by the website's deploy (repository_dispatch, needs the website repo's
+#   APP_REPO_DISPATCH_TOKEN secret), once a day as a fallback, or by hand.
+# - Unchanged feed: nothing happens.
+# - Changed feed and Flutter checks pass: commits to main, and Codemagic's ios-testflight
+#   workflow builds and uploads a TestFlight release from that push.
+# - Changed feed but checks fail (for example a test that pins the course list): opens a pull
+#   request with the change and the failing output, and marks this run failed so it gets noticed.
+on:
+  repository_dispatch:
+    types: [site-content-published]
+  schedule:
+    - cron: '17 13 * * *' # daily, 7:17 a.m. Mountain (standard time)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-site-content
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CI: true
+      FLUTTER_SUPPRESS_ANALYTICS: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download the website's content feed
+        id: feed
+        run: node tool/sync_site_content.mjs
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        if: steps.feed.outputs.changed == 'true'
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - name: Check the app with the new content
+        id: checks
+        if: steps.feed.outputs.changed == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter pub get
+          flutter analyze 2>&1 | tee analyze-output.txt
+          flutter test 2>&1 | tee test-output.txt
+      - name: Publish to main (Codemagic builds TestFlight)
+        if: steps.feed.outputs.changed == 'true' && steps.checks.outcome == 'success'
+        env:
+          VERSION: ${{ steps.feed.outputs.version }}
+          COMMIT: ${{ github.event.client_payload.commit }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/training/content.json
+          git commit -m "Sync training content from the website ($VERSION)" \
+            -m "Website feed https://securebydesigninc.com/app/content/v1.json${COMMIT:+, site commit $COMMIT}. Installed apps already show this content; this updates the bundled offline copy and starts a TestFlight build."
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo "::notice title=Content synced::Bundled content $VERSION pushed to main; Codemagic builds TestFlight from it."
+      - name: Open a pull request for review
+        if: steps.feed.outputs.changed == 'true' && steps.checks.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.feed.outputs.version }}
+          DROPPED: ${{ steps.feed.outputs.dropped }}
+        run: |
+          branch="content/site-$VERSION"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          git add assets/training/content.json
+          git commit -m "Sync training content from the website ($VERSION)"
+          git push --force origin "$branch"
+          {
+            echo "The website published new training content (\`$VERSION\`). Installed apps already show it; this updates the app's bundled offline copy."
+            echo
+            echo "The Flutter checks failed with the new content, so it wasn't pushed to main automatically. Update the tests (or the content) and merge to start a TestFlight build."
+            if [ -n "$DROPPED" ]; then echo; echo "Lessons no longer in the feed: \`$DROPPED\`. If they moved, add them to \`LearningStore._movedLessons\`."; fi
+            for f in analyze-output.txt test-output.txt; do
+              [ -f "$f" ] || continue
+              echo; echo "<details><summary>$f (last 80 lines)</summary>"; echo; echo '```'; tail -n 80 "$f"; echo '```'; echo "</details>"
+            done
+          } > pr-body.md
+          if ! gh pr create --base main --head "$branch" --title "Sync training content from the website ($VERSION)" --body-file pr-body.md; then
+            gh pr edit "$branch" --body-file pr-body.md || echo "::warning::Couldn't open the pull request (allow GitHub Actions to create pull requests in the repository settings). Branch: $branch"
+          fi
+          echo "::error title=Content needs review::The app's checks failed with website content $VERSION. See the pull request from $branch."
+          exit 1

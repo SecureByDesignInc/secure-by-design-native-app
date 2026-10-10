@@ -329,14 +329,34 @@ const foundationResources = <LearningResource>[
   ),
 ];
 
-const learningPaths = <LearningPath>[...publishedPaths, ...foundationPaths];
+/// Published courses (kept in step with the website) followed by the
+/// foundation lessons. Rebuilt only when newer website content arrives.
+List<LearningPath> get learningPaths {
+  _refreshCatalog();
+  return _learningPaths;
+}
 
 /// Official references first, then each course's materials once. Course parts
 /// that share a material (the RMF guide and catalog) list the same ID.
-final resources = <LearningResource>[
-  ...foundationResources.where((resource) => resource.id != 'journal'),
-  ...{
-    for (final path in publishedPaths)
-      for (final material in path.materials) material.id: material
-  }.values,
-];
+List<LearningResource> get resources {
+  _refreshCatalog();
+  return _resources;
+}
+
+List<LearningPath>? _catalogFor;
+List<LearningPath> _learningPaths = const [];
+List<LearningResource> _resources = const [];
+void _refreshCatalog() {
+  final published = publishedPaths;
+  if (identical(published, _catalogFor)) return;
+  _catalogFor = published;
+  _learningPaths =
+      List.unmodifiable(<LearningPath>[...published, ...foundationPaths]);
+  _resources = List.unmodifiable(<LearningResource>[
+    ...foundationResources.where((resource) => resource.id != 'journal'),
+    ...{
+      for (final path in published)
+        for (final material in path.materials) material.id: material
+    }.values,
+  ]);
+}

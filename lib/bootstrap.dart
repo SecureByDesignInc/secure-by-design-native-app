@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'data/learning_store.dart';
+import 'data/site_content.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
 
@@ -16,7 +17,13 @@ class _BootstrapAppState extends State<BootstrapApp> {
   @override
   void initState() {
     super.initState();
-    _store = LearningStore.load();
+    _store = _open();
+  }
+
+  // Course content comes first: saved progress is matched against its lessons.
+  static Future<LearningStore> _open() async {
+    await SiteContent.instance.load();
+    return LearningStore.load();
   }
 
   @override
@@ -60,7 +67,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
                             const SizedBox(height: 24),
                             FilledButton(
                               onPressed: () =>
-                                  setState(() => _store = LearningStore.load()),
+                                  setState(() => _store = _open()),
                               child: const Text('Try again'),
                             ),
                           ],

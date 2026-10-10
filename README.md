@@ -91,7 +91,8 @@ The logo mark is the existing website asset's displayed viewport. It is reused f
 | `lib/main.dart` / `lib/bootstrap.dart` | Startup, local-state loading, retry state |
 | `lib/app.dart` | Application shell and adaptive navigation |
 | `lib/theme.dart` | Shared design tokens and component styles |
-| `lib/data/catalog.dart` | Sample lessons, questions, and reference links |
+| `lib/data/catalog.dart` | Foundation lessons and reference links |
+| `lib/data/site_content.dart` | Website course content: bundled copy, saved download, refresh on launch and resume |
 | `lib/data/learning_store.dart` | Serialized local progress and bookmark writes |
 | `lib/screens/` | Home, learning paths, lessons, resources, and progress |
 | `lib/widgets/` | Shared interface components |
@@ -102,19 +103,27 @@ The logo mark is the existing website asset's displayed viewport. It is reused f
 
 ## Course content updates
 
-Import from the current Site checkout, then format and validate:
+The website publishes the app's course content. Installed apps follow it automatically; you don't run anything for a content change.
+
+- **Live feed.** Every website deploy builds https://securebydesigninc.com/app/content/v1.json (the website's `scripts/prepare-app-content.mjs`): the published Training Library courses, lessons, knowledge checks, materials, and the Inside the Network reference. `lib/data/site_content.dart` checks it on launch and whenever the app returns to the foreground, saves a valid new version on the device, and shows it straight away. If the feed can't be reached or doesn't parse, the app keeps the last good copy, then the bundled one.
+- **Bundled copy.** `assets/training/content.json` is the same feed, shipped in the app for new installs and offline first launches, and used by the tests. A download made before an app update is discarded in favor of the newer bundled copy, then refreshed.
+- **Automatic app builds.** The *Sync website content* workflow (`.github/workflows/sync-site-content.yml`) runs when the website deploys and once a day. When the feed changed and `flutter analyze` and `flutter test` pass, it commits the new bundled copy to main, and Codemagic builds TestFlight from that push. When checks fail, it opens a pull request with the output instead.
+- **Progress is safe.** Saved progress for every lesson this build shipped with is kept even if a download leaves that lesson out. Courses the website adds later appear in the Training Library under the matching category.
+
+To refresh the bundled copy by hand:
 
 ```bash
-node tool/import_site_training.mjs /path/to/site
+node tool/sync_site_content.mjs                 # from the live website
+node tool/sync_site_content.mjs /path/to/site   # or from a website checkout
 flutter analyze
 flutter test
 ```
 
-The importer only reads the Site. The Site maintains `content/training-progress.json` and `content/training-resources.json` itself, and the importer stops if a lesson ID is missing from the Site's progress catalog, because account sync would reject it. Materials the Site's bookmark catalog does not list yet are generated with `syncable: false` and can only be saved on the device; the importer prints them. `--write-site` regenerates both Site catalogs from the app's catalog; it is not part of the normal workflow. Preserve existing lesson and material IDs on content edits.
+The website stops its build if a lesson is missing from its progress catalog, because account sync would reject it, and marks materials its bookmark catalog doesn't list yet as `syncable: false` (saved on the device only). Preserve existing lesson and material IDs on content edits; when a lesson moves, add it to `LearningStore._movedLessons` and the website's server migration. New screens and features are app code and still ship through TestFlight and App Store review.
 
 ## Release workflow
 
-Codemagic checks pull requests targeting main and builds the signed TestFlight IPA when main changes, provided the existing repository webhook is enabled. The Apple integration and bundle identifier remain unchanged. No public App Store review or external tester invitation is configured. The Native app checks GitHub Actions workflow also runs analysis and widget tests on pull requests, with rendered preview artifacts. Platform compilation and physical-device checks are separate from the Flutter widget tests.
+Codemagic checks pull requests targeting main and builds the signed TestFlight IPA when main changes (including the automatic content syncs above), provided the existing repository webhook is enabled. The Apple integration and bundle identifier remain unchanged. No public App Store review or external tester invitation is configured. The Native app checks GitHub Actions workflow also runs analysis and widget tests on pull requests, with rendered preview artifacts. Platform compilation and physical-device checks are separate from the Flutter widget tests.
 
 ## Official setup references
 

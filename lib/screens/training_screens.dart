@@ -206,7 +206,7 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
       SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
         ChoiceChip(label: const Text('All training'), selected: category.isEmpty,
             onSelected: (_) => setState(() => category = '')),
-        for (final group in trainingCategories) ...[
+        for (final group in categoriesFor(publishedPaths)) ...[
           const SizedBox(width: 8),
           ChoiceChip(label: Text(group.title), selected: category == group.id,
               onSelected: (_) {
@@ -218,8 +218,8 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
       const SizedBox(height: 28),
       if (matches.isEmpty)
         const Text('No matching training. Try another topic.'),
-      for (final group in trainingCategories)
-        if (matches.any(group.contains)) ...[
+      for (final group in categoriesFor(matches))
+        if (matches.any((path) => inCategory(path, group))) ...[
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             TopicBadge(group.icon, size: 40),
             const SizedBox(width: 12),
@@ -227,12 +227,12 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
                 children: [
               Text(group.title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
-              Text('${matches.where(group.contains).length} '
-                  '${matches.where(group.contains).length == 1 ? 'course' : 'courses'}'),
+              Text('${matches.where((path) => inCategory(path, group)).length} '
+                  '${matches.where((path) => inCategory(path, group)).length == 1 ? 'course' : 'courses'}'),
             ])),
           ]),
           const SizedBox(height: 16),
-          ResponsiveCards(children: matches.where(group.contains)
+          ResponsiveCards(children: matches.where((path) => inCategory(path, group))
               .map((path) => TrainingCard(key: ValueKey(path.id),
                   path: path, store: widget.store)).toList()),
           const SizedBox(height: 32),

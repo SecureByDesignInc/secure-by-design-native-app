@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../data/site_content.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -22,12 +21,8 @@ class _NetworkScreenState extends State<NetworkScreen> {
   @override
   void initState() {
     super.initState();
-    // Decode on this isolate: loadString hands assets over 50 KB to a
-    // background isolate, which the reference does not need.
-    _data = rootBundle.load('assets/training/network.json').then((bytes) =>
-        Map<String, dynamic>.from(jsonDecode(utf8.decode(
-                bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes)))
-            as Map));
+    // The reference arrives with the website's course content (SiteContent).
+    _data = Future.value(SiteContent.instance.network);
   }
 
   @override
