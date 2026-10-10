@@ -125,7 +125,7 @@ void main() {
     await next.disconnectAccount();
     expect(next.completed, {'ad-2'});
   });
-  test('course workbooks the website now catalogs sync with the account',
+  test('course downloads the website catalogs sync with the account',
       () async {
     final cloud = Cloud();
     final auth = AccountStore(transport: cloud);
@@ -134,16 +134,16 @@ void main() {
     final store = await LearningStore.load();
     addTearDown(store.dispose);
     await store.connectAccount(auth);
-    await store.toggleSaved('harden-baseline-pdf');
+    await store.toggleSaved('harden-baseline-package');
     await settled(store);
     await store.toggleSaved('harden-guide');
     await settled(store);
     expect(store.syncError, isNull);
     expect(cloud.bookmarks['alice']!['harden-guide'], true);
-    expect(cloud.bookmarks['alice']!['harden-baseline-pdf'], true);
-    expect(store.saved, {'harden-baseline-pdf', 'harden-guide'});
+    expect(cloud.bookmarks['alice']!['harden-baseline-package'], true);
+    expect(store.saved, {'harden-baseline-package', 'harden-guide'});
     await store.sync();
-    expect(store.saved, {'harden-baseline-pdf', 'harden-guide'});
+    expect(store.saved, {'harden-baseline-package', 'harden-guide'});
   });
   test('account switching and late responses never mix learner records',
       () async {
