@@ -253,7 +253,7 @@
     },
     {
       "id": "workstations",
-      "name": "50 Windows 11 PCs",
+      "name": "50 Windows PCs",
       "role": "User workstations × 50",
       "zone": "v80",
       "controls": [
@@ -262,7 +262,7 @@
         "SI-2",
         "SI-3"
       ],
-      "known": "Fifty Windows 11 user workstations, displayed as one selectable group. Individual hostnames and domain-join status were not provided.",
+      "known": "Fifty Windows user workstations, displayed as one selectable group. Individual hostnames and domain-join status were not provided.",
       "design": [
         "Apply approved hardening and minimize local administrative access.",
         "Deploy and verify patching, protection, and required logging.",
@@ -711,7 +711,7 @@
         "workstations"
       ],
       "functions": [
-        "50 Windows 11 endpoints",
+        "50 Windows endpoints",
         "Internal identity, files, and approved updates",
         "Host firewall blocks peer management",
         "802.1X port admission; unknown devices go to quarantine VLAN 90"
@@ -2244,7 +2244,7 @@
         "splunk"
       ],
       "service": "Management",
-      "transport": "RDP 3389 · WinRM 5985–5986 · SSH 22 to Linux · product consoles over HTTPS; MFA, named accounts, and target binding",
+      "transport": "RDP 3389 · WinRM 5985–5986 · AD Web Services 9389 to the DCs · SSH 22 to Linux · product consoles over HTTPS; MFA, named accounts, and target binding",
       "purpose": "Tier 0 · identity, PKI, and what controls them administration: Tier 0 operators with separate task permissions. Includes the DC-facing administration of WSUS (DC update ring), ePO (DC agent policy), Nessus (DC scan credentials), and Splunk (DC monitoring), plus the core switch and the hypervisor hosts and their console",
       "owner": "Privileged-access owner",
       "status": "permit",
@@ -2379,7 +2379,7 @@
         {
           "name": "AD Web Services",
           "port": "TCP 9389",
-          "note": "Used by Active Directory PowerShell and Administrative Center from administration hosts, not user workstations."
+          "note": "Used by Active Directory PowerShell and Administrative Center from the Tier 0 administration host (rule A01), not user workstations."
         }
       ],
       "depends": [
@@ -2433,7 +2433,7 @@
         {
           "name": "AD Web Services",
           "port": "TCP 9389",
-          "note": "Used by Active Directory PowerShell and Administrative Center from administration hosts, not user workstations."
+          "note": "Used by Active Directory PowerShell and Administrative Center from the Tier 0 administration host (rule A01), not user workstations."
         }
       ],
       "depends": [
@@ -2766,7 +2766,7 @@
       "services": [
         {
           "name": "Remote management",
-          "port": "RDP 3389 · WinRM 5985–5986 · SSH 22 to Linux · HTTPS consoles",
+          "port": "RDP 3389 · WinRM 5985–5986 · AD Web Services 9389 to the DCs · SSH 22 to Linux · HTTPS consoles",
           "note": "Rule A01: Tier 0 targets only, with MFA and named accounts."
         }
       ],
@@ -2778,7 +2778,7 @@
       ]
     },
     "workstations": {
-      "purpose": "Represent 50 Windows 11 user endpoints.",
+      "purpose": "Represent 50 Windows user endpoints.",
       "services": [
         {
           "name": "Addressing",

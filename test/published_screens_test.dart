@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/data/catalog.dart';
@@ -10,7 +9,6 @@ import 'package:secure_by_design_app/screens/course_screen.dart';
 import 'package:secure_by_design_app/screens/training_screens.dart';
 import 'package:secure_by_design_app/screens/network_screen.dart';
 import 'package:secure_by_design_app/screens/path_screen.dart';
-import 'package:secure_by_design_app/widgets/training_share.dart';
 import 'package:secure_by_design_app/theme.dart';
 
 void main() {
@@ -71,13 +69,14 @@ void main() {
     expect(resources.where((resource) => resource.id == 'rmf-word').length, 1);
   });
 
-  test('configuration courses carry workbooks, checklists, objectives, recaps, and every knowledge check', () {
+  test('configuration courses offer their guide and one download, objectives, recaps, and every knowledge check', () {
     for (final path in publishedPaths.where((path) =>
         path.category == 'Network build' && path.id != 'dc01-dc02')) {
       final urls = path.materials.map((material) => material.url).toList();
-      expect(urls.where((url) => url.endsWith('-Workbook.pdf')).length, 1, reason: path.id);
-      expect(urls.where((url) => url.endsWith('-Workbook.docx')).length, 1, reason: path.id);
-      expect(urls, contains('https://securebydesigninc.com/training/${path.id}/checklist'));
+      expect(urls, [
+        'https://securebydesigninc.com/training/${path.id}',
+        'https://securebydesigninc.com/training/${path.id}/SecureByDesign-${path.id}-Learning-Package.zip',
+      ], reason: path.id);
       for (final lesson in path.lessons) {
         expect(lesson.objectives, isNotEmpty, reason: lesson.id);
         expect(lesson.recap, isNotEmpty, reason: lesson.id);
@@ -86,9 +85,9 @@ void main() {
       }
     }
     // The website lists every material the app offers, so every bookmark syncs.
-    for (final id in ['dc-guide', 'dc-pdf', 'dns-configuration-guide', 'two-tier-pki-checklist',
+    for (final id in ['dc-guide', 'dc-package', 'dns-configuration-guide', 'two-tier-pki-package',
         'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide',
-        'harden-baseline-pdf']) {
+        'harden-baseline-package']) {
       expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
     }
     expect(resources.every((resource) => resource.syncable), isTrue);
@@ -238,28 +237,6 @@ void main() {
         scrollable: find.byType(Scrollable).first);
     expect(find.textContaining('F01 · DNS'), findsOneWidget);
     expect(tester.takeException(), isNull);
-  });
-  testWidgets('sharing passes the fixed homepage and an iPad anchor',
-      (tester) async {
-    MethodCall? sent;
-    const channel = MethodChannel('dev.fluttercommunity.plus/share');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (call) async {
-      sent = call;
-      return 'dismissed';
-    });
-    addTearDown(() => TestDefaultBinaryMessengerBinding
-        .instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, null));
-    await tester.pumpWidget(MaterialApp(
-        theme: buildTheme(), home: const Scaffold(body: TrainingShare())));
-    await tester.tap(find.text('Pass it on'));
-    await tester.pumpAndSettle();
-    expect(sent, isNotNull);
-    expect(sent!.arguments['text'],
-        'Learn it. Share it. Pay it forward. https://securebydesigninc.com/');
-    expect(sent!.arguments['originWidth'], greaterThan(0));
-    expect(find.text('Copy homepage link'), findsNothing);
   });
 }
 

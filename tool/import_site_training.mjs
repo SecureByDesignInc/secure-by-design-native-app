@@ -49,15 +49,14 @@ const siteIdFor = (url, fallback) => siteResources.find(r => r.url === base + ur
 const entries = [...catalog.episodes, ...catalog.courses];
 const entry = id => entries.find(e => e.id === id) ?? fail(`Catalog entry ${id} is missing from content/videos.json`);
 
-// 1.1 · Build the identity foundation (DC01/DC02 episode)
+// 1.1 · Promote Primary & Secondary Domain Controller (DC01/DC02 episode)
 const dcEntry = entry('dc01-dc02');
 const dcCourse = {
   ...dcEntry, category: 'Network build', icon: 'directory', studyTime: `${dc.chapters.length} guided chapters`, topics: dc.chapters.length,
   materials: [
+    // One download per course (owner request, 9 October 2026): the guide plus its ZIP.
     resource('dc-guide', 'Interactive build guide', dcEntry.training.guide, 'Explore the build and keep your evidence record.'),
-    resource('dc-pdf', 'Companion workbook · PDF', dcEntry.training.pdf, `${dcEntry.training.pages} pages · edition ${dcEntry.training.materialsEdition}`),
-    resource('dc-word', 'Editable workbook · Word', dcEntry.training.word, 'Make the workbook your own.'),
-    resource('dc-package', 'Complete learning package · ZIP', dcEntry.training.package, 'Guide, workbooks, and verification commands.'),
+    resource('dc-package', 'Training materials · ZIP', dcEntry.training.package, 'Offline guide, workbook (PDF and Word), and verification commands.'),
   ],
   lessons: dc.chapters.map(c => ({
     id: `training:dc01-dc02:${c.id}`, title: c.title, minutes: 10, summary: c.outcome,
@@ -115,15 +114,13 @@ const rmfCourses = rmfParts.map(part => {
   };
 });
 
-// 1.2–1.12 · Configuration courses
+// 1.2–1.10 · Configuration courses
 const configCourses = configurations.map(config => {
   const course = entry(config.id), t = course.training;
   const materials = [
     resource(siteIdFor(t.guide, `${course.id}-guide`), `${course.title} · Interactive guide`, t.guide, course.subtitle),
-    ...(t.pdf ? [resource(`${course.id}-pdf`, `${course.title} · Workbook PDF`, t.pdf, `${t.pages} pages · edition ${t.materialsEdition}`)] : []),
-    ...(t.word ? [resource(`${course.id}-word`, `${course.title} · Editable workbook (Word)`, t.word, 'Make the workbook your own.')] : []),
-    ...(t.checklistPage ? [resource(`${course.id}-checklist-page`, `${course.title} · Printable checklist`, t.checklistPage, 'Print the configuration and evidence checklist.')] : []),
-    resource(siteIdFor(t.checklist, `${course.id}-checklist`), `${course.title} · Configuration checklist`, t.checklist, 'Download a Markdown checklist for your configuration and evidence.'),
+    resource(siteIdFor(t.package ?? fail(`${course.id} has no training package`), `${course.id}-package`), `${course.title} · Training materials (ZIP)`, t.package,
+      'Workbook (PDF and Word), checklist, and verification commands.'),
   ];
   return {
     ...course, category: 'Network build', icon: course.id.includes('pki') ? 'risk' : course.id === 'logging-pipeline' ? 'monitoring' : 'directory',
