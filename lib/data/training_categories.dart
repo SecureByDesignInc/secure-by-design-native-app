@@ -45,7 +45,38 @@ const trainingCategories = [
       ['rmf-boe-ato', 'rmf-body-of-evidence', 'rmf-authorization-to-operate']),
 ];
 
-TrainingCategory categoryFor(LearningPath path) => trainingCategories.firstWhere(
-    (category) => category.contains(path),
-    orElse: () => TrainingCategory(
-        path.category, path.category, path.subtitle, path.icon, [path.id]));
+/// Courses the website adds after this release join the category that matches
+/// their website category; anything else gets a group of its own.
+const _categoryForWebsiteCategory = {
+  'Network build': 'foundations',
+  'Network authorization': 'authorization',
+};
+
+TrainingCategory categoryFor(LearningPath path) {
+  for (final category in trainingCategories) {
+    if (category.contains(path)) return category;
+  }
+  final mapped = _categoryForWebsiteCategory[path.category];
+  for (final category in trainingCategories) {
+    if (category.id == mapped) return category;
+  }
+  return TrainingCategory(
+      path.category, path.category, path.subtitle, path.icon, [path.id]);
+}
+
+/// The groups to show for [paths]: the app's categories, then a group for any
+/// new website category, so every published course is listed.
+List<TrainingCategory> categoriesFor(Iterable<LearningPath> paths) {
+  final extra = <String, TrainingCategory>{};
+  for (final path in paths) {
+    final category = categoryFor(path);
+    if (!trainingCategories.any((known) => known.id == category.id)) {
+      extra.putIfAbsent(category.id, () => category);
+    }
+  }
+  return [...trainingCategories, ...extra.values];
+}
+
+/// Whether [path] is listed under [category] (see [categoryFor]).
+bool inCategory(LearningPath path, TrainingCategory category) =>
+    categoryFor(path).id == category.id;

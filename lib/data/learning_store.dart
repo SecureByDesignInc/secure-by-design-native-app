@@ -9,6 +9,7 @@ import 'getting_started.dart';
 import 'account.dart';
 import 'haptics.dart';
 import 'learning_activity.dart';
+import 'site_content.dart';
 
 class LearningStore extends ChangeNotifier {
   LearningStore._(this._preferences,
@@ -82,8 +83,13 @@ class LearningStore extends ChangeNotifier {
   String? syncError;
   DateTime? lastSynced;
   Future<void> _writes = Future.value();
-  Set<String> get _lessonIds =>
-      learningPaths.expand((p) => p.lessons).map((l) => l.id).toSet();
+  /// Lessons whose progress is kept: everything shown now, plus every lesson
+  /// this build shipped with, so a lesson missing from a website update never
+  /// erases saved progress.
+  Set<String> get _lessonIds => {
+        ...learningPaths.expand((p) => p.lessons).map((l) => l.id),
+        ...SiteContent.instance.knownLessonIds,
+      };
 
   /// October 2026 library restructure: course 1.5 (connect-segment) was removed
   /// and its time lesson moved into course 1.2; course 1.6 (pki-services) merged
@@ -155,6 +161,9 @@ class LearningStore extends ChangeNotifier {
   void _notify() {
     if (!_disposed) notifyListeners();
   }
+
+  /// Newer course content arrived from the website; redraw with it.
+  void contentUpdated() => _notify();
 
   void _readLocal() {
     _activities = {};

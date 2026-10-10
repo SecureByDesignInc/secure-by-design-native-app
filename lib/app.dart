@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'data/learning_store.dart';
 import 'data/account.dart';
+import 'data/site_content.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/training_screens.dart';
 import 'widgets/account_navigation.dart';
@@ -48,6 +49,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void dispose() {
     _dayRefresh?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    SiteContent.instance.removeListener(_contentChanged);
     _account.removeListener(_accountChanged);
     _account.dispose();
     super.dispose();
@@ -61,6 +63,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         const Duration(minutes: 1), (_) => widget.store.refreshDay());
     widget.store.analytics.appOpened();
     _account.addListener(_accountChanged);
+    // Website deploys reach the app here: check for newer course content now
+    // and on every return to the foreground.
+    SiteContent.instance.addListener(_contentChanged);
+    unawaited(SiteContent.instance.refresh());
     if (widget.store.gettingStarted.shouldPresentWelcome) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) openOnboarding(context, widget.store, firstRun: true);
@@ -73,7 +79,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       setState(() {});
       widget.store.sync();
+      unawaited(SiteContent.instance.refresh());
     }
+  }
+
+  void _contentChanged() {
+    widget.store.contentUpdated();
+    if (mounted) setState(() {});
   }
 
   void _accountChanged() {
