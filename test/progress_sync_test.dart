@@ -103,7 +103,7 @@ void main() {
     cloud.offline = true;
     await store.completeLesson('training:dc01-dc02:prepare');
     await settled(store);
-    await store.toggleSaved('dc-pdf');
+    await store.toggleSaved('dc-package');
     await settled(store);
     expect(store.syncError, isNotNull);
     store.dispose();
@@ -112,16 +112,16 @@ void main() {
     expect(next.completed, {'ad-2'});
     await next.connectAccount(auth);
     expect(next.completed, {'training:dc01-dc02:prepare'});
-    expect(next.saved, {'dc-pdf'});
+    expect(next.saved, {'dc-package'});
     cloud.offline = false;
     await next.sync();
     expect(next.syncError, isNull);
     expect(next.stats.streak, 1);
     expect(cloud.activity['alice']!.length, 1);
     expect(cloud.records['alice']!['training:dc01-dc02:prepare'], 'completed');
-    await next.toggleSaved('dc-pdf');
+    await next.toggleSaved('dc-package');
     await settled(next);
-    expect(cloud.bookmarks['alice']!['dc-pdf'], false);
+    expect(cloud.bookmarks['alice']!['dc-package'], false);
     await next.disconnectAccount();
     expect(next.completed, {'ad-2'});
   });
@@ -167,7 +167,7 @@ void main() {
         {'id': 'native:ad-1', 'status': 'completed'}
       ],
       'bookmarks': [
-        {'id': 'dc-pdf', 'saved': true}
+        {'id': 'dc-package', 'saved': true}
       ]
     });
     await sync;

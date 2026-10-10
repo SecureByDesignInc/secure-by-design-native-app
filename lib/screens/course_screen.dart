@@ -4,7 +4,6 @@ import '../data/models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/lesson_video.dart';
-import '../widgets/training_share.dart';
 import 'path_screen.dart';
 
 class CourseScreen extends StatefulWidget {
@@ -204,7 +203,7 @@ class _CourseScreenState extends State<CourseScreen> {
                       })),
               if (_tab == 2) ...[
                 const Text(
-                    'Your guides, workbooks, and templates. Open a resource to view or download it.',
+                    'Open the interactive guide, or download every training material in one file.',
                     style: TextStyle(color: SbdColors.muted, height: 1.6)),
                 const SizedBox(height: 20),
                 for (final resource in path.materials)
@@ -256,8 +255,6 @@ class _CourseScreenState extends State<CourseScreen> {
                                           : Icons.bookmark_outline))
                                 ]),
                               ]))),
-                const SizedBox(height: 8),
-                const TrainingShare(),
               ],
             ])));
       });

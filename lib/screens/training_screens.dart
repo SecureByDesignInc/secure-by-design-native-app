@@ -8,7 +8,6 @@ import '../widgets/training_card.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/getting_started.dart';
-import '../widgets/training_share.dart';
 import '../widgets/learning_rewards.dart';
 import 'main_screens.dart' show ResourcesScreen;
 import 'network_screen.dart';
@@ -364,8 +363,6 @@ class ExploreScreen extends StatelessWidget {
             Icons.terminal_outlined,
             () => openResource(
                 context, 'https://securebydesigninc.com/cyber-range')),
-        const SizedBox(height: 12),
-        const TrainingShare(),
       ]);
 }
 
