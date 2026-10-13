@@ -236,11 +236,6 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
               ])),
             ]),
             const SizedBox(height: 20),
-            const Wrap(spacing: 8, crossAxisAlignment: WrapCrossAlignment.center,
-                children: [Icon(Icons.verified_outlined, size: 20, color: SbdColors.cyan),
-                  Text('Community · Included', style: TextStyle(color: SbdColors.cyan,
-                      fontWeight: FontWeight.w600))]),
-            const SizedBox(height: 10),
             Text(store.storageLabel, style: const TextStyle(fontSize: 13)),
             // Sell sign-in on what it does for the learner, not on the form.
             if (!account.signedIn) ...[
@@ -373,8 +368,8 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                     onContinue: () => AccountNavigation.openTraining(context)))
           else
             _AccountGroup(title: 'Membership', children: [
-              _AccountRow(icon: Icons.layers_outlined, title: 'Compare membership plans',
-                  subtitle: 'Community is included. Builder and Guided are coming soon.',
+              _AccountRow(icon: Icons.layers_outlined, title: 'Membership options',
+                  subtitle: 'Coming soon',
                   onTap: _showMemberships),
             ]),
         ]);

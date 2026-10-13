@@ -136,6 +136,10 @@ Home and My Account include a local-calendar streak, seven-day calendar, daily X
 - `/api/native-activity` syncs account activity with bounded uploads and paginated history. Guest data only joins an account through the existing explicit import. Delayed responses are discarded after account changes, and failed writes remain pending. Activity is private; there are no fabricated competitors, public leaderboards, or friend invitations. Website reading completions do not retroactively earn app activity rewards.
 - Deploy the additive Site migration 0008 and native-activity endpoint before distributing this app. The previous app remains compatible with its unchanged native-progress endpoint.
 
+## Memberships: "Coming soon" only (13 October 2026)
+
+At the owner's request no membership specifics are shown: no plan names, prices, features or billing. My Account's membership options show one "Coming soon" statement, a short line, a link back to Training, and the note from Secure By Design; the account card no longer shows a Community badge, and the invitations read "Memberships are coming soon." `assets/membership-plans.json` is again an identical copy of the website's `content/membership-plans.json` (now `creatorNote`, `comingSoon`, `comingSoonDetail`). This supersedes the two membership sections below.
+
 ## Membership plans (0.4.1)
 
 Memberships are available from Info, My Account, and after learning. The first lesson celebration offers an optional link; Continue remains the primary action. Community keeps all current lessons, rewards, downloads, and optional progress sync. Builder ($20/month or $180/year) and Guided ($99/month) are coming-soon previews. Detail selection and the billing-period toggle are local display state only: no checkout, subscription, paid entitlement, or marketing signup exists. The bundled `assets/membership-plans.json` matches the website’s `content/membership-plans.json`; update both together. Haptics keep the saved default-on preference.
