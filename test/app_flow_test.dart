@@ -102,6 +102,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Explore').last);
     await tester.pumpAndSettle();
+    // The Inside the Network and Live Threat Map cards come first.
+    await tester.ensureVisible(find.text('Saved resources & materials'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Saved resources & materials'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
