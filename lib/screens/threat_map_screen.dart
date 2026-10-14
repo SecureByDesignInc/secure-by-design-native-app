@@ -16,9 +16,9 @@ void openThreatMap(BuildContext context) {
       MaterialPageRoute<void>(builder: (_) => const ThreatMapScreen()));
 }
 
-/// Check Point's live cyber threat map, the same map as the website's
+/// Radware's live cyber threat map, the same map as the website's
 /// Threat Map page. It opens in-app on iOS, Android, and macOS (where a web
-/// view is available) and in the browser elsewhere. Only Check Point's map
+/// view is available) and in the browser elsewhere. Only Radware's map
 /// loads in the view; any other page it links to opens in the browser.
 class ThreatMapScreen extends StatefulWidget {
   const ThreatMapScreen({super.key, this.embedded});
@@ -26,8 +26,8 @@ class ThreatMapScreen extends StatefulWidget {
   /// Overrides whether the map opens in-app; tests pass false.
   final bool? embedded;
 
-  static const url = 'https://threatmap.checkpoint.com/';
-  static const host = 'threatmap.checkpoint.com';
+  static const url = 'https://livethreatmap.radware.com/';
+  static const host = 'livethreatmap.radware.com';
 
   /// Whether this platform can show the map in-app.
   static bool get canEmbed =>
@@ -88,7 +88,7 @@ class _ThreatMapScreenState extends State<ThreatMapScreen> {
               },
               icon: const Icon(Icons.refresh)),
         IconButton(
-            tooltip: 'Open on Check Point',
+            tooltip: 'Open on Radware',
             onPressed: () => openResource(context, ThreatMapScreen.url),
             icon: const Icon(Icons.open_in_new)),
       ]),
@@ -101,9 +101,9 @@ class _ThreatMapScreenState extends State<ThreatMapScreen> {
                 color: SbdColors.surface,
                 border: Border(bottom: BorderSide(color: SbdColors.border))),
             child: const Text(
-                'Live attacks detected by Check Point’s ThreatCloud network. '
-                'The map is provided by Check Point Software Technologies; '
-                'Secure By Design is not affiliated with Check Point.',
+                'A near real-time sample of attacks recorded by Radware’s threat '
+                'deception network. The map is provided by Radware; '
+                'Secure By Design is not affiliated with Radware.',
                 style: TextStyle(
                     color: SbdColors.muted, fontSize: 12.5, height: 1.5))),
         if (_controller != null && !_error && _progress < 100)
@@ -127,8 +127,8 @@ class _Fallback extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
                 error
-                    ? 'The live map could not load. Check your connection, or open it on Check Point’s website.'
-                    : 'Open Check Point’s live threat map in your browser.',
+                    ? 'The live map could not load. Check your connection, or open it on Radware’s website.'
+                    : 'Open Radware’s live threat map in your browser.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(height: 1.6)),
             const SizedBox(height: 20),

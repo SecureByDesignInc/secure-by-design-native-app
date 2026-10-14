@@ -10,8 +10,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('the map is Check Point’s, opened only over HTTPS', () {
-    expect(ThreatMapScreen.url, 'https://threatmap.checkpoint.com/');
+  test('the map is Radware’s, opened only over HTTPS', () {
+    expect(ThreatMapScreen.url, 'https://livethreatmap.radware.com/');
     expect(Uri.parse(ThreatMapScreen.url).host, ThreatMapScreen.host);
   });
 
@@ -45,10 +45,10 @@ void main() {
           theme: buildTheme(), home: const ThreatMapScreen(embedded: false)));
       await tester.pumpAndSettle();
       expect(find.text('Live Threat Map'), findsOneWidget);
-      expect(find.textContaining('not affiliated with Check Point'),
+      expect(find.textContaining('not affiliated with Radware'),
           findsOneWidget);
       expect(find.text('Open the live map'), findsOneWidget);
-      expect(find.byTooltip('Open on Check Point'), findsOneWidget);
+      expect(find.byTooltip('Open on Radware'), findsOneWidget);
       expect(find.byTooltip('Reload the map'), findsNothing);
       expect(tester.takeException(), isNull);
     });

@@ -324,7 +324,7 @@ class ExploreScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    const Expanded(child: Kicker('Live from Check Point')),
+                    const Expanded(child: Kicker('Live from Radware')),
                     Icon(Icons.public,
                         color: SbdColors.cyan.withValues(alpha: 0.7),
                         size: 34),
