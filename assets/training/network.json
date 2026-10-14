@@ -455,14 +455,16 @@
         "IA-2(1)",
         "AU-12"
       ],
-      "known": "Dedicated privileged workstation for approved member-server targets. Separate operator roles further restrict security tools and protected audit storage.",
+      "known": "Privileged workstation for approved member-server targets. Separate operator roles further restrict security tools and protected audit storage. It hosts one virtual machine, SBD-ADMIN-PC01, the Tier 2 seat: Tier 1 accounts work only on the host, Tier 2 accounts only in the virtual machine.",
       "design": [
         "Separate privileged accounts from identity and endpoint administration.",
-        "Require offline-compatible MFA, named targets, and session auditing."
+        "Require offline-compatible MFA, named targets, and session auditing.",
+        "Host the Tier 2 seat as a virtual machine under the DISA Windows PAW STIG exception for sites short on workstations, sharing no clipboard, drives, or folders with it."
       ],
       "evidence": [
         "Target allowlist and effective host rules.",
-        "Cross-tier denial and MFA tests."
+        "Cross-tier denial and MFA tests.",
+        "Virtual machine placement, host and guest settings, and refused sign-ins in both directions across that boundary."
       ],
       "zone": "v60",
       "address": "10.0.60.20"
@@ -477,14 +479,16 @@
         "IA-2(1)",
         "AU-12"
       ],
-      "known": "Dedicated privileged workstation for the 50 client endpoints. No AD, CA, or server administrative sessions.",
+      "known": "Privileged workstation for the 50 client endpoints, running as a virtual machine on the SBD-ADMIN-SRV01 seat with its own name and address. No AD, CA, or server administrative sessions, and no higher-tier sign-ins.",
       "design": [
         "Use scoped endpoint-admin identities and managed local credentials.",
-        "Deny direct management from ordinary user workstations."
+        "Deny direct management from ordinary user workstations.",
+        "Deny Tier 0 and Tier 1 sign-ins inside the virtual machine; keep Tier 2 accounts off the host."
       ],
       "evidence": [
         "Endpoint scope and privileged account review.",
-        "Server and identity management denial tests."
+        "Server and identity management denial tests.",
+        "Refused higher-tier sign-in inside the virtual machine."
       ],
       "zone": "v60",
       "address": "10.0.60.30"
@@ -666,7 +670,7 @@
         "AU-12",
         "SC-7(15)"
       ],
-      "boundary": "Separate identity/PKI, server, and endpoint administrative hosts and accounts. Host rules deny cross-tier management; sharing this VLAN does not grant access."
+      "boundary": "Separate identity/PKI, server, and endpoint administrative hosts and accounts: two physical seats, with the endpoint seat a virtual machine on the server seat. Host rules deny cross-tier management; sharing this VLAN does not grant access."
     },
     {
       "id": "v70",
@@ -1730,7 +1734,7 @@
           "from": "jump2",
           "to": "dc1",
           "protocol": "MANAGEMENT · REMOTE ADMINISTRATION",
-          "description": "With an endpoint administrator’s stolen session on SBD-ADMIN-PC01, the attacker aims at SBD-DC01. That host manages user endpoints only. No rule lets it manage a domain controller, so default deny drops it.",
+          "description": "With an endpoint administrator’s stolen session on SBD-ADMIN-PC01, the attacker aims at SBD-DC01. That seat, a virtual machine on SBD-ADMIN-SRV01, manages user endpoints only. No rule lets it manage a domain controller, so default deny drops it.",
           "note": "Tiered administration keeps one stolen account from reaching every tier: the management rule for ADMIN-PC01 (A03) names only the user endpoints.",
           "source": null,
           "transport": "TCP",
@@ -2771,7 +2775,7 @@
         }
       ],
       "depends": [],
-      "dependencyText": "Targets are DC01, DC02, the issuing CA, PKI template administration, the core switch, the hypervisor hosts, and the DC-facing scopes of WSUS, ePO, Nessus, and Splunk. Separate ADMIN-SRV01 and ADMIN-PC01 hosts handle member servers and clients. Host firewalls and scoped accounts deny cross-tier access.",
+      "dependencyText": "Targets are DC01, DC02, the issuing CA, PKI template administration, the core switch, the hypervisor hosts, and the DC-facing scopes of WSUS, ePO, Nessus, and Splunk. ADMIN-SRV01 handles member servers, and ADMIN-PC01, a virtual machine on it, handles clients; this seat runs no virtual machines. Host firewalls and scoped accounts deny cross-tier access.",
       "verify": [
         "Approved target list and privileged identities.",
         "Session controls and administrative audit trail."

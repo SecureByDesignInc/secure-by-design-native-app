@@ -235,3 +235,11 @@ restructured the Build the Network path. It now runs 1.1–1.10.
   source: course 1.2's time lesson is now “Make SBD-DC01 the domain's time
   source”, and the network reference no longer lists TIME01 or rule F08.
 
+
+## Tier 2 admin seat as a virtual machine (October 13, 2026)
+
+The bundled catalog and `assets/training/network.json` were re-imported from the website after the owner asked for fewer admin machines.
+
+- **Course 1.5 (materials edition 1.5).** The three admin seats now run on two machines. SBD-ADMIN-PC01, the Tier 2 seat, is a virtual machine on SBD-ADMIN-SRV01; AdminJumpBox01 runs no virtual machines. This is the arrangement the DISA Windows PAW STIG allows where workstations are scarce.
+- **New content.** The design lesson assigns each tier its seat under the STIG. The admin-hosts, logon-restrictions and prove lessons cover each seat's Group Policy and maintenance group, the virtual machine's host and guest settings, and who may sign in on each seat. All four lessons gain steps and knowledge checks. Lesson IDs are unchanged, so saved progress carries over. The course is about 3.2 hours.
+- **Network reference.** SBD-ADMIN-PC01 keeps its own address (10.0.60.30) and rule A03. Its description, SBD-ADMIN-SRV01's, the VLAN 60 boundary and the attack drill's step 6 describe the virtual machine.
