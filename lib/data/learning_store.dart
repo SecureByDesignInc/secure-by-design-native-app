@@ -88,14 +88,26 @@ class LearningStore extends ChangeNotifier {
   /// October 2026 library restructure: course 1.5 (connect-segment) was removed
   /// and its time lesson moved into course 1.2; course 1.6 (pki-services) merged
   /// into course 1.4. Saved device progress follows the lessons to their new IDs
-  /// (the website migrates account progress the same way).
+  /// (the website migrates account progress the same way). On 14 October 2026
+  /// the consolidated courses split into one course per system; the withdrawn
+  /// endpoint-protection and scanning lessons simply drop out (no lesson has their IDs).
   static const _movedLessons = {
-    'training:connect-segment:time': 'training:dns-configuration:time',
+    'training:connect-segment:time': 'training:domain-time:time', // moved again on 14 October 2026
     'training:pki-services:publication': 'training:two-tier-pki:publication',
     'training:pki-services:publish-trust': 'training:two-tier-pki:publish-trust',
     'training:pki-services:template-admin': 'training:two-tier-pki:template-admin',
     'training:pki-services:first-templates': 'training:two-tier-pki:first-templates',
     'training:pki-services:validate': 'training:two-tier-pki:validate',
+    // 14 October 2026: one course per system (content/progress-moves.json on the website).
+    'training:dns-configuration:time': 'training:domain-time:time',
+    'training:harden-baseline:staging': 'training:stig-scap:staging',
+    'training:harden-baseline:baseline': 'training:stig-scap:baseline',
+    'training:tiered-admin:dhcp': 'training:dhcp:dhcp',
+    'training:patch-protect:repo': 'training:linux-repository:repo',
+    'training:patch-protect:mgmt': 'training:management-server:mgmt',
+    'training:logging-pipeline:protect': 'training:audit-repository:protect',
+    'training:logging-pipeline:analyze': 'training:splunk-analysis:analyze',
+    'training:logging-pipeline:prove': 'training:splunk-analysis:prove',
   };
   static const _movedPaths = {'pki-services': 'two-tier-pki'};
   Set<String> _carried(Iterable<String> ids) =>
