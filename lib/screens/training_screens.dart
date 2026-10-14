@@ -11,6 +11,7 @@ import '../widgets/getting_started.dart';
 import '../widgets/learning_rewards.dart';
 import 'main_screens.dart' show ResourcesScreen;
 import 'network_screen.dart';
+import 'threat_map_screen.dart';
 import 'path_screen.dart';
 import 'membership_screen.dart';
 
@@ -314,6 +315,32 @@ class ExploreScreen extends StatelessWidget {
                               builder: (_) => const NetworkScreen())),
                       icon: const Icon(Icons.explore_outlined, size: 19),
                       label: const Text('Open the map')),
+                ])),
+        const SizedBox(height: 14),
+        Panel(
+            gradient: true,
+            onTap: () => openThreatMap(context),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const Expanded(child: Kicker('Live from Check Point')),
+                    Icon(Icons.public,
+                        color: SbdColors.cyan.withValues(alpha: 0.7),
+                        size: 34),
+                  ]),
+                  const SizedBox(height: 10),
+                  Text('Live Threat Map',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  const Text(
+                      'Watch attacks detected around the world as they happen, then learn the defenses in your training.',
+                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
+                  const SizedBox(height: 18),
+                  OutlinedButton.icon(
+                      onPressed: () => openThreatMap(context),
+                      icon: const Icon(Icons.public, size: 19),
+                      label: const Text('Watch live attacks')),
                 ])),
         const SizedBox(height: 28),
         Text('Your library', style: Theme.of(context).textTheme.titleMedium),

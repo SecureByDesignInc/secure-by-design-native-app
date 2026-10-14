@@ -11,6 +11,7 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 - Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
 - Bundled course text and knowledge checks, plus the nine original foundation lessons.
 - Inside the Network: seven offline traffic processes, five what-ifs, 23 system references, and the policy register (F01–F20 plus administrative and deny rules); the complete website 3D explorer opens in-app on iOS, Android, and macOS.
+- Live Threat Map: Check Point's live cyber threat map (the same map as the website's Threat Map page) opens from Explore, in-app on iOS, Android, and macOS and in the browser elsewhere. Only the map loads in the view; other links open in the browser. If Check Point's site is unreachable, the screen offers the browser link.
 - Saved materials and native homepage sharing: Learn it. Share it. Pay it forward.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
