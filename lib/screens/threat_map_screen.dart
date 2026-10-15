@@ -29,6 +29,37 @@ class ThreatMapScreen extends StatefulWidget {
   static const url = 'https://livethreatmap.radware.com/';
   static const host = 'livethreatmap.radware.com';
 
+  /// Blurs Radware's red "Contact sales" call-to-action inside the map and
+  /// stops it taking taps. The web view shows Radware's page directly, so it
+  /// can find that element by its text; a watcher catches it if Radware draws
+  /// it late or redraws it. Nothing else on the map is changed.
+  static const hideSalesBoxScript = r'''
+(function () {
+  if (window.__sbdSalesBlur) return;
+  window.__sbdSalesBlur = true;
+  var label = /contact\s*(sales|us)/i;
+  function cover() {
+    var nodes = document.querySelectorAll('a, button, [role="button"], div, span');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      if (el.dataset.sbdBlur) continue;
+      var text = (el.textContent || '').trim();
+      if (!text || text.length > 40 || !label.test(text)) continue;
+      var box = el.closest('a, button, [role="button"]') || el;
+      box.dataset.sbdBlur = '1';
+      el.dataset.sbdBlur = '1';
+      box.style.setProperty('filter', 'blur(8px)', 'important');
+      box.style.setProperty('pointer-events', 'none', 'important');
+      box.style.setProperty('user-select', 'none', 'important');
+      box.setAttribute('aria-hidden', 'true');
+      box.setAttribute('tabindex', '-1');
+    }
+  }
+  cover();
+  new MutationObserver(cover).observe(document.documentElement, { childList: true, subtree: true });
+})();
+''';
+
   /// Whether this platform can show the map in-app.
   static bool get canEmbed =>
       !kIsWeb &&
@@ -53,6 +84,10 @@ class _ThreatMapScreenState extends State<ThreatMapScreen> {
         ..setBackgroundColor(SbdColors.background)
         ..setNavigationDelegate(NavigationDelegate(onProgress: (v) {
           if (mounted) setState(() => _progress = v);
+        }, onPageFinished: (_) {
+          unawaited(_controller
+              ?.runJavaScript(ThreatMapScreen.hideSalesBoxScript)
+              .catchError((Object _) {}));
         }, onWebResourceError: (e) {
           if (e.isForMainFrame == true && mounted) {
             setState(() => _error = true);
