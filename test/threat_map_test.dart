@@ -15,6 +15,15 @@ void main() {
     expect(Uri.parse(ThreatMapScreen.url).host, ThreatMapScreen.host);
   });
 
+  test('the in-app map blurs Radware’s contact-sales box and blocks its taps',
+      () {
+    const script = ThreatMapScreen.hideSalesBoxScript;
+    expect(script, contains(r'contact\s*sales'));
+    expect(script, contains("'filter', 'blur(8px)'"));
+    expect(script, contains("'pointer-events', 'none'"));
+    expect(script, contains('MutationObserver'));
+  });
+
   testWidgets('Explore offers the Live Threat Map after Inside the Network',
       (tester) async {
     tester.view.physicalSize = const Size(390, 844);
