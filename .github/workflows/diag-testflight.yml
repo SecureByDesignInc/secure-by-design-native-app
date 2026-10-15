@@ -1,0 +1,64 @@
+name: Diagnose TestFlight uploads (temporary)
+on:
+  push:
+    branches: [diag/testflight-status]
+permissions:
+  contents: read
+jobs:
+  details:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CM_TOKEN: ${{ secrets.CM_API_TOKEN }}
+    steps:
+      - name: Recent builds
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          H = {'x-auth-token': os.environ['CM_TOKEN']}
+          def get(url):
+              return json.load(urllib.request.urlopen(urllib.request.Request(url, headers=H), timeout=30))
+          def note(title, msg):
+              msg = str(msg).replace('%', '%25').replace('\r', '').replace('\n', '%0A')
+              print(f"::notice title={title}::{msg}")
+          ids = [b['_id'] for b in (get('https://api.codemagic.io/builds?appId=6ac115f2b13f02f748819eff').get('builds') or [])][:8]
+          full = []
+          for i in ids:
+              b = get(f'https://api.codemagic.io/builds/{i}').get('build') or {}
+              full.append(b)
+          if full:
+              note('build keys', ', '.join(sorted(full[0].keys())))
+              acts = full[0].get('buildActions') or []
+              if acts: note('action keys', ', '.join(sorted(acts[0].keys())))
+          for b in full:
+              arts = b.get('artefacts') or b.get('artifacts') or []
+              arts = [f"{a.get('type')} v={a.get('versionName')} build={a.get('buildNumber') or a.get('versionCode')}" for a in arts if a.get('type') in ('ipa', 'aab', 'apk')]
+              acts = [f"{x.get('name')}={x.get('status')}" for x in (b.get('buildActions') or [])]
+              note(f"build {b.get('index')} {b.get('_id','')[:8]}",
+                   f"started {b.get('startedAt')} | workflow {b.get('fileWorkflowId') or b.get('workflowId')} | branch {b.get('branch')} | commit {((b.get('commit') or {}).get('hash') or '')[:9]} | status {b.get('status')} | message {b.get('message')} | {'; '.join(arts) or 'no app file'} | steps: {'; '.join(acts)}")
+          json.dump(full, open('full.json', 'w'))
+          PY
+      - name: Publishing logs
+        run: |
+          python3 - <<'PY'
+          import json, os, re, urllib.request
+          H = {'x-auth-token': os.environ['CM_TOKEN']}
+          def note(title, msg):
+              msg = str(msg).replace('%', '%25').replace('\r', '').replace('\n', '%0A')
+              print(f"::notice title={title}::{msg}")
+          full = json.load(open('full.json'))
+          shown = 0
+          for b in full:
+              if shown >= 4: break
+              for a in b.get('buildActions') or []:
+                  if not re.search(r'publish|app store|testflight', a.get('name') or '', re.I): continue
+                  url = a.get('logUrl')
+                  if not url:
+                      note(f"build {b.get('index')} {a.get('name')}", json.dumps({k: v for k, v in a.items() if 'url' not in k.lower()})[:1500]); shown += 1; continue
+                  try:
+                      text = urllib.request.urlopen(urllib.request.Request(url, headers=H), timeout=30).read().decode('utf-8', 'replace')
+                  except Exception as e:
+                      text = f'log not readable: {e}'
+                  lines = [l for l in text.splitlines() if l.strip() and 'http' not in l]
+                  note(f"build {b.get('index')} {a.get('name')} log tail", '\n'.join(lines[-30:])[:3500]); shown += 1
+          PY
