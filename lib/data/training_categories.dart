@@ -49,8 +49,9 @@ const trainingCategories = [
   TrainingCategory(
       'authorization',
       'Network Authorization',
-      'Apply the Risk Management Framework, assemble the Body of Evidence, '
-          'and prepare an Authorization to Operate for the network you built.',
+      'Take the network you built through the Risk Management Framework steps '
+          'of NIST SP 800-37, with the JSIG mapped in: prepare, categorize, and '
+          'select; implement and assess; then authorize and monitor.',
       'journal',
       ['rmf-boe-ato', 'rmf-body-of-evidence', 'rmf-authorization-to-operate']),
 ];
