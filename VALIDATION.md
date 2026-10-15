@@ -30,3 +30,13 @@ No public App Store release, Google Play listing, new lab entitlement, or video 
 - New widget and unit tests cover site order and numbering, the three authorization parts over one set of module IDs, configuration materials and lesson structure, multi-check lesson completion with unchanged XP, device-only bookmarks staying out of account sync, and the offline what-ifs and policy register.
 - Flutter was not available in the authoring environment; `flutter analyze` and `flutter test` run in the Native app checks workflow on the pull request. Device checks for this release: open several new courses and a multi-check lesson on an iPhone, save a new workbook while signed in, and confirm sync still reports no error.
 
+
+## Streak v1, onboarding analytics choice — 0.9.0 (October 8, 2026)
+
+- Streaks: new learners start with two freezes (was one). A streak of 3+ days that breaks by one or two unprotected missed days can be earned back, free, by finishing two lessons or reviews on the two days after the first miss. Home shows a supportive restore card while the window is open; it never highlights the loss.
+- Celebrations: full milestone celebrations only at 7, 30, 100 and 365 days, with a heavier haptic and a spring-in that is skipped under Reduce Motion. Ordinary days keep the small celebration, plus a "one more day to your milestone" hint and a note when a freeze is earned.
+- Quests & rewards: a month calendar shows practiced, frozen and earned-back days.
+- Onboarding: the plan step now asks, with neither answer preselected, whether to share anonymous usage. Nothing is sent unless the learner says yes. Onboarding answers never leave the device.
+- Analytics (only with consent): onboarding_completed (skipped, started_lesson), daily_goal_set (goal_xp), streak_extended, streak_milestone, earn_back_offered, earn_back_completed (streak count). The My Account disclosure lists the new events.
+- Tests added for earn-back windows and expiry, milestone and restore rewards, bounded event properties, the Home restore card at 390 px and 320 px with 2× text, and reduced-motion milestones. Two existing expectations changed with the new rules: the starting freeze count, and a streak now surviving two missed days.
+- Flutter was not available in the authoring environment; `flutter analyze`, `flutter test` and the Android bundle build run in the Native app checks workflow on the pull request. Device checks: complete a lesson on day 7 to see the milestone, turn on Reduce Motion and repeat, and skip two days without freezes to see the restore card.

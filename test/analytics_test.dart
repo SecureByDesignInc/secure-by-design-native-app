@@ -78,7 +78,7 @@ void main() {
     await store.toggleSaved('ms-ad');
     await store.toggleSaved('ms-ad');
     expect(transport.events.map((e) => e['event']),
-        ['lesson_completed', 'resource_saved']);
+        ['lesson_completed', 'streak_extended', 'resource_saved']);
     expect((await LearningStore.load()).completed, {'ad-1'});
   });
 
@@ -89,5 +89,38 @@ void main() {
     await store.completeLesson('ad-1');
     await Future<void>.delayed(Duration.zero);
     expect((await LearningStore.load()).completed, {'ad-1'});
+  });
+
+  test('onboarding, goal and streak events carry only fixed, bounded fields',
+      () async {
+    final transport = FakeTransport();
+    var now = DateTime(2026, 10, 1);
+    final store = await LearningStore.load(transport: transport, clock: () => now);
+    store.analytics.onboardingFinished(skipped: false, startedLesson: true);
+    await store.setDailyGoal(40);
+    expect(transport.events, isEmpty, reason: 'nothing leaves before consent');
+    await store.analytics.setEnabled(true);
+    store.analytics.onboardingFinished(skipped: false, startedLesson: true);
+    await store.setDailyGoal(10);
+    await store.setDailyGoal(10);
+    store.analytics.streakMilestone(8);
+    for (var i = 0; i < 7; i++) {
+      await store.finishLesson('ad-1');
+      now = now.add(const Duration(days: 1));
+    }
+    final names = transport.events.map((e) => e['event']).toList();
+    expect(names.where((n) => n == 'onboarding_completed'), hasLength(1));
+    expect(names.where((n) => n == 'daily_goal_set'), hasLength(1));
+    expect(names.where((n) => n == 'streak_extended'), hasLength(7));
+    expect(names.where((n) => n == 'streak_milestone'), hasLength(1));
+    final onboarding = transport.events
+        .firstWhere((e) => e['event'] == 'onboarding_completed');
+    expect((onboarding['properties'] as Map).keys.toSet(), {
+      r'$process_person_profile', 'platform', 'environment', 'schema_version',
+      'skipped', 'started_lesson',
+    });
+    final milestone =
+        transport.events.firstWhere((e) => e['event'] == 'streak_milestone');
+    expect((milestone['properties'] as Map)['days'], 7);
   });
 }

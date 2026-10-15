@@ -60,7 +60,34 @@ class LearningBadge {
   final bool earned;
 }
 
+/// A streak that broke recently and can still be restored, free: finish
+/// [needed] lessons on the two calendar days after the first missed day.
+class EarnBack {
+  const EarnBack(
+      {required this.streak, required this.done, required this.deadline});
+  static const needed = 2;
+
+  /// The streak length before the miss, restored when the learner earns it back.
+  final int streak;
+
+  /// Lessons or reviews already finished inside the earn-back window.
+  final int done;
+
+  /// The last calendar day of the window (inclusive).
+  final String deadline;
+  int get remaining => math.max(0, needed - done);
+}
+
 class LearningStats {
+  /// New learners start fully protected: two freezes cover their first misses.
+  static const startingFreezes = 2, maxFreezes = 2;
+
+  /// Shorter streaks simply restart; there is little to earn back.
+  static const earnBackMinimum = 3;
+
+  /// Big celebrations happen only at these streak lengths.
+  static const milestones = [7, 30, 100, 365];
+
   LearningStats(
       Iterable<LearningActivity> activities, DateTime now, this.dailyGoal) {
     today = learningDay(now);
@@ -72,22 +99,47 @@ class LearningStats {
     final dates = days.keys.toList()..sort();
     DateTime? previous;
     var run = 0, learned = 0;
+
+    // Bridges [gap] missed days after [from]. Freezes go first; one or two
+    // remaining missed days can be earned back with two lessons on the two
+    // days after the first miss. Returns whether the run survives.
+    bool bridge(DateTime from, int gap) {
+      final protected = math.min(gap, freezes);
+      for (var i = 1; i <= protected; i++) {
+        frozenDays.add(learningDay(from.add(Duration(days: i))));
+      }
+      freezes -= protected;
+      final unprotected = gap - protected;
+      if (unprotected == 0) return true;
+      if (unprotected > 2 || run < earnBackMinimum) return false;
+      final missed = from.add(Duration(days: protected + 1));
+      final window = [
+        learningDay(missed.add(const Duration(days: 1))),
+        learningDay(missed.add(const Duration(days: 2))),
+      ];
+      final done = window.fold(0, (n, day) => n + (days[day]?.length ?? 0));
+      if (done >= EarnBack.needed) {
+        for (var i = 0; i < unprotected; i++) {
+          repairedDays.add(learningDay(missed.add(Duration(days: i))));
+        }
+        return true;
+      }
+      if (today.compareTo(window.last) <= 0) {
+        earnBack = EarnBack(streak: run, done: done, deadline: window.last);
+      }
+      return false;
+    }
+
     for (final key in dates) {
       final date = parseLearningDay(key)!;
-      if (previous != null) {
-        final gap = date.difference(previous).inDays - 1;
-        final protected = math.min(gap, freezes);
-        for (var i = 1; i <= protected; i++) {
-          frozenDays.add(learningDay(previous.add(Duration(days: i))));
-        }
-        freezes -= protected;
-        if (gap > protected) run = 0;
-      } else {
-        freezes = 1;
+      if (previous == null) {
+        freezes = startingFreezes;
+      } else if (!bridge(previous, date.difference(previous).inDays - 1)) {
+        run = 0;
       }
       run++;
       learned++;
-      if (learned % 7 == 0) freezes = math.min(2, freezes + 1);
+      if (learned % 7 == 0) freezes = math.min(maxFreezes, freezes + 1);
       longestStreak = math.max(longestStreak, run);
       previous = date;
     }
@@ -95,12 +147,7 @@ class LearningStats {
       // Today stays open until midnight. Only past missed days use a freeze.
       final gap =
           math.max(0, parseLearningDay(today)!.difference(previous).inDays - 1);
-      final protected = math.min(gap, freezes);
-      for (var i = 1; i <= protected; i++) {
-        frozenDays.add(learningDay(previous.add(Duration(days: i))));
-      }
-      freezes -= protected;
-      if (gap > protected) run = 0;
+      if (!bridge(previous, gap)) run = 0;
     }
     streak = run;
   }
@@ -108,7 +155,22 @@ class LearningStats {
   final int dailyGoal;
   final Map<String, List<LearningActivity>> days = {};
   final Set<String> frozenDays = {};
+
+  /// Missed days covered by a completed earn-back.
+  final Set<String> repairedDays = {};
+
+  /// Set while a recently broken streak can still be restored.
+  EarnBack? earnBack;
   int streak = 0, longestStreak = 0, freezes = 0;
+
+  /// The next celebration ahead of the current streak, or null after a year.
+  int? get nextMilestone {
+    for (final m in milestones) {
+      if (m > streak) return m;
+    }
+    return null;
+  }
+
   bool get learnedToday => days.containsKey(today);
   int get learningDays => days.length;
   List<DailyQuest> questsOn(String day) {
@@ -157,9 +219,21 @@ class LearningReward {
       required this.review,
       required this.stats,
       required this.newBadges,
-      required this.extendedStreak});
+      required this.extendedStreak,
+      this.milestone,
+      this.restoredStreak = false,
+      this.freezeEarned = false});
   final int xp;
   final bool review, extendedStreak;
+
+  /// True when this lesson completed an earn-back and restored the streak.
+  final bool restoredStreak;
+
+  /// True when this lesson refilled a streak freeze.
+  final bool freezeEarned;
+
+  /// The streak milestone this lesson reached, if any (7, 30, 100 or 365).
+  final int? milestone;
   final LearningStats stats;
   final List<LearningBadge> newBadges;
 }

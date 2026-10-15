@@ -62,10 +62,23 @@ class LearningStore extends ChangeNotifier {
     return _serialize(() async {
       if (epoch != _epoch) return;
       if (![10, 20, 40].contains(goal)) throw ArgumentError.value(goal);
+      final changed = goal != _dailyGoal;
       _dailyGoal = goal;
       await _persist();
+      if (changed) analytics.dailyGoalChanged(goal);
       _notify();
     });
+  }
+
+  String? _earnBackOfferedDay;
+
+  /// Records, at most once per day, that the restore offer was shown.
+  void noteEarnBackOffered() {
+    final offer = stats.earnBack;
+    final day = learningDay(_clock());
+    if (offer == null || _earnBackOfferedDay == day) return;
+    _earnBackOfferedDay = day;
+    analytics.earnBackOffered(offer.streak);
   }
 
   final LearningAnalytics analytics;
@@ -312,11 +325,22 @@ class LearningStore extends ChangeNotifier {
       if (cloudConnected) _pendingRecords[id] = 'completed';
       await _persist();
       final after = stats;
+      final extended = !before.learnedToday && after.learnedToday;
+      final restored = before.earnBack != null &&
+          after.earnBack == null &&
+          after.streak > before.streak + 1;
+      final milestone = after.streak > before.streak &&
+              LearningStats.milestones.contains(after.streak)
+          ? after.streak
+          : null;
       reward = LearningReward(
           xp: after.totalXp - before.totalXp,
           review: review,
           stats: after,
-          extendedStreak: !before.learnedToday && after.learnedToday,
+          extendedStreak: extended,
+          restoredStreak: restored,
+          freezeEarned: after.freezes > before.freezes,
+          milestone: milestone,
           newBadges: after.badges
               .where((b) =>
                   b.earned &&
@@ -324,6 +348,9 @@ class LearningStore extends ChangeNotifier {
                       .any((old) => old.title == b.title && old.earned))
               .toList());
       if (!review) analytics.lessonCompleted(id);
+      if (extended) analytics.streakExtended(after.streak);
+      if (restored) analytics.earnBackCompleted(after.streak);
+      if (milestone != null) analytics.streakMilestone(milestone);
       _notify();
     });
     if (cloudConnected) unawaited(sync());

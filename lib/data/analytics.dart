@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'catalog.dart';
+import 'learning_activity.dart';
 
 abstract interface class AnalyticsTransport {
   Future<void> send(Map<String, Object> event);
@@ -134,6 +135,32 @@ class LearningAnalytics extends ChangeNotifier {
 
   void appOpened() => _capture('app_opened', {});
   void feedbackOpened() => _capture('feedback_opened', {});
+
+  /// Onboarding choices themselves never leave the device; only the outcome.
+  void onboardingFinished(
+          {required bool skipped, required bool startedLesson}) =>
+      _capture('onboarding_completed',
+          {'skipped': skipped, 'started_lesson': startedLesson});
+
+  void dailyGoalChanged(int goal) {
+    if (const [10, 20, 40].contains(goal)) {
+      _capture('daily_goal_set', {'goal_xp': goal});
+    }
+  }
+
+  void streakExtended(int streak) => _streak('streak_extended', streak);
+  void streakMilestone(int days) {
+    if (LearningStats.milestones.contains(days)) {
+      _capture('streak_milestone', {'days': days});
+    }
+  }
+
+  void earnBackOffered(int streak) => _streak('earn_back_offered', streak);
+  void earnBackCompleted(int streak) => _streak('earn_back_completed', streak);
+  void _streak(String name, int streak) {
+    if (streak >= 0 && streak <= 100000) _capture(name, {'streak': streak});
+  }
+
   void pathOpened(String id) {
     if (learningPaths.any((path) => path.id == id)) {
       _capture('path_opened', {'path_id': id});
