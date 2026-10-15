@@ -37,7 +37,7 @@ class ThreatMapScreen extends StatefulWidget {
 (function () {
   if (window.__sbdSalesBlur) return;
   window.__sbdSalesBlur = true;
-  var label = /contact\s*(sales|us)/i;
+  var label = /^contact\s*sales$/i;
   function cover() {
     var nodes = document.querySelectorAll('a, button, [role="button"], div, span');
     for (var i = 0; i < nodes.length; i++) {

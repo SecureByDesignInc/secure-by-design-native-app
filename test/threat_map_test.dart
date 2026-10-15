@@ -18,7 +18,7 @@ void main() {
   test('the in-app map blurs Radware’s contact-sales box and blocks its taps',
       () {
     const script = ThreatMapScreen.hideSalesBoxScript;
-    expect(script, contains(r'contact\s*(sales|us)'));
+    expect(script, contains(r'contact\s*sales'));
     expect(script, contains("'filter', 'blur(8px)'"));
     expect(script, contains("'pointer-events', 'none'"));
     expect(script, contains('MutationObserver'));
