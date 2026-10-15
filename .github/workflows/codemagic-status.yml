@@ -14,6 +14,10 @@ on:
         description: Codemagic app id (required for trigger)
         required: false
         default: ''
+      build_id:
+        description: Codemagic build id (for detail)
+        required: false
+        default: ''
 permissions:
   contents: read
   pull-requests: write
@@ -73,6 +77,27 @@ jobs:
             echo ''
             echo '```'
           } >> comment.md
+      - name: Build detail
+        if: ${{ inputs.mode == 'detail' && inputs.build_id != '' }}
+        run: |
+          set -euo pipefail
+          curl -sS --fail -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds/${{ inputs.build_id }}" > build.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          data = json.load(open('build.json'))
+          build = data.get('build', data)
+          lines = ['', '#### Build detail', f"status: {build.get('status')} · message: {build.get('message')} · index: {build.get('index')}"]
+          actions = build.get('buildActions') or []
+          for a in actions:
+              lines.append(f"- {a.get('name')}: {a.get('status')}")
+          for a in [a for a in actions if a.get('status') == 'failed'][:2]:
+              url = a.get('logUrl')
+              if not url:
+                  continue
+              log = subprocess.run(['curl', '-sS', '-L', '-H', 'x-auth-token: ' + os.environ['CM_TOKEN'], url], capture_output=True, text=True).stdout
+              lines += ['', f"##### Log tail: {a.get('name')}", '```', log[-7000:], '```']
+          open('comment.md', 'a').write('\n'.join(lines) + '\n')
+          PY
       - name: Post results on PR 14
         env:
           GH_TOKEN: ${{ github.token }}
