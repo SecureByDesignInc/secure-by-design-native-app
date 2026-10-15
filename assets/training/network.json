@@ -795,7 +795,7 @@
         "Protect each platform’s configuration, required data, keys, and recovery material; validate vendor-supported recovery.",
         "Define downtime, recovery point and recovery time targets; rehearse loss of each platform.",
         "Backup path: each server writes to a protected local backup volume; custodians carry DC, CA, and audit backups here under the media custody procedure. There is no network path to this facility.",
-        "Document the single-instance design in the system security plan, with backups as its mitigation (PL-2): one server each suits the small network and modest resource needs. The risk response records the remaining risk (RA-7), and only the authorizing official accepts it (CA-6); track restore gaps in the POA&M (CA-5)."
+        "Track restore gaps found in recovery exercises in the POA&M (CA-5)."
       ]
     }
   ],
@@ -1983,7 +1983,7 @@
       ],
       "service": "Log ingestion",
       "transport": "Splunk forwarder · TCP 9997 with TLS",
-      "purpose": "Single-instance Splunk ingestion of forwarded events and router syslog",
+      "purpose": "Splunk ingestion of forwarded events and router syslog",
       "owner": "SIEM owner",
       "status": "permit",
       "statusLabel": "Permitted by policy"
@@ -2167,6 +2167,21 @@
       "transport": "RPC TCP 135 + dynamic TCP 49152–65535",
       "purpose": "Certificate requests and autoenrollment to the issuing CA for the templates each group is permitted",
       "owner": "PKI custodian",
+      "status": "permit",
+      "statusLabel": "Permitted by policy"
+    },
+    {
+      "id": "F24",
+      "from": [
+        "core"
+      ],
+      "to": [
+        "syslog"
+      ],
+      "service": "Syslog",
+      "transport": "UDP 514 · the core router’s deny log",
+      "purpose": "The core router reports the traffic it denies to the collector; part of the network’s existing configuration, which no course changes",
+      "owner": "Network owner",
       "status": "permit",
       "statusLabel": "Permitted by policy"
     },
@@ -2588,6 +2603,11 @@
           "name": "Syslog over TLS",
           "port": "TCP 6514",
           "note": "Configure the collector listener and trusted senders."
+        },
+        {
+          "name": "Router deny log",
+          "port": "UDP 514 (F24)",
+          "note": "The core router reports the traffic it denies; existing network configuration."
         },
         {
           "name": "Splunk forwarder",
