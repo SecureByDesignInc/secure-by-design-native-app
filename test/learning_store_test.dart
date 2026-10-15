@@ -74,14 +74,17 @@ void main() {
           'training:connect-segment:time',
           'training:connect-segment:router',
           'training:pki-services:template-admin',
+          'training:harden-baseline:staging',
+          'training:patch-protect:epo',
         ],
         'sbd.started.v1': ['training:pki-services:validate'],
         'sbd.lastPath.v1': 'pki-services',
       });
       final store = await LearningStore.load();
       expect(store.completed, {
-        'training:dns-configuration:time',
+        'training:domain-time:time',
         'training:two-tier-pki:template-admin',
+        'training:stig-scap:staging',
       });
       expect(store.currentPath.id, 'two-tier-pki');
     },

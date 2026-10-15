@@ -10,22 +10,32 @@ class TrainingCategory {
 }
 
 /// Every published course belongs to exactly one category; within a category
-/// courses keep the website's order (1.1, 1.2, … 1.10, then 2.1–2.3).
+/// courses keep the website's order (1.1, 1.2, … 1.19, then 2.1–2.3). The
+/// website's coming-soon tiles (1.16 and 1.17) have no material and aren't in the app.
 const trainingCategories = [
   TrainingCategory(
       'foundations',
       'Network Foundations',
-      'Build identity, DNS and time, harden the baseline, then add tiered '
-          'administration, logging, the workstation fleet, patching, '
+      'Build the network one system at a time: the domain controllers, DNS, '
+          'domain time, STIG measurement and Group Policy hardening, DHCP, '
+          'tiered administration, the Linux repository, the logging pipeline, '
+          'the workstation fleet, Windows updates, the living inventory, '
           'business services, and proven recovery.',
       'directory', [
     'dc01-dc02',
     'dns-configuration',
+    'domain-time',
+    'stig-scap',
     'harden-baseline',
+    'dhcp',
     'tiered-admin',
+    'linux-repository',
     'logging-pipeline',
+    'audit-repository',
+    'splunk-analysis',
     'workstation-fleet',
     'patch-protect',
+    'management-server',
     'business-services',
     'prove-recovery',
   ]),

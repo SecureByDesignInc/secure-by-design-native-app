@@ -19,23 +19,29 @@ void main() {
 
   test('the app carries every website course in site order with stable progress IDs', () {
     expect(publishedPaths.map((path) => path.id), [
-      'dc01-dc02', 'dns-configuration', 'harden-baseline', 'two-tier-pki',
-      'tiered-admin', 'logging-pipeline',
-      'workstation-fleet', 'patch-protect', 'business-services',
+      'dc01-dc02', 'dns-configuration', 'domain-time', 'stig-scap',
+      'harden-baseline', 'two-tier-pki', 'dhcp', 'tiered-admin',
+      'linux-repository', 'logging-pipeline', 'audit-repository',
+      'splunk-analysis', 'workstation-fleet', 'patch-protect',
+      'management-server', 'business-services',
       'prove-recovery', 'rmf-boe-ato', 'rmf-body-of-evidence',
       'rmf-authorization-to-operate',
     ]);
     expect(publishedPaths.map((path) => path.number), [
-      for (var i = 1; i <= 10; i++) '1.$i',
+      // 1.16 and 1.17 are coming soon on the website and have no material yet.
+      for (var i = 1; i <= 19; i++) if (i != 16 && i != 17) '1.$i',
       for (var i = 1; i <= 3; i++) '2.$i',
     ]);
     final build = publishedPaths.where((path) => path.category == 'Network build');
-    expect(build.length, 10);
-    expect(course('dns-configuration').lessons.length, 6);
+    expect(build.length, 17);
+    expect(course('dns-configuration').lessons.length, 5);
+    expect(course('domain-time').lessons.length, 5);
     expect(course('two-tier-pki').lessons.length, 10);
     final ids = publishedPaths.expand((path) => path.lessons).map((lesson) => lesson.id).toList();
-    expect(ids.length, 75);
-    expect(ids, contains('training:dns-configuration:time'));
+    expect(ids.length, 105);
+    expect(ids, contains('training:domain-time:time'));
+    expect(ids, isNot(contains('training:dns-configuration:time')));
+    expect(ids.where((id) => id.endsWith(':epo') || id.endsWith(':nessus')), isEmpty);
     expect(ids, contains('training:two-tier-pki:template-admin'));
     expect(ids.where((id) => id.contains('connect-segment') || id.contains('pki-services')), isEmpty);
     expect(ids.toSet().length, ids.length);

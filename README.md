@@ -11,6 +11,7 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 - Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
 - Bundled course text and knowledge checks, plus the nine original foundation lessons.
 - Inside the Network: seven offline traffic processes, five what-ifs, 23 system references, and the policy register (F01–F20 plus administrative and deny rules); the complete website 3D explorer opens in-app on iOS, Android, and macOS.
+- Live Threat Map: Radware's live cyber threat map (the same map as the website's Threat Map page) opens from Explore, in-app on iOS, Android, and macOS and in the browser elsewhere. Only the map loads in the view; other links open in the browser. If Radware's site is unreachable, the screen offers the browser link.
 - Saved materials and native homepage sharing: Learn it. Share it. Pay it forward.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
@@ -239,3 +240,15 @@ restructured the Build the Network path. It now runs 1.1–1.10.
   source: course 1.2's time lesson is now “Make SBD-DC01 the domain's time
   source”, and the network reference no longer lists TIME01 or rule F08.
 
+
+## Tier 2 admin seat as a virtual machine (October 13, 2026)
+
+The bundled catalog and `assets/training/network.json` were re-imported from the website after the owner asked for fewer admin machines.
+
+- **Course 1.5 (materials edition 1.5).** The three admin seats now run on two machines. SBD-ADMIN-PC01, the Tier 2 seat, is a virtual machine on SBD-ADMIN-SRV01; AdminJumpBox01 runs no virtual machines. This is the arrangement the DISA Windows PAW STIG allows where workstations are scarce.
+- **New content.** The design lesson assigns each tier its seat under the STIG. The admin-hosts, logon-restrictions and prove lessons cover each seat's Group Policy and maintenance group, the virtual machine's host and guest settings, and who may sign in on each seat. All four lessons gain steps and knowledge checks. Lesson IDs are unchanged, so saved progress carries over. The course is about 3.2 hours.
+- **Network reference.** SBD-ADMIN-PC01 keeps its own address (10.0.60.30) and rule A03. Its description, SBD-ADMIN-SRV01's, the VLAN 60 boundary and the attack drill's step 6 describe the virtual machine.
+
+## One course per system (October 14, 2026)
+
+The website split its consolidated Build the Network courses into one course per system, so the path now runs 1.1–1.19 (website PR #48). The app imports it with `node tool/import_site_training.mjs <site checkout>`: 17 build courses plus the three Network Authorization parts, 105 lessons. Website tiles 1.16 (SBD-EPO01) and 1.17 (SBD-NESSUS01) are "Coming soon" with no material, so the app leaves them out until they have lessons. Lessons that moved keep their lesson id; `LearningStore._movedLessons` carries device progress to their new course (the website's `content/progress-moves.json` lists the same moves), and progress for the withdrawn endpoint-protection and scanning lessons drops out. Categories in `lib/data/training_categories.dart` list the new courses.

@@ -46,7 +46,8 @@ const resource = (id, title, url, description) =>
   ({id, title, url: url.startsWith('http') ? url : base + url, description, category: 'Training materials', publisher: 'Secure By Design', icon: 'directory'});
 // Reuse the Site's bookmark ID for a destination it already catalogs.
 const siteIdFor = (url, fallback) => siteResources.find(r => r.url === base + url)?.id ?? fallback;
-const entries = [...catalog.episodes, ...catalog.courses];
+// Coming-soon tiles (kind "coming-soon") have no material yet, so the app leaves them out until they do.
+const entries = [...catalog.episodes, ...catalog.courses.filter(c => c.kind !== 'coming-soon')];
 const entry = id => entries.find(e => e.id === id) ?? fail(`Catalog entry ${id} is missing from content/videos.json`);
 
 // 1.1 · Promote Primary & Secondary Domain Controller (DC01/DC02 episode)
