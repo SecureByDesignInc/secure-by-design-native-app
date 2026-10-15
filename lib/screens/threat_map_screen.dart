@@ -16,8 +16,8 @@ void openThreatMap(BuildContext context) {
       MaterialPageRoute<void>(builder: (_) => const ThreatMapScreen()));
 }
 
-/// Radware's live cyber threat map, the same map as the website's
-/// Threat Map page. It opens in-app on iOS, Android, and macOS (where a web
+/// Radware's live cyber threat map, the same map as the website's homepage
+/// Live Threat Map. It opens in-app on iOS, Android, and macOS (where a web
 /// view is available) and in the browser elsewhere. Only Radware's map
 /// loads in the view; any other page it links to opens in the browser.
 class ThreatMapScreen extends StatefulWidget {
