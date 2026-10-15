@@ -58,7 +58,7 @@ void main() {
     }
   });
 
-  test('the authorization course keeps one set of module IDs across three parts', () {
+  test('each authorization course has its own page and download over one set of module IDs', () {
     final parts = publishedPaths.where((path) => path.category == 'Network authorization').toList();
     expect(parts.map((path) => path.title),
         ['Risk Management Framework', 'Body of Evidence', 'Authorization to Operate']);
@@ -67,12 +67,24 @@ void main() {
     ]);
     expect(parts.map((path) => path.lessons.length), [4, 5, 3]);
     expect(parts.map((path) => path.topics).fold(0, (a, b) => a + b), 36);
-    for (final part in parts) {
-      expect(part.materials.map((material) => material.id), containsAll(['rmf-guide', 'rmf-word']));
+    // Owner request, 15 October 2026: each course has its own page and training materials download,
+    // and every module opens on its RMF step (NIST SP 800-37 Rev. 2 with the 2016 JSIG mapped in).
+    const pages = ['rmf', 'rmf-body-of-evidence', 'rmf-authorization-to-operate'];
+    for (var i = 0; i < parts.length; i++) {
+      expect(parts[i].materials.take(2).map((material) => material.url), [
+        'https://securebydesigninc.com/training/${pages[i]}/index.html',
+        'https://securebydesigninc.com/training/${pages[i]}/SecureByDesign-${pages[i]}-Learning-Package.zip',
+      ]);
+      for (final lesson in parts[i].lessons) {
+        expect(lesson.sourceUrl,
+            startsWith('https://securebydesigninc.com/training/${pages[i]}/index.html#catalog/'));
+        expect(lesson.sections.map((section) => section.heading), contains('What this module produces'),
+            reason: lesson.id);
+      }
     }
+    expect(resources.where((resource) => resource.id == 'rmf-word'), isEmpty);
     expect(parts[1].materials.map((material) => material.id), contains('rmf-evidence'));
     expect(parts[2].materials.map((material) => material.id), contains('rmf-capstone'));
-    expect(resources.where((resource) => resource.id == 'rmf-word').length, 1);
   });
 
   test('configuration courses offer their guide and one download, objectives, recaps, and every knowledge check', () {
@@ -92,7 +104,7 @@ void main() {
     }
     // The website lists every material the app offers, so every bookmark syncs.
     for (final id in ['dc-guide', 'dc-package', 'dns-configuration-guide', 'two-tier-pki-package',
-        'rmf-guide', 'rmf-word', 'rmf-evidence', 'rmf-capstone', 'harden-guide',
+        'rmf-guide', 'rmf-boe-ato-package', 'rmf-evidence', 'rmf-capstone', 'harden-guide',
         'harden-baseline-package']) {
       expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
     }

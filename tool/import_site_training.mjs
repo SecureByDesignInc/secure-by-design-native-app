@@ -33,7 +33,7 @@ const context = {window: {}};
 for (const p of ['catalog-data.js', 'learning-data.js']) {
   vm.runInNewContext(fs.readFileSync(path.join(site, 'public/training/rmf', p), 'utf8'), context);
 }
-const {CATALOG, LEARNING} = context.window;
+const {CATALOG, CATALOG_PARTS, LEARNING} = context.window;
 
 const base = 'https://securebydesigninc.com';
 const q = s => JSON.stringify(String(s)).replace(/\$/g, '\\$');
@@ -76,40 +76,46 @@ const dcCourse = {
   })),
 };
 
-// 2.1–2.3 · The RMF course, shown as three parts over one set of modules.
+// 2.1–2.3 · Network Authorization: three courses, each with its own page and download (owner request,
+// 15 October 2026). Modules follow the RMF steps of NIST SP 800-37 Rev. 2 with the 2016 JSIG mapped in.
 // Lesson IDs stay training:rmf-boe-ato:<module> so saved progress survives.
 const rmfParts = catalog.courses.filter(c => c.categoryId === 'network-authorization').sort((a, b) => a.categoryOrder - b.categoryOrder);
 if (rmfParts[0]?.id !== 'rmf-boe-ato') fail('The first Network Authorization part must keep the rmf-boe-ato ID.');
 if (rmfParts.flatMap(p => p.moduleIds).join() !== CATALOG.map(m => m.id).join()) fail('RMF parts must cover every module once, in order.');
-const rmfShared = [
-  resource('rmf-guide', 'Interactive authorization course', '/training/rmf/index.html', 'Lessons, evidence examples, and the capstone.'),
-  resource('rmf-word', 'Full training catalog · Word', rmfParts[0].training.word, `Edition ${rmfParts[0].training.materialsEdition} · ${CATALOG.length} modules`),
-];
-const rmfExtras = {
-  '#evidence': resource('rmf-evidence', 'Body of Evidence examples and starters', '/training/rmf/index.html#evidence', 'Ten examples with editable Markdown and CSV starters.'),
-  '#capstone': resource('rmf-capstone', 'Authorization package capstone', '/training/rmf/index.html#capstone', 'Assemble, defend, and maintain the practice package.'),
+// The Site's own entry for a destination (bookmark ID, title, description), so saved materials match the Site.
+const siteResource = url => {
+  const r = siteResources.find(x => x.url === base + url && !x.retired) ?? fail(`The Site has no training resource for ${url}`);
+  return resource(r.id, r.title, url, r.description);
+};
+const taskLines = tasks => tasks.map(([id, name]) => `${id} · ${name}`).join('\n');
+const rmfStep = m => {
+  const r = m.rmf;
+  return [
+    section(m.phase === 'Foundations' ? 'Before the RMF steps' : `The RMF step · ${r.step}`, r.roles),
+    ...(r.nist.length ? [section('NIST SP 800-37 Rev. 2 tasks', taskLines(r.nist))] : []),
+    ...(r.jsig.length ? [section('JSIG (11 April 2016) tasks', taskLines(r.jsig))] : m.phase === 'Prepare' ? [section('JSIG (11 April 2016) tasks', 'The 2016 JSIG has no Prepare step.')] : []),
+    section('What this module produces', r.outputs.map(o => `• ${o}`).join('\n') + (r.jsigOutputs.length ? `\n\nJSIG step outputs: ${r.jsigOutputs.join('; ')}` : '')),
+    ...(r.difference ? [section('Where the JSIG and NIST differ', r.difference)] : []),
+  ];
 };
 const rmfCourses = rmfParts.map(part => {
+  const layout = CATALOG_PARTS.find(p => p.id === part.id) ?? fail(`${part.id} is missing from CATALOG_PARTS`);
+  const page = `/training/${layout.folder}/index.html`;
   const modules = CATALOG.filter(m => part.moduleIds.includes(m.id));
   const topics = modules.reduce((n, m) => n + m.lessons.length, 0);
   const hours = modules.reduce((n, m) => n + Number(m.hours), 0) + (part.capstoneHours ?? 0);
   if (topics !== part.lessonCount || hours !== part.estimatedHours) fail(`${part.id} counts differ from the module catalog`);
-  const extras = part.training.relatedResources.map(r => {
-    const hash = new URL(r.href, base).hash;
-    const title = r.title.replace(/^Open the /, '').replace(/^./, c => c.toUpperCase());
-    return rmfExtras[hash] ?? resource(`rmf-${hash.replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '')}`, title, r.href, r.detail);
-  });
   return {
     ...part, category: 'Network authorization', icon: 'risk',
     studyTime: `${modules.length} modules · ${topics} topics · ${hours} study hours`,
-    topics, materials: [...rmfShared, ...extras],
+    topics, materials: [siteResource(page), siteResource(part.training.package), ...part.training.relatedResources.map(r => siteResource(r.href))],
     lessons: modules.map(m => {
       const l = LEARNING[CATALOG.indexOf(m)];
       return {
         id: `training:rmf-boe-ato:${m.id}`, title: `${m.id} · ${m.title}`, minutes: Math.round(Number(m.hours) * 60), summary: m.outcome,
-        sections: [...l.learn.map(a => section(a[0], a.slice(1).join('\n\n'))), section(l.example[0], l.example[1].map(a => a.join(': ')).join('\n\n')), section('Build', m.build), section('Prove', m.prove)],
+        sections: [...rmfStep(m), ...l.learn.map(a => section(a[0], a.slice(1).join('\n\n'))), section(l.example[0], l.example[1].map(a => a.join(': ')).join('\n\n')), section('Build', m.build), section('Prove', m.prove)],
         quizzes: [quiz(...l.quiz)],
-        source: base + '/training/rmf/index.html#catalog/' + m.id,
+        source: base + page + '#catalog/' + m.id,
       };
     }),
   };
