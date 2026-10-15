@@ -5,6 +5,8 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/account_navigation.dart';
 
+// Owner request, 13 October 2026: memberships show one "Coming soon"
+// statement and no specifics (see lib/data/membership.dart).
 class MembershipInvitation extends StatelessWidget {
   const MembershipInvitation({super.key});
   @override
@@ -13,18 +15,18 @@ class MembershipInvitation extends StatelessWidget {
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Kicker('Your next step'),
         const SizedBox(height: 12),
-        Text('Keep learning with Community.',
+        Text('Memberships are coming soon.',
             style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 10),
         const Text(
-            'Your current lessons and learning tools are included. Explore what’s coming with Builder and Guided.',
+            'Keep learning with the current lessons and tools in the meantime.',
             style: TextStyle(color: SbdColors.muted, height: 1.6)),
         const SizedBox(height: 12),
         OutlinedButton.icon(
             onPressed: () =>
                 AccountNavigation.openAccount(context, memberships: true),
             icon: const Icon(Icons.layers_outlined),
-            label: const Text('Explore plans in My Account')),
+            label: const Text('View membership options')),
       ]));
 }
 
@@ -48,13 +50,6 @@ class _MembershipSectionState extends State<MembershipSection> {
     return catalog;
   }
 
-  bool _annual = false;
-  String _selected = 'community';
-  void _choose(String id) {
-    widget.store.haptics.selectionChanged();
-    setState(() => _selected = id);
-  }
-
   @override
   Widget build(BuildContext context) => FutureBuilder<MembershipCatalog>(
       future: _catalog,
@@ -68,99 +63,43 @@ class _MembershipSectionState extends State<MembershipSection> {
                 child: const Text('Try again')),
             TextButton(
                 onPressed: widget.onContinue,
-                child: const Text('Continue with Community')),
+                child: const Text('Keep learning in the Training Library')),
           ]));
         }
         if (!snapshot.hasData) {
           return const Text('Loading membership options…');
         }
         final catalog = snapshot.data!;
-        final plan = catalog.plans.firstWhere((p) => p.id == _selected);
-        final yearly = _annual && plan.annualPrice != null;
-        final amount = yearly ? plan.annualPrice! : plan.monthlyPrice;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Kicker('Learn it. Build it. Put it to work.'),
           const SizedBox(height: 12),
           Text('Membership options',
               style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 14),
-          const Text(
-              'Start with Community. Add hands-on projects or personal guidance when you’re ready.',
-              style: TextStyle(color: SbdColors.muted, height: 1.6)),
+          DecoratedBox(
+              decoration: BoxDecoration(
+                  color: SbdColors.surface,
+                  border: Border.all(color: SbdColors.cyan),
+                  borderRadius: BorderRadius.circular(999)),
+              child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.schedule, size: 18, color: SbdColors.cyan),
+                    const SizedBox(width: 8),
+                    Flexible(
+                        child: Text(catalog.comingSoon,
+                            style: const TextStyle(
+                                color: SbdColors.cyan,
+                                fontWeight: FontWeight.w600))),
+                  ]))),
+          const SizedBox(height: 14),
+          Text(catalog.comingSoonDetail,
+              style: const TextStyle(color: SbdColors.muted, height: 1.6)),
           const SizedBox(height: 14),
           OutlinedButton(
               onPressed: widget.onContinue,
-              child: const Text('Continue with Community')),
-          const SizedBox(height: 22),
-          Wrap(spacing: 10, runSpacing: 10, children: [
-            ChoiceChip(
-                label: const Text('Monthly'),
-                selected: !_annual,
-                showCheckmark: false,
-                onSelected: (_) {
-                  widget.store.haptics.selectionChanged();
-                  setState(() => _annual = false);
-                }),
-            ChoiceChip(
-                label: const Text('Annual · save 25%'),
-                selected: _annual,
-                showCheckmark: false,
-                onSelected: (_) {
-                  widget.store.haptics.selectionChanged();
-                  setState(() => _annual = true);
-                }),
-          ]),
-          const SizedBox(height: 10),
-          Text(
-              catalog.billingNote ??
-                  'Annual savings apply to Builder. Guided is billed monthly or quarterly. All prices are in USD.',
-              style: const TextStyle(color: SbdColors.muted, height: 1.6)),
-          const SizedBox(height: 20),
-          LayoutBuilder(builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 900 &&
-                MediaQuery.textScalerOf(context).scale(16) <= 20;
-            final width =
-                wide ? (constraints.maxWidth - 28) / 3 : constraints.maxWidth;
-            return Wrap(spacing: 14, runSpacing: 16, children: [
-              for (final item in catalog.plans)
-                SizedBox(width: width, child: _planCard(item))
-            ]);
-          }),
-          const SizedBox(height: 20),
-          Semantics(
-              liveRegion: true,
-              child: Panel(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    Text(
-                        '${plan.name} · \$$amount${plan.available ? '' : yearly ? '/year · coming soon' : '/month · coming soon'}',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 12),
-                    Text(
-                        (yearly ? plan.detailAnnual : plan.detailMonthly) ??
-                            (plan.available
-                                ? 'Keep learning with the current courses and tools. Sharing is always optional. No subscription or automatic charges.'
-                                : 'Planned price: \$$amount${yearly ? ' per year' : ' per month'}. Your own lab hardware, software and hosting are separate.'),
-                        style: const TextStyle(
-                            color: SbdColors.muted, height: 1.6)),
-                    if (!plan.available) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                          (yearly ? plan.renewAnnual : plan.renewMonthly) ??
-                              'Planned billing: renews at \$$amount/${yearly ? 'year' : 'month'}. Cancel before renewal; access continues through the paid period. Community access and saved progress remain.',
-                          style: const TextStyle(
-                              color: SbdColors.muted, height: 1.6)),
-                    ],
-                    const SizedBox(height: 12),
-                    const Text(
-                        'Builder and Guided are coming soon. Their benefits are being prepared; paid enrollment and checkout are not open.',
-                        style: TextStyle(height: 1.6)),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                        onPressed: widget.onContinue,
-                        child: const Text('Continue with Community')),
-                  ]))),
+              child: const Text('Keep learning in the Training Library')),
           const SizedBox(height: 24),
           Panel(
               child: Column(
@@ -175,70 +114,4 @@ class _MembershipSectionState extends State<MembershipSection> {
               ])),
         ]);
       });
-
-  Widget _planCard(MembershipPlan plan) {
-    final yearly = _annual && plan.annualPrice != null;
-    final amount = yearly ? plan.annualPrice! : plan.monthlyPrice;
-    return Panel(
-        gradient: _selected == plan.id,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(
-              plan.status ??
-                  (plan.available
-                      ? 'Available now'
-                      : 'Coming soon · planned benefits'),
-              style: const TextStyle(color: SbdColors.cyan, height: 1.5)),
-          if (plan.badge != null) ...[
-            const SizedBox(height: 8),
-            Text(plan.badge!,
-                style: const TextStyle(
-                    color: SbdColors.cyan, fontWeight: FontWeight.w600)),
-          ],
-          const SizedBox(height: 14),
-          Text(plan.name, style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 8),
-          Text(plan.tagline,
-              style: const TextStyle(color: SbdColors.muted, height: 1.5)),
-          const SizedBox(height: 18),
-          Text(
-              '\$$amount${plan.available ? '' : yearly ? ' / year' : ' / month'}',
-              style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 8),
-          Text(
-              plan.available
-                  ? 'No payment details required.'
-                  : (yearly ? plan.chargeAnnual : plan.chargeMonthly) ??
-                      (yearly
-                          ? '\$${plan.annualPrice} billed yearly.'
-                          : '\$${plan.monthlyPrice} billed monthly when available.'),
-              style: const TextStyle(color: SbdColors.muted, height: 1.5)),
-          const SizedBox(height: 18),
-          for (final feature in plan.features)
-            Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                          padding: EdgeInsets.only(top: 3),
-                          child: Icon(Icons.check,
-                              color: SbdColors.cyan, size: 18)),
-                      const SizedBox(width: 9),
-                      Expanded(
-                          child: Text(feature,
-                              style: const TextStyle(height: 1.6))),
-                    ])),
-          const SizedBox(height: 8),
-          if (plan.available)
-            FilledButton(
-                onPressed: widget.onContinue,
-                child: const Text('Continue with Community'))
-          else
-            OutlinedButton(
-                onPressed: () => _choose(plan.id),
-                child: Text(_selected == plan.id
-                    ? '${plan.name} details selected'
-                    : 'Explore ${plan.name}')),
-        ]));
-  }
 }

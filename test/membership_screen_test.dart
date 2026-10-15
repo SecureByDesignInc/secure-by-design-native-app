@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/app.dart';
@@ -8,20 +9,16 @@ import 'package:secure_by_design_app/screens/training_screens.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  test('paid plans stay unavailable and Builder annual saving is accurate',
-      () async {
+  // Owner request, 13 October 2026: one "Coming soon" statement, no specifics.
+  test('membership copy is a single coming-soon statement', () async {
     final catalog = await MembershipCatalog.load();
-    final builder = catalog.plans.firstWhere((p) => p.id == 'builder');
-    expect(catalog.plans.where((p) => p.available).map((p) => p.id),
-        ['community']);
-    expect(builder.monthlyPrice, 20);
-    expect(builder.annualPrice, 180);
-    expect(1 - builder.annualPrice! / (12 * builder.monthlyPrice), .25);
-    expect(
-        catalog.plans.firstWhere((p) => p.id == 'guided').annualPrice, isNull);
+    expect(catalog.comingSoon, 'Coming soon');
+    final raw = await rootBundle.loadString('assets/membership-plans.json');
+    expect(RegExp(r'\$\d|Builder|Guided|founding|month|annual|quarter',
+            caseSensitive: false).hasMatch(raw), isFalse);
   });
   for (final large in [false, true]) {
-    testWidgets('plans preserve access and readable billing, large: $large',
+    testWidgets('membership options read coming soon, large: $large',
         (tester) async {
       tester.view.physicalSize =
           large ? const Size(320, 740) : const Size(390, 844);
@@ -41,7 +38,6 @@ void main() {
       await tester.runAsync(MembershipCatalog.load);
       await tester.pumpAndSettle();
       expect(find.byType(MyLearningScreen), findsOneWidget);
-      expect(find.text('Community · Included'), findsOneWidget);
       await tester.ensureVisible(find.text('View membership options'));
       await tester.tap(find.text('View membership options'));
       await tester.pump();
@@ -56,24 +52,14 @@ void main() {
       expect(
           Navigator.of(tester.element(find.byType(MyLearningScreen))).canPop(),
           isFalse);
-      expect(find.text('Community'), findsOneWidget);
-      expect(find.text('Coming soon · founding pricing for the first 100 members'),
-          findsOneWidget);
-      expect(find.text('Coming soon · limited seats'), findsOneWidget);
-      expect(find.text('Recommended'), findsOneWidget);
-      await tester.ensureVisible(find.text('Annual · save 25%'));
-      await tester.tap(find.text('Annual · save 25%'));
-      await tester.pumpAndSettle();
-      expect(find.text('\$180 / year'), findsOneWidget);
-      expect(find.text('\$99 / month'), findsOneWidget);
-      await tester.ensureVisible(find.text('Explore Builder'));
-      await tester.tap(find.text('Explore Builder'));
-      await tester.pumpAndSettle();
-      expect(find.text('Builder · \$180/year · coming soon'), findsOneWidget);
+      expect(find.text('Coming soon'), findsOneWidget);
+      expect(find.textContaining('\$'), findsNothing);
+      expect(find.textContaining('Builder'), findsNothing);
+      expect(find.textContaining('Guided'), findsNothing);
       expect(store.completed, isEmpty);
       expect(tester.takeException(), isNull);
-      await tester.ensureVisible(find.text('Continue with Community').first);
-      await tester.tap(find.text('Continue with Community').first);
+      await tester.ensureVisible(find.text('Keep learning in the Training Library'));
+      await tester.tap(find.text('Keep learning in the Training Library'));
       await tester.pumpAndSettle();
       expect(find.byType(TrainingLibraryScreen), findsOneWidget);
       expect(
@@ -115,8 +101,8 @@ void main() {
     await tester.ensureVisible(find.text('Complete lesson'));
     await tester.tap(find.text('Complete lesson'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Explore plans in My Account'));
-    await tester.tap(find.text('Explore plans in My Account'));
+    await tester.ensureVisible(find.text('Membership options in My Account'));
+    await tester.tap(find.text('Membership options in My Account'));
     await tester.pump();
     await tester.runAsync(MembershipCatalog.load);
     await tester.pumpAndSettle();

@@ -484,7 +484,7 @@ class LessonCelebration extends StatelessWidget {
           const SizedBox(height: 12),
           TextButton(
               onPressed: onMemberships,
-              child: const Text('Explore plans in My Account')),
+              child: const Text('Membership options in My Account')),
         ],
       ]);
 }
