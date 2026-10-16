@@ -110,7 +110,8 @@ void main() {
       await tester.pumpWidget(RepaintBoundary(key: boundary, child: MaterialApp(
           debugShowCheckedModeBanner: false, theme: buildTheme(), home: Scaffold(body: MyLearningScreen(store: store, account: account)))));
       await tester.pumpAndSettle();
-      expect(find.text('View membership options'), findsOneWidget);
+      expect(find.text('Free Community account'), findsOneWidget);
+      expect(find.text('View membership options'), findsNothing);
       if (scale == 1) await capture(tester, boundary, 'my-account');
       await tester.ensureVisible(find.text('Saved materials'));
       await tester.tap(find.text('Saved materials'));

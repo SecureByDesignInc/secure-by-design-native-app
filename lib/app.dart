@@ -23,8 +23,7 @@ class _SecureByDesignAppState extends State<SecureByDesignApp> {
 
   @override
   Widget build(BuildContext context) => AccountNavigation(
-      onAccount: (memberships) =>
-          _shellKey.currentState?._openAccount(memberships),
+      onAccount: () => _shellKey.currentState?._openAccount(),
       onTraining: () => _shellKey.currentState?._select(1),
       child: MaterialApp(
         title: 'Secure By Design',
@@ -85,7 +84,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   int _tab = 0;
-  bool _showMemberships = false;
   int _accountVisit = 0;
   static const labels = ['Home', 'Training', 'Explore', 'My Account'];
   static const icons = [
@@ -99,15 +97,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     widget.store.haptics.selectionChanged();
     setState(() {
       _tab = index;
-      _showMemberships = false;
     });
   }
 
-  void _openAccount(bool memberships) {
+  void _openAccount() {
     widget.store.haptics.selectionChanged();
     setState(() {
       _tab = 3;
-      _showMemberships = memberships;
       _accountVisit++;
     });
   }
@@ -210,8 +206,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             _ => MyLearningScreen(
                 key: ValueKey(_accountVisit),
                 store: widget.store,
-                account: _account,
-                initiallyShowMemberships: _showMemberships),
+                account: _account),
           };
           final content = Column(
             children: [

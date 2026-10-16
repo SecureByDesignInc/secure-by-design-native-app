@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/account_navigation.dart';
 
 import '../data/models.dart';
 import '../data/catalog.dart';
@@ -425,11 +424,7 @@ class _LessonScreenState extends State<LessonScreen> {
           appBar: AppBar(title: const Text('Session complete')),
           body: LessonCelebration(
               reward: _reward!,
-              onContinue: () => Navigator.pop(context),
-              onMemberships: widget.store.completed.length == 1
-                  ? () =>
-                      AccountNavigation.openAccount(context, memberships: true)
-                  : null));
+              onContinue: () => Navigator.pop(context)));
     }
     final lesson = widget.lesson;
     final completed = widget.store.isCompleted(lesson.id);

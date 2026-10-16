@@ -26,7 +26,6 @@ flutter:
   assets:
     - assets/brand/brand-mark.png
     - assets/training/network.json
-    - assets/membership-plans.json
   fonts:
     - family: Geist
       fonts:

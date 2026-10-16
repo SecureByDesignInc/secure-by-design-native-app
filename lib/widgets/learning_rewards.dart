@@ -418,13 +418,9 @@ class _Stat extends StatelessWidget {
 
 class LessonCelebration extends StatelessWidget {
   const LessonCelebration(
-      {super.key,
-      required this.reward,
-      required this.onContinue,
-      this.onMemberships});
+      {super.key, required this.reward, required this.onContinue});
   final LearningReward reward;
   final VoidCallback onContinue;
-  final VoidCallback? onMemberships;
   @override
   Widget build(BuildContext context) => PageContent(maxWidth: 620, children: [
         const SizedBox(height: 16),
@@ -480,11 +476,5 @@ class LessonCelebration extends StatelessWidget {
               subtitle: const Text('Achievement unlocked')),
         const SizedBox(height: 24),
         FilledButton(onPressed: onContinue, child: const Text('Continue')),
-        if (onMemberships != null) ...[
-          const SizedBox(height: 12),
-          TextButton(
-              onPressed: onMemberships,
-              child: const Text('Membership options in My Account')),
-        ],
       ]);
 }

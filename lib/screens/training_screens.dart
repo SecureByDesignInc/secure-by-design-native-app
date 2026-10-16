@@ -13,7 +13,6 @@ import 'main_screens.dart' show ResourcesScreen;
 import 'network_screen.dart';
 import 'threat_map_screen.dart';
 import 'path_screen.dart';
-import 'membership_screen.dart';
 
 export '../widgets/training_card.dart' show TrainingCard;
 export 'my_account_screen.dart' show MyLearningScreen;
@@ -171,7 +170,6 @@ class TrainingHome extends StatelessWidget {
       ],
       if (store.gettingStarted.next != GettingStartedMessage.welcome)
         GettingStartedCard(store: store, onTab: onTab),
-      if (store.completed.isNotEmpty) const MembershipInvitation(),
     ]);
   }
 }
