@@ -9,16 +9,16 @@ class AccountNavigation extends InheritedWidget {
     required super.child,
   });
 
-  final ValueChanged<bool> onAccount;
+  final VoidCallback onAccount;
   final VoidCallback onTraining;
 
   static AccountNavigation _of(BuildContext context) =>
       context.getInheritedWidgetOfExactType<AccountNavigation>()!;
 
-  static void openAccount(BuildContext context, {bool memberships = false}) {
+  static void openAccount(BuildContext context) {
     final navigation = _of(context);
     Navigator.of(context).popUntil((route) => route.isFirst);
-    navigation.onAccount(memberships);
+    navigation.onAccount();
   }
 
   static void openTraining(BuildContext context) {
