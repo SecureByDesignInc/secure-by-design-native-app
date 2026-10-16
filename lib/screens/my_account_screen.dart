@@ -4,52 +4,27 @@ import '../data/account.dart';
 import '../data/catalog.dart';
 import '../data/learning_store.dart';
 import '../theme.dart';
-import '../widgets/account_navigation.dart';
 import '../widgets/app_support.dart';
 import '../widgets/common.dart';
+import '../widgets/community_account.dart';
 import '../widgets/getting_started.dart';
 import '../widgets/learning_rewards.dart';
 import 'account_screen.dart';
-import 'membership_screen.dart';
 import 'onboarding_screen.dart';
 import 'path_screen.dart';
 
 class MyLearningScreen extends StatefulWidget {
-  const MyLearningScreen({super.key, required this.store, required this.account,
-      this.initiallyShowMemberships = false});
+  const MyLearningScreen({super.key, required this.store, required this.account});
   final LearningStore store;
   final AccountStore account;
-  final bool initiallyShowMemberships;
 
   @override
   State<MyLearningScreen> createState() => _MyLearningScreenState();
 }
 
 class _MyLearningScreenState extends State<MyLearningScreen> {
-  final _membershipKey = GlobalKey();
-  late bool _membershipsExpanded = widget.initiallyShowMemberships;
   LearningStore get store => widget.store;
   AccountStore get account => widget.account;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initiallyShowMemberships) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showMemberships());
-    }
-  }
-
-  void _showMemberships() {
-    if (!mounted) return;
-    if (!_membershipsExpanded) setState(() => _membershipsExpanded = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final target = _membershipKey.currentContext;
-      if (!mounted || target == null) return;
-      Scrollable.ensureVisible(target, alignment: 0,
-          duration: MediaQuery.disableAnimationsOf(context)
-              ? Duration.zero : const Duration(milliseconds: 250));
-    });
-  }
 
   Future<void> _detail(String title, Widget Function(BuildContext) content) =>
       Navigator.of(context).push<void>(MaterialPageRoute(builder: (context) =>
@@ -141,7 +116,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete your account?'),
         content: const Text(
-            'This permanently deletes your Secure By Design account, sign-in methods, saved progress, saved materials, learning activity, Community membership, and email preferences on the website and in the app. It can’t be undone.'),
+            'This permanently deletes your Secure By Design account, sign-in methods, saved progress, saved materials, learning activity, Community record, and email preferences on the website and in the app. It can’t be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -258,16 +233,10 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
               const SizedBox(height: 4),
             ] else
               const SizedBox(height: 14),
-            Wrap(spacing: 10, runSpacing: 10, children: [
-              if (!account.signedIn)
-                FilledButton.icon(onPressed: () => Navigator.push(context,
-                    MaterialPageRoute<void>(builder: (_) => AccountScreen(account: account))),
-                    icon: const Icon(Icons.login), label: const Text('Sign in')),
-              OutlinedButton.icon(onPressed: _showMemberships,
-                  icon: const Icon(Icons.layers_outlined),
-                  label: const Text('View membership options')),
-            ]),
             if (!account.signedIn) ...[
+              FilledButton.icon(onPressed: () => Navigator.push(context,
+                  MaterialPageRoute<void>(builder: (_) => AccountScreen(account: account))),
+                  icon: const Icon(Icons.login), label: const Text('Sign in')),
               const SizedBox(height: 12),
               const Text('You can keep learning on this device either way.',
                   style: TextStyle(fontSize: 12, color: SbdColors.muted)),
@@ -362,16 +331,9 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
                   child: const Text('Add my device-only progress')),
           ])),
           const SizedBox(height: 24),
-          if (_membershipsExpanded)
-            Padding(key: _membershipKey, padding: const EdgeInsets.only(top: 12),
-                child: MembershipSection(store: store, onReady: _showMemberships,
-                    onContinue: () => AccountNavigation.openTraining(context)))
-          else
-            _AccountGroup(title: 'Membership', children: [
-              _AccountRow(icon: Icons.layers_outlined, title: 'Membership options',
-                  subtitle: 'Coming soon',
-                  onTap: _showMemberships),
-            ]),
+          // Owner request, 16 October 2026: no membership tiers. Every account
+          // is a free Community account, as on the website's My Account.
+          const CommunityAccountPanel(),
         ]);
       });
 }
