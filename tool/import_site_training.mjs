@@ -55,9 +55,10 @@ const dcEntry = entry('dc01-dc02');
 const dcCourse = {
   ...dcEntry, category: 'Network build', icon: 'directory', studyTime: `${dc.chapters.length} guided chapters`, topics: dc.chapters.length,
   materials: [
-    // One download per course (owner request, 9 October 2026): the guide plus its ZIP.
-    resource('dc-guide', 'Interactive build guide', dcEntry.training.guide, 'Explore the build and keep your evidence record.'),
-    resource('dc-package', 'Training materials · ZIP', dcEntry.training.package, 'Offline guide, workbook (PDF and Word), and verification commands.'),
+    // One download per course (owner request, 18 October 2026): the guide plus its Word workbook. The -package IDs
+    // stay so saved materials keep working.
+    resource('dc-guide', 'Interactive build guide', dcEntry.training.guide, 'Explore the build and keep your notes in your account.'),
+    resource('dc-package', 'Companion workbook · Word', dcEntry.training.word, `${dcEntry.training.pages}-page companion workbook.`),
   ],
   lessons: dc.chapters.map(c => ({
     id: `training:dc01-dc02:${c.id}`, title: c.title, minutes: 10, summary: c.outcome,
@@ -108,7 +109,7 @@ const rmfCourses = rmfParts.map(part => {
   return {
     ...part, category: 'Network authorization', icon: 'risk',
     studyTime: `${modules.length} modules · ${topics} topics · ${hours} study hours`,
-    topics, materials: [siteResource(page), siteResource(part.training.package), ...part.training.relatedResources.map(r => siteResource(r.href))],
+    topics, materials: [siteResource(page), siteResource(part.training.word), ...part.training.relatedResources.map(r => siteResource(r.href))],
     lessons: modules.map(m => {
       const l = LEARNING[CATALOG.indexOf(m)];
       return {
@@ -126,8 +127,7 @@ const configCourses = configurations.map(config => {
   const course = entry(config.id), t = course.training;
   const materials = [
     resource(siteIdFor(t.guide, `${course.id}-guide`), `${course.title} · Interactive guide`, t.guide, course.subtitle),
-    resource(siteIdFor(t.package ?? fail(`${course.id} has no training package`), `${course.id}-package`), `${course.title} · Training materials (ZIP)`, t.package,
-      'Workbook (PDF and Word), checklist, and verification commands.'),
+    resource(`${course.id}-package`, `${course.title} · Workbook (Word)`, t.word ?? fail(`${course.id} has no Word workbook`), `${t.pages}-page companion workbook.`),
   ];
   return {
     ...course, category: 'Network build', icon: course.id.includes('pki') ? 'risk' : course.id === 'logging-pipeline' ? 'monitoring' : 'directory',
