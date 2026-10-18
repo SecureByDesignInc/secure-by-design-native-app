@@ -67,13 +67,14 @@ void main() {
     ]);
     expect(parts.map((path) => path.lessons.length), [4, 5, 3]);
     expect(parts.map((path) => path.topics).fold(0, (a, b) => a + b), 36);
-    // Owner request, 15 October 2026: each course has its own page and training materials download,
-    // and every module opens on its RMF step (NIST SP 800-37 Rev. 2 with the 2016 JSIG mapped in).
+    // Owner request, 15 October 2026: each course has its own page, and every module opens on its RMF step
+    // (NIST SP 800-37 Rev. 2 with the 2016 JSIG mapped in). Owner request, 18 October 2026: the one download
+    // is the Word workbook; the website serves the consolidated course 2.1 workbook for all three.
     const pages = ['rmf', 'rmf-body-of-evidence', 'rmf-authorization-to-operate'];
     for (var i = 0; i < parts.length; i++) {
       expect(parts[i].materials.take(2).map((material) => material.url), [
         'https://securebydesigninc.com/training/${pages[i]}/index.html',
-        'https://securebydesigninc.com/training/${pages[i]}/SecureByDesign-${pages[i]}-Learning-Package.zip',
+        'https://securebydesigninc.com/grc-rmf-training/rmf/SecureByDesign-rmf-Workbook.docx',
       ]);
       for (final lesson in parts[i].lessons) {
         expect(lesson.sourceUrl,
@@ -93,7 +94,7 @@ void main() {
       final urls = path.materials.map((material) => material.url).toList();
       expect(urls, [
         'https://securebydesigninc.com/training/${path.id}',
-        'https://securebydesigninc.com/training/${path.id}/SecureByDesign-${path.id}-Learning-Package.zip',
+        'https://securebydesigninc.com/training/${path.id}/SecureByDesign-${path.id}-Workbook.docx',
       ], reason: path.id);
       for (final lesson in path.lessons) {
         expect(lesson.objectives, isNotEmpty, reason: lesson.id);
