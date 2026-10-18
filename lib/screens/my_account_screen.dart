@@ -333,7 +333,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
           const SizedBox(height: 24),
           // Owner request, 16 October 2026: no membership tiers. Every account
           // is a free Community account, as on the website's My Account.
-          const CommunityAccountPanel(),
+          CommunityAccountPanel(analytics: store.analytics),
         ]);
       });
 }

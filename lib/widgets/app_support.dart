@@ -103,7 +103,7 @@ class AnalyticsSetting extends StatelessWidget {
             ),
             const Text(
               'Help us improve lessons by sending app opens, lesson and resource '
-              'actions, answer correctness, and feedback-board opens to PostHog '
+              'actions, answer correctness, and feedback-board and booking-page opens to PostHog '
               'in the US. Events use a random device ID and include your platform. '
               'No name, email, answer text, or session recordings are sent. '
               'Your IP address is used to deliver requests and anonymized in PostHog. '
