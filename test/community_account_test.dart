@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/app.dart';
+import 'package:secure_by_design_app/data/booking.dart';
+import 'package:secure_by_design_app/widgets/community_account.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
 import 'package:secure_by_design_app/screens/training_screens.dart';
 import 'package:secure_by_design_app/widgets/learning_rewards.dart';
@@ -106,5 +108,38 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     store.dispose();
+  });
+
+  // Owner request, 18 October 2026: "Book a call" in My Account, as on the website.
+  test('only an https Google booking page counts as the booking link', () {
+    expect(validBookingUrl('https://calendar.app.google/AbC123'),
+        'https://calendar.app.google/AbC123');
+    expect(
+        validBookingUrl(
+            'https://calendar.google.com/calendar/appointments/schedules/AcZ'),
+        isNotNull);
+    for (final url in [
+      '',
+      'not a url',
+      'http://calendar.app.google/AbC123',
+      'https://calendly.com/sbd',
+      'https://calendar.app.google.evil.example/x',
+    ]) {
+      expect(validBookingUrl(url), isNull, reason: url);
+    }
+  });
+
+  testWidgets('My Account shows Book a call only with a booking page',
+      (tester) async {
+    Future<void> show(String url) => tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: CommunityAccountPanel(bookingUrl: url)))));
+    await show('');
+    expect(find.text('Book a call'), findsNothing);
+    await show('https://calendar.app.google/AbC123');
+    expect(find.text('Book a call'), findsOneWidget);
+    expect(find.byKey(const ValueKey('book-a-call')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

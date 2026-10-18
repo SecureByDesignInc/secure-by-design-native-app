@@ -134,6 +134,7 @@ class LearningAnalytics extends ChangeNotifier {
 
   void appOpened() => _capture('app_opened', {});
   void feedbackOpened() => _capture('feedback_opened', {});
+  void bookingOpened() => _capture('booking_opened', {});
   void pathOpened(String id) {
     if (learningPaths.any((path) => path.id == id)) {
       _capture('path_opened', {'path_id': id});
