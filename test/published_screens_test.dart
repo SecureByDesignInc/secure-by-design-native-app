@@ -156,12 +156,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsNWidgets(3));
     expect(find.text('Configure DNS and time'), findsNothing);
-    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Certificates & Trust'));
-    await tester.enterText(find.byType(TextField), 'Root CA');
+    // 20 October 2026: the PKI is part 6 of course 1.1, in Network Foundations.
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Network Foundations'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Network Foundations'));
+    await tester.enterText(find.byType(TextField), 'two-tier PKI');
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsOneWidget);
-    expect(find.text('Configure the two-tier PKI'), findsOneWidget);
+    expect(find.text('Build and harden the identity foundation'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'no matching topic');
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsNothing);
@@ -177,7 +178,7 @@ void main() {
             body: TrainingCard(path: publishedPaths.first, store: store))));
     await tester.tap(find.text('View materials (${publishedPaths.first.materials.length})'));
     await tester.pumpAndSettle();
-    expect(find.text('Interactive build guide'), findsOneWidget);
+    expect(find.text(publishedPaths.first.materials.first.title), findsOneWidget);
     expect(find.text('Start the first lesson'), findsNothing);
   });
   for (final scale in [1.0, 2.0]) {
