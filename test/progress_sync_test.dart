@@ -101,9 +101,9 @@ void main() {
     await store.completeLesson('ad-2');
     await store.connectAccount(auth);
     cloud.offline = true;
-    await store.completeLesson('training:dc01-dc02:prepare');
+    await store.completeLesson('training:identity-foundation:dc-prepare');
     await settled(store);
-    await store.toggleSaved('dc-package');
+    await store.toggleSaved('identity-foundation-package');
     await settled(store);
     expect(store.syncError, isNotNull);
     store.dispose();
@@ -111,17 +111,17 @@ void main() {
     addTearDown(next.dispose);
     expect(next.completed, {'ad-2'});
     await next.connectAccount(auth);
-    expect(next.completed, {'training:dc01-dc02:prepare'});
-    expect(next.saved, {'dc-package'});
+    expect(next.completed, {'training:identity-foundation:dc-prepare'});
+    expect(next.saved, {'identity-foundation-package'});
     cloud.offline = false;
     await next.sync();
     expect(next.syncError, isNull);
     expect(next.stats.streak, 1);
     expect(cloud.activity['alice']!.length, 1);
-    expect(cloud.records['alice']!['training:dc01-dc02:prepare'], 'completed');
-    await next.toggleSaved('dc-package');
+    expect(cloud.records['alice']!['training:identity-foundation:dc-prepare'], 'completed');
+    await next.toggleSaved('identity-foundation-package');
     await settled(next);
-    expect(cloud.bookmarks['alice']!['dc-package'], false);
+    expect(cloud.bookmarks['alice']!['identity-foundation-package'], false);
     await next.disconnectAccount();
     expect(next.completed, {'ad-2'});
   });
@@ -134,16 +134,16 @@ void main() {
     final store = await LearningStore.load();
     addTearDown(store.dispose);
     await store.connectAccount(auth);
-    await store.toggleSaved('harden-baseline-package');
+    await store.toggleSaved('identity-foundation-package');
     await settled(store);
-    await store.toggleSaved('harden-guide');
+    await store.toggleSaved('identity-foundation-guide');
     await settled(store);
     expect(store.syncError, isNull);
-    expect(cloud.bookmarks['alice']!['harden-guide'], true);
-    expect(cloud.bookmarks['alice']!['harden-baseline-package'], true);
-    expect(store.saved, {'harden-baseline-package', 'harden-guide'});
+    expect(cloud.bookmarks['alice']!['identity-foundation-guide'], true);
+    expect(cloud.bookmarks['alice']!['identity-foundation-package'], true);
+    expect(store.saved, {'identity-foundation-package', 'identity-foundation-guide'});
     await store.sync();
-    expect(store.saved, {'harden-baseline-package', 'harden-guide'});
+    expect(store.saved, {'identity-foundation-package', 'identity-foundation-guide'});
   });
   test('account switching and late responses never mix learner records',
       () async {
@@ -167,7 +167,7 @@ void main() {
         {'id': 'native:ad-1', 'status': 'completed'}
       ],
       'bookmarks': [
-        {'id': 'dc-package', 'saved': true}
+        {'id': 'identity-foundation-package', 'saved': true}
       ]
     });
     await sync;

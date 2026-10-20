@@ -39,11 +39,8 @@ void main() {
     }
     String titleFor(String id) =>
         categoryFor(publishedPaths.firstWhere((path) => path.id == id)).title;
-    for (final id in ['two-tier-pki']) {
-      expect(titleFor(id), 'Certificates & Trust');
-      expect(publishedPaths.firstWhere((path) => path.id == id).category, 'Network build');
-    }
-    for (final id in ['dc01-dc02', 'dns-configuration', 'harden-baseline', 'prove-recovery']) {
+    // 20 October 2026: the PKI is part of course 1.1, so Certificates & Trust folded into Network Foundations.
+    for (final id in ['identity-foundation', 'linux-repository', 'prove-recovery']) {
       expect(titleFor(id), 'Network Foundations');
     }
     for (final id in ['rmf-boe-ato', 'rmf-body-of-evidence', 'rmf-authorization-to-operate']) {
@@ -75,20 +72,20 @@ void main() {
       await tester.enterText(find.byType(TextField), 'DNS');
       await tester.pumpAndSettle();
       final card = find.byWidgetPredicate((widget) => widget is TrainingCard &&
-          widget.path.id == 'dns-configuration');
+          widget.path.id == 'identity-foundation');
       await tester.ensureVisible(card);
-      final toggle = find.byKey(const ValueKey('expand-dns-configuration'));
+      final toggle = find.byKey(const ValueKey('expand-identity-foundation'));
       await tester.ensureVisible(toggle);
       await tester.tap(toggle);
       await tester.pumpAndSettle();
       expect(find.descendant(of: card, matching: find.text('Hide lessons')), findsOneWidget);
-      final lesson = publishedPaths.firstWhere((path) => path.id == 'dns-configuration').lessons.first;
+      final lesson = publishedPaths.firstWhere((path) => path.id == 'identity-foundation').lessons.first;
       await tester.ensureVisible(find.text(lesson.title));
       await tester.pumpAndSettle();
       if (scale == 1) await capture(tester, boundary, 'expanded-training');
       await tester.tap(find.text(lesson.title));
       await tester.pumpAndSettle();
-      expect(store.currentPath.id, 'dns-configuration');
+      expect(store.currentPath.id, 'identity-foundation');
       expect(store.completed, isEmpty);
       expect(find.text('Your lesson'), findsOneWidget);
       expect(tester.takeException(), isNull);

@@ -60,7 +60,7 @@ void main() {
       final store = await LearningStore.load();
       expect(store.completed, {'ad-1'});
       expect(store.saved, isEmpty);
-      expect(store.currentPath.id, 'dc01-dc02');
+      expect(store.currentPath.id, 'identity-foundation');
       await expectLater(store.completeLesson('missing'), throwsArgumentError);
       await expectLater(store.toggleSaved('missing'), throwsArgumentError);
     },
@@ -82,11 +82,12 @@ void main() {
       });
       final store = await LearningStore.load();
       expect(store.completed, {
-        'training:domain-time:time',
-        'training:two-tier-pki:template-admin',
-        'training:stig-scap:staging',
+        // 20 October 2026: these lessons now live in course 1.1, the identity foundation.
+        'training:identity-foundation:time',
+        'training:identity-foundation:pki-template-admin',
+        'training:identity-foundation:stig-staging',
       });
-      expect(store.currentPath.id, 'two-tier-pki');
+      expect(store.currentPath.id, 'identity-foundation');
     },
   );
 }

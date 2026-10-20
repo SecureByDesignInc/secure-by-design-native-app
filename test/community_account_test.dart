@@ -88,17 +88,18 @@ void main() {
     await tester.ensureVisible(find.text('Start the first lesson'));
     await tester.tap(find.text('Start the first lesson'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text(
-        'Changing them on a domain controller later is a separate procedure'));
-    await tester.tap(find.text(
-        'Changing them on a domain controller later is a separate procedure'));
+    for (final answer in ['The forest', 'Delegation and Group Policy', 'A domain controller']) {
+      await tester.ensureVisible(find.text(answer));
+      await tester.tap(find.text(answer));
+      await tester.pumpAndSettle();
+    }
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Complete lesson'));
     await tester.tap(find.text('Complete lesson'));
     await tester.pumpAndSettle();
     expect(find.byType(LessonCelebration), findsOneWidget);
     _expectNoMembershipPrompts();
-    expect(store.completed, {'training:dc01-dc02:prepare'});
+    expect(store.completed, {'training:identity-foundation:dc-design'});
 
     // Home used to show "Memberships are coming soon." after a first lesson.
     await tester.pumpWidget(const SizedBox.shrink());
