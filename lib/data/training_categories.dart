@@ -10,7 +10,7 @@ class TrainingCategory {
 }
 
 /// Every published course belongs to exactly one category; within a category
-/// courses keep the website's order (1.1, 1.2, … 1.12, then 2.1–2.3). The
+/// courses keep the website's order (1.1, 1.2, … 1.12, then 2.1). The
 /// website's coming-soon tiles (1.9 and 1.10) have no material and aren't in the app.
 /// Course 1.1 holds what courses 1.1–1.8 taught (20 October 2026).
 const trainingCategories = [
@@ -41,7 +41,8 @@ const trainingCategories = [
           'of NIST SP 800-37, with the JSIG mapped in: prepare, categorize, and '
           'select; implement and assess; then authorize and monitor.',
       'journal',
-      ['rmf-boe-ato', 'rmf-body-of-evidence', 'rmf-authorization-to-operate']),
+      // One course since 15 October 2026 on the website (2.1, RMF to ATO); the app matches since 20 October 2026.
+      ['rmf-boe-ato']),
 ];
 
 TrainingCategory categoryFor(LearningPath path) => trainingCategories.firstWhere(

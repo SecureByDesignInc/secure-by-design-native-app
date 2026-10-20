@@ -43,7 +43,7 @@ void main() {
     for (final id in ['identity-foundation', 'linux-repository', 'prove-recovery']) {
       expect(titleFor(id), 'Network Foundations');
     }
-    for (final id in ['rmf-boe-ato', 'rmf-body-of-evidence', 'rmf-authorization-to-operate']) {
+    for (final id in ['rmf-boe-ato']) {
       expect(titleFor(id), 'Network Authorization');
     }
     // Categories list courses in the website's order.
