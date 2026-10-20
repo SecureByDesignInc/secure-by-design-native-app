@@ -56,7 +56,7 @@ void main() {
       final store = await LearningStore.load();
       await tester.pumpWidget(SecureByDesignApp(store: store));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('My Account').last);
+      await tester.tap(find.byKey(const ValueKey('tab-account')));
       await tester.pumpAndSettle();
       expect(find.byType(MyLearningScreen), findsOneWidget);
       await tester.ensureVisible(find.text('Free Community account'));

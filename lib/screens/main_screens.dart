@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app_tabs.dart';
 import '../data/catalog.dart';
 import '../data/learning_store.dart';
 import '../data/models.dart';
@@ -173,7 +174,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () => onTab(1),
+              onPressed: () => onTab(AppTab.training.index),
               child: const Text('All paths'),
             ),
           ],
@@ -187,7 +188,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         Panel(
-          onTap: () => onTab(2),
+          onTap: () => openResources(context, store),
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
@@ -344,6 +345,17 @@ class _LearnScreenState extends State<LearnScreen> {
         ],
       );
 }
+
+/// References to read and save, from My Account and the getting-started guide.
+Future<void> openResources(BuildContext context, LearningStore store) =>
+    Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+            builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('Resources & references')),
+                body: AnimatedBuilder(
+                    animation: store,
+                    builder: (context, child) => ResourcesScreen(store: store)))));
 
 class ResourcesScreen extends StatefulWidget {
   const ResourcesScreen({super.key, required this.store});

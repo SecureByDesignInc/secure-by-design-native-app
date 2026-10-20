@@ -6,11 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/app.dart';
-import 'package:secure_by_design_app/data/catalog.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
 import 'package:secure_by_design_app/screens/path_screen.dart';
 import 'package:secure_by_design_app/theme.dart';
 import 'package:secure_by_design_app/widgets/learning_rewards.dart';
+import 'support/sample_paths.dart';
 
 Future<void> _tap(WidgetTester tester, String label) async {
   await tester.ensureVisible(find.text(label).last);
@@ -32,6 +32,9 @@ Future<void> _capture(WidgetTester tester, GlobalKey key, String name) async {
 }
 
 void main() {
+  // The retired sample courses keep these tests independent of course content.
+  setUpAll(useSampleCatalog);
+  tearDownAll(useBundledCatalog);
   setUpAll(() async {
     await (FontLoader('Geist')
           ..addFont(rootBundle.load('assets/fonts/Geist.ttf')))
@@ -84,7 +87,7 @@ void main() {
       expect(tester.takeException(), isNull);
       await _tap(tester, 'Practice what you know');
       expect(find.text('Practice'), findsOneWidget);
-      final lesson = foundationPaths.first.lessons.first;
+      final lesson = samplePaths.first.lessons.first;
       await _tap(tester, lesson.answers[lesson.correctAnswer]);
       await _tap(tester, 'Complete review');
       expect(store.stats.streak, 7);
@@ -107,8 +110,8 @@ void main() {
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = await LearningStore.load(clock: () => DateTime(2026, 10, 5));
-    final path = foundationPaths.first,
-        lesson = foundationPaths.first.lessons.first;
+    final path = samplePaths.first,
+        lesson = samplePaths.first.lessons.first;
     await tester.pumpWidget(MaterialApp(
         theme: buildTheme(),
         home: LessonScreen(store: store, path: path, lesson: lesson)));

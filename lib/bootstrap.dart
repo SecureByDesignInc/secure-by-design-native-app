@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'app.dart';
+import 'data/content_feed.dart';
 import 'data/learning_store.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -13,10 +16,22 @@ class BootstrapApp extends StatefulWidget {
 
 class _BootstrapAppState extends State<BootstrapApp> {
   late Future<LearningStore> _store;
+  final _feed = ContentFeed();
   @override
   void initState() {
     super.initState();
-    _store = LearningStore.load();
+    _store = _open();
+  }
+
+  /// The catalog is settled before any progress loads, so every saved lesson
+  /// is matched against the courses this session will show.
+  Future<LearningStore> _open() async {
+    await _feed.applyCached();
+    final store = await LearningStore.load();
+    // Training published on the website since this build: checked in the
+    // background, verified, and used from the next launch.
+    unawaited(_feed.refresh());
+    return store;
   }
 
   @override
@@ -60,7 +75,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
                             const SizedBox(height: 24),
                             FilledButton(
                               onPressed: () =>
-                                  setState(() => _store = LearningStore.load()),
+                                  setState(() => _store = _open()),
                               child: const Text('Try again'),
                             ),
                           ],

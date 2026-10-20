@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/app.dart';
 import 'package:secure_by_design_app/data/haptics.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
-import 'package:secure_by_design_app/data/published_catalog.dart';
+import 'package:secure_by_design_app/data/catalog.dart';
 import 'package:secure_by_design_app/screens/course_screen.dart';
 
 void main() {
@@ -65,7 +65,7 @@ void main() {
     await tester.ensureVisible(find.text('Keep exploring'));
     await tester.tap(find.text('Keep exploring'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Explore').last);
+    await tester.tap(find.byKey(const ValueKey('tab-systemHub')));
     await tester.pumpAndSettle();
     expect(pulses, ['HapticFeedbackType.selectionClick']);
     expect(tester.takeException(), isNull);

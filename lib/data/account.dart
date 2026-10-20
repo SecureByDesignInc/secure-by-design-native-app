@@ -24,6 +24,11 @@ abstract interface class AccountTransport {
 }
 
 class NativeAccountTransport implements AccountTransport {
+  /// Account replies are small; course-guide notes can reach 30,000
+  /// characters per lesson, so the guide transport allows more.
+  const NativeAccountTransport({this.maxBytes = 16384});
+  final int maxBytes;
+
   @override
   Future<Map<String, dynamic>> request(
     String method,
@@ -49,7 +54,7 @@ class NativeAccountTransport implements AccountTransport {
         final response = await request.close();
         final bytes = <int>[];
         await for (final chunk in response) {
-          if (bytes.length + chunk.length > 16384) {
+          if (bytes.length + chunk.length > maxBytes) {
             throw const AccountFailure(
               'The account service could not respond. Try again.',
             );
@@ -124,12 +129,17 @@ bool supportsHttpsCallback() {
 class AccountStore extends ChangeNotifier {
   AccountStore(
       {AccountTransport? transport,
+      AccountTransport? guideTransport,
       BrowserAuthenticator? browser,
       bool? httpsCallback})
-      : _transport = transport ?? NativeAccountTransport(),
+      : _transport = transport ?? const NativeAccountTransport(),
+        _guideTransport = guideTransport ??
+            transport ??
+            const NativeAccountTransport(maxBytes: 2 * 1024 * 1024),
         _browser = browser ?? systemBrowserSignIn,
         _httpsCallback = httpsCallback ?? supportsHttpsCallback();
   final AccountTransport _transport;
+  final AccountTransport _guideTransport;
   final BrowserAuthenticator _browser;
   final bool _httpsCallback;
   static const callbackScheme = 'securebydesign';
@@ -298,6 +308,39 @@ class AccountStore extends ChangeNotifier {
     try {
       return await _transport.request('POST', '/api/native-progress',
           token: token, body: {'records': records, 'bookmarks': bookmarks});
+    } on AccountFailure catch (failure) {
+      if (failure.status == 401 && token == _token) {
+        _clear();
+        _notify();
+      }
+      rethrow;
+    }
+  }
+
+  /// Reads a course guide's checks and notes (`sbd-<course>`), or saves
+  /// [state] and returns what the account now holds. These are the website
+  /// guide's own records, so lab mode and the website stay in step.
+  Future<Map<String, dynamic>?> guideState(String guideId,
+      {Map<String, Object>? state}) async {
+    final token = _token, owner = accountId;
+    if (token == null || owner == null) {
+      throw const AccountFailure('Sign in to keep your lab notes in your account.');
+    }
+    if (!RegExp(r'^sbd-[a-z0-9-]{1,76}$').hasMatch(guideId)) {
+      throw ArgumentError.value(guideId, 'guideId');
+    }
+    try {
+      final data = await _guideTransport.request(
+          state == null ? 'GET' : 'PUT', '/api/native-progress/guide/$guideId',
+          token: token, body: state == null ? null : {'state': state});
+      if (token != _token || data['accountId'] != owner) {
+        throw const AccountFailure('Your account changed.');
+      }
+      final saved = data['state'];
+      if (saved != null && saved is! Map<String, dynamic>) {
+        throw const FormatException('Invalid guide response');
+      }
+      return saved as Map<String, dynamic>?;
     } on AccountFailure catch (failure) {
       if (failure.status == 401 && token == _token) {
         _clear();

@@ -13,7 +13,7 @@ enum LearningGoal {
 
 enum LearningStart {
   foundations('Start with the foundations',
-      'I’m new to these concepts. Start with a short, guided explanation.'),
+      'I’m new to these concepts. Start with the design lessons that open each course.'),
   practical('I’m ready to apply it',
       'I have some experience. Help me build, configure, and document a real system.');
 
@@ -37,11 +37,12 @@ class OnboardingProfile {
   List<String> get pathIds => [
         for (final goal in LearningGoal.values.where(goals.contains))
           switch (goal) {
-            LearningGoal.build =>
-              start == LearningStart.foundations ? 'ad' : 'identity-foundation',
-            LearningGoal.authorize =>
-              start == LearningStart.foundations ? 'rmf' : 'rmf-boe-ato',
-            LearningGoal.monitor => 'monitoring',
+            // Every goal starts in a website course: the app-only sample lessons
+            // were retired in October 2026, and each course opens with design
+            // lessons for learners starting with the foundations.
+            LearningGoal.build => 'identity-foundation',
+            LearningGoal.authorize => 'rmf-boe-ato',
+            LearningGoal.monitor => 'logging-pipeline',
           }
       ];
 

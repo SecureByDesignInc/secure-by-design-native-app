@@ -352,6 +352,13 @@ class LearningDashboard extends StatelessWidget {
           label: Text(store.practiceLesson == null
               ? 'Start a lesson'
               : 'Practice what you know')),
+      if (store.reviewsDue > 0) ...[
+        const SizedBox(height: 8),
+        // Practice opens the most overdue review first (LearningStore.reviewIntervals).
+        Text(
+            '${store.reviewsDue} ${store.reviewsDue == 1 ? 'lesson is' : 'lessons are'} due for review',
+            style: const TextStyle(color: SbdColors.muted, fontSize: 13)),
+      ],
       const SizedBox(height: 24),
       Panel(
           child:

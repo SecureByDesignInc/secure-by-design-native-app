@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/getting_started.dart';
 import '../data/learning_store.dart';
 import '../data/catalog.dart';
+import '../screens/main_screens.dart' show openResources;
 import '../screens/onboarding_screen.dart';
 import '../screens/path_screen.dart';
 import '../theme.dart';
@@ -29,7 +30,7 @@ class GettingStartedCard extends StatelessWidget {
               ),
             GettingStartedMessage.resources => (
                 'Keep a useful reference close.',
-                'Visit Explore and bookmark one guide for your next learning session. Find saved references in Resources & materials.',
+                'Open Resources & references and bookmark one guide for your next learning session. Find what you saved in My Account.',
                 'Explore resources'
               ),
             GettingStartedMessage.feedback => (
@@ -81,10 +82,7 @@ class GettingStartedCard extends StatelessWidget {
                                 } else {
                                   await dismiss();
                                   if (context.mounted) {
-                                    onTab(
-                                        message == GettingStartedMessage.welcome
-                                            ? 1
-                                            : 2);
+                                    await openResources(context, store);
                                   }
                                 }
                               },
@@ -166,7 +164,7 @@ class LearningPlanChecklist extends StatelessWidget {
             Wrap(spacing: 8, runSpacing: 8, children: [
               OutlinedButton(
                 onPressed: () => learned
-                    ? onTab(2)
+                    ? openResources(context, store)
                     : openLearningPath(context, store, paths.first),
                 child: Text(
                     learned ? 'Find a reference' : 'Open my learning path'),

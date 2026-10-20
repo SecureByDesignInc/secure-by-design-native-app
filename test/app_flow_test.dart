@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/app.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
+import 'package:secure_by_design_app/app_tabs.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -90,7 +91,7 @@ void main() {
       expect(find.text('1 of 46 lessons complete'), findsOneWidget); // course 1.1 counts lessons since 20 October 2026
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await tester.tap(find.text('My Account').last);
+      await tester.tap(find.byKey(const ValueKey('tab-account')));
       await tester.pumpAndSettle();
       expect(find.text('1 of 46 lessons complete'), findsOneWidget);
       final reloaded = await LearningStore.load();
@@ -109,12 +110,12 @@ void main() {
     final store = await LearningStore.load();
     await tester.pumpWidget(SecureByDesignApp(store: store));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Explore').last);
+    // October 2026: references moved from the retired Explore tab to My Account.
+    await tester.tap(find.byKey(const ValueKey('tab-account')));
     await tester.pumpAndSettle();
-    // The Inside the Network and Live Threat Map cards come first.
-    await tester.ensureVisible(find.text('Saved resources & materials'));
+    await tester.ensureVisible(find.text('Resources & references'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Saved resources & materials'));
+    await tester.tap(find.text('Resources & references'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
         find.byTooltip('Save Active Directory fundamentals'), 300,
@@ -156,8 +157,8 @@ void main() {
           await tester.pumpWidget(SecureByDesignApp(store: store));
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
-          for (final tab in ['Training', 'Explore', 'My Account']) {
-            await tester.tap(find.text(tab).last);
+          for (final tab in AppTab.values.skip(1)) {
+            await tester.tap(find.byKey(ValueKey('tab-${tab.name}')));
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
           }
@@ -216,12 +217,14 @@ void main() {
     );
     await tester.pumpAndSettle();
     for (final entry in {
-      'Home': 'home',
-      'Training': 'training',
-      'Explore': 'explore',
-      'My Account': 'progress',
+      AppTab.home: 'home',
+      AppTab.systemHub: 'system-hub',
+      AppTab.training: 'training',
+      AppTab.ato: 'ato-builder',
+      AppTab.community: 'community',
+      AppTab.account: 'progress',
     }.entries) {
-      await tester.tap(find.text(entry.key).last);
+      await tester.tap(find.byKey(ValueKey('tab-${entry.key.name}')));
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
         final render = boundary.currentContext!.findRenderObject()!

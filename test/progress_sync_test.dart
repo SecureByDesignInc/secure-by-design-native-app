@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/data/account.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
+import 'support/sample_paths.dart';
 
 class Cloud implements AccountTransport {
   String user = 'alice';
@@ -63,6 +64,9 @@ Future<void> settled(LearningStore store) async {
 }
 
 void main() {
+  // The retired sample courses keep these tests independent of course content.
+  setUpAll(useSampleCatalog);
+  tearDownAll(useBundledCatalog);
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
   test('guest history is preserved and imports only when requested', () async {

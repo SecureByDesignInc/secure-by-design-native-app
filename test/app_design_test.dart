@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/data/account.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
-import 'package:secure_by_design_app/data/published_catalog.dart';
+import 'package:secure_by_design_app/data/catalog.dart';
 import 'package:secure_by_design_app/data/training_categories.dart';
 import 'package:secure_by_design_app/screens/training_screens.dart';
 import 'package:secure_by_design_app/theme.dart';
@@ -39,9 +39,9 @@ void main() {
     }
     String titleFor(String id) =>
         categoryFor(publishedPaths.firstWhere((path) => path.id == id)).title;
-    // 20 October 2026: the PKI is part of course 1.1, so Certificates & Trust folded into Network Foundations.
+    // 20 October 2026: the app uses the website's Training Hub categories (Build the Network, Network Authorization).
     for (final id in ['identity-foundation', 'linux-repository', 'prove-recovery']) {
-      expect(titleFor(id), 'Network Foundations');
+      expect(titleFor(id), 'Build the Network');
     }
     for (final id in ['rmf-boe-ato']) {
       expect(titleFor(id), 'Network Authorization');

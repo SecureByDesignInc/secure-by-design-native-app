@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/data/analytics.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
+import 'support/sample_paths.dart';
 
 class FakeTransport implements AnalyticsTransport {
   final events = <Map<String, Object>>[];
@@ -17,6 +18,9 @@ class FakeTransport implements AnalyticsTransport {
 }
 
 void main() {
+  // The retired sample courses keep these tests independent of course content.
+  setUpAll(useSampleCatalog);
+  tearDownAll(useBundledCatalog);
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 

@@ -10,6 +10,7 @@ import '../widgets/community_account.dart';
 import '../widgets/getting_started.dart';
 import '../widgets/learning_rewards.dart';
 import 'account_screen.dart';
+import 'main_screens.dart' show openResources;
 import 'onboarding_screen.dart';
 import 'path_screen.dart';
 
@@ -282,6 +283,9 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
             _AccountRow(icon: Icons.bookmarks_outlined, title: 'Saved materials',
                 subtitle: '${store.saved.length} saved for later',
                 onTap: () => _detail('Saved materials', _savedMaterials)),
+            _AccountRow(icon: Icons.menu_book_outlined, title: 'Resources & references',
+                subtitle: 'Official guides and course materials to save for later',
+                onTap: () => openResources(context, store)),
             _AccountRow(icon: Icons.emoji_events_outlined, title: 'Quests & rewards',
                 subtitle: 'Streaks, achievements, and your daily goal',
                 onTap: () => _detail('Quests & rewards', (context) => LearningDashboard(
