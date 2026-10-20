@@ -54,7 +54,7 @@ class _CourseScreenState extends State<CourseScreen> {
         final path = widget.path, store = widget.store;
         final next = store.nextLesson(path);
         return Scaffold(
-            appBar: AppBar(title: const Text('Training Library')),
+            appBar: AppBar(title: const Text('Training Hub')),
             body: SafeArea(
                 child: PageContent(maxWidth: 820, children: [
               Kicker(path.number.isEmpty

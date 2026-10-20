@@ -193,7 +193,7 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
               .toLowerCase().contains(query.trim().toLowerCase());
     }).toList();
     return PageContent(children: [
-      Text('Training Library', style: Theme.of(context).textTheme.headlineMedium),
+      Text('Training Hub', style: Theme.of(context).textTheme.headlineMedium),
       const SizedBox(height: 8),
       const Text('Build the network. Prepare it for authorization.'),
       const SizedBox(height: 18),
