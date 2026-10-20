@@ -157,6 +157,9 @@ class LearningStore extends ChangeNotifier {
     'training:tiered-admin:scan': 'training:identity-foundation:tier-scan',
   };
   static const _movedPaths = {
+    // Network Authorization became one course on the website (15 October 2026) and in the app (20 October 2026).
+    'rmf-body-of-evidence': 'rmf-boe-ato',
+    'rmf-authorization-to-operate': 'rmf-boe-ato',
     'pki-services': 'identity-foundation',
     'dc01-dc02': 'identity-foundation',
     'dns-configuration': 'identity-foundation',

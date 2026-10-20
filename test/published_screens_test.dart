@@ -23,13 +23,12 @@ void main() {
       'identity-foundation', 'linux-repository', 'logging-pipeline', 'audit-repository',
       'splunk-analysis', 'workstation-fleet', 'patch-protect',
       'management-server', 'business-services',
-      'prove-recovery', 'rmf-boe-ato', 'rmf-body-of-evidence',
-      'rmf-authorization-to-operate',
+      'prove-recovery', 'rmf-boe-ato',
     ]);
     expect(publishedPaths.map((path) => path.number), [
       // 1.9 and 1.10 are coming soon on the website and have no material yet.
       for (var i = 1; i <= 12; i++) if (i != 9 && i != 10) '1.$i',
-      for (var i = 1; i <= 3; i++) '2.$i',
+      '2.1', // Network Authorization is one course, 2.1 RMF to ATO
     ]);
     final build = publishedPaths.where((path) => path.category == 'Network build');
     expect(build.length, 10);
@@ -57,34 +56,31 @@ void main() {
     }
   });
 
-  test('each authorization course has its own page and download over one set of module IDs', () {
+  test('Network Authorization is one course, 2.1 RMF to ATO, over one set of module IDs', () {
     final parts = publishedPaths.where((path) => path.category == 'Network authorization').toList();
-    expect(parts.map((path) => path.title),
-        ['Risk Management Framework', 'Body of Evidence', 'Authorization to Operate']);
+    expect(parts.map((path) => path.title), ['RMF to ATO']);
     expect(parts.expand((path) => path.lessons).map((lesson) => lesson.id), [
       for (var i = 1; i <= 12; i++) 'training:rmf-boe-ato:${'$i'.padLeft(2, '0')}',
     ]);
-    expect(parts.map((path) => path.lessons.length), [4, 5, 3]);
+    expect(parts.map((path) => path.lessons.length), [12]);
     expect(parts.map((path) => path.topics).fold(0, (a, b) => a + b), 36);
-    // Owner request, 15 October 2026: each course has its own page, and every module opens on its RMF step
-    // (NIST SP 800-37 Rev. 2 with the 2016 JSIG mapped in). Owner request, 18 October 2026: the one download
-    // is the Word workbook; the website serves the consolidated course 2.1 workbook for all three.
-    const pages = ['rmf', 'rmf-body-of-evidence', 'rmf-authorization-to-operate'];
-    for (var i = 0; i < parts.length; i++) {
-      expect(parts[i].materials.take(2).map((material) => material.url), [
-        'https://securebydesigninc.com/training/${pages[i]}/index.html',
+    // Owner direction, 15 October 2026 (the app since 20 October 2026): one course, 2.1 RMF to ATO, whose every
+    // module opens on its RMF step (NIST SP 800-37 Rev. 2 with the 2016 JSIG mapped in). Owner request,
+    // 18 October 2026: the one download is the Word workbook.
+    for (final part in parts) {
+      expect(part.materials.take(2).map((material) => material.url), [
+        'https://securebydesigninc.com/grc-rmf-training/rmf/index.html',
         'https://securebydesigninc.com/grc-rmf-training/rmf/SecureByDesign-rmf-Workbook.docx',
       ]);
-      for (final lesson in parts[i].lessons) {
+      for (final lesson in part.lessons) {
         expect(lesson.sourceUrl,
-            startsWith('https://securebydesigninc.com/training/${pages[i]}/index.html#catalog/'));
+            startsWith('https://securebydesigninc.com/grc-rmf-training/rmf/index.html#catalog/'));
         expect(lesson.sections.map((section) => section.heading), contains('What this module produces'),
             reason: lesson.id);
       }
     }
     expect(resources.where((resource) => resource.id == 'rmf-word'), isEmpty);
-    expect(parts[1].materials.map((material) => material.id), contains('rmf-evidence'));
-    expect(parts[2].materials.map((material) => material.id), contains('rmf-capstone'));
+    expect(parts.single.materials.map((material) => material.id), contains('rmf-boe-ato-evidence'));
   });
 
   test('configuration courses offer their guide and one download, objectives, recaps, and every knowledge check', () {
@@ -104,7 +100,7 @@ void main() {
     }
     // The website lists every material the app offers, so every bookmark syncs.
     for (final id in ['identity-foundation-guide', 'identity-foundation-package', 'linux-repository-package',
-        'rmf-guide', 'rmf-boe-ato-package', 'rmf-evidence', 'rmf-capstone']) {
+        'rmf-guide', 'rmf-boe-ato-package', 'rmf-boe-ato-evidence']) {
       expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
     }
     expect(resources.every((resource) => resource.syncable), isTrue);
@@ -154,7 +150,7 @@ void main() {
     await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Network Authorization'));
     await tester.pumpAndSettle();
-    expect(find.byType(TrainingCard), findsNWidgets(3));
+    expect(find.byType(TrainingCard), findsNWidgets(1));
     expect(find.text('Configure DNS and time'), findsNothing);
     // 20 October 2026: the PKI is part 6 of course 1.1, in Network Foundations.
     await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Network Foundations'));

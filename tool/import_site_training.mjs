@@ -26,12 +26,11 @@ const fail = message => { throw new Error(message); };
 
 const catalog = read('content/videos.json');
 const configurations = read('content/configuration-courses.json');
-const dc = read('public/training/dc01-dc02/lesson.json');
 const siteProgress = read('content/training-progress.json');
 const siteResources = read('content/training-resources.json');
 const context = {window: {}};
 for (const p of ['catalog-data.js', 'learning-data.js']) {
-  vm.runInNewContext(fs.readFileSync(path.join(site, 'public/training/rmf', p), 'utf8'), context);
+  vm.runInNewContext(fs.readFileSync(path.join(site, 'public/grc-rmf-training/rmf', p), 'utf8'), context);
 }
 const {CATALOG, CATALOG_PARTS, LEARNING} = context.window;
 
@@ -50,39 +49,15 @@ const siteIdFor = (url, fallback) => siteResources.find(r => r.url === base + ur
 const entries = [...catalog.episodes, ...catalog.courses.filter(c => c.kind !== 'coming-soon')];
 const entry = id => entries.find(e => e.id === id) ?? fail(`Catalog entry ${id} is missing from content/videos.json`);
 
-// 1.1 · Promote Primary & Secondary Domain Controller (DC01/DC02 episode)
-const dcEntry = entry('dc01-dc02');
-const dcCourse = {
-  ...dcEntry, category: 'Network build', icon: 'directory', studyTime: `${dc.chapters.length} guided chapters`, topics: dc.chapters.length,
-  materials: [
-    // One download per course (owner request, 18 October 2026): the guide plus its Word workbook. The -package IDs
-    // stay so saved materials keep working.
-    resource('dc-guide', 'Interactive build guide', dcEntry.training.guide, 'Explore the build and keep your notes in your account.'),
-    resource('dc-package', 'Companion workbook · Word', dcEntry.training.word, `${dcEntry.training.pages}-page companion workbook.`),
-  ],
-  lessons: dc.chapters.map(c => ({
-    id: `training:dc01-dc02:${c.id}`, title: c.title, minutes: 10, summary: c.outcome,
-    sections: [
-      section('Understand the why', c.intro),
-      ...(c.foundationIds || []).flatMap(id => {
-        const f = dc.foundations.find(x => x.id === id) ?? fail(`Unknown foundation ${id}`);
-        return [section(f.title, f.summary), ...f.blocks.map(s => section(...s)), section('Remember', f.takeaway)];
-      }),
-      ...c.steps.map(s => section(...s)),
-      section(c.commandLabel, c.command), section('What to look for', c.expected),
-      section('Avoid this mistake', c.mistake), section('Keep your evidence', c.evidencePrompt),
-    ],
-    quizzes: [quiz(c.quiz.prompt, c.quiz.answers, c.quiz.correct, c.quiz.feedback)],
-    source: base + dcEntry.training.guide + '#' + c.id,
-  })),
-};
+// Course 1.1 is a configuration course since 20 October 2026 (courses 1.1–1.8 merged), so the Site has no episodes.
+if (catalog.episodes.length) fail('The Site publishes episodes again: restore their import.');
 
-// 2.1–2.3 · Network Authorization: three courses, each with its own page and download (owner request,
-// 15 October 2026). Modules follow the RMF steps of NIST SP 800-37 Rev. 2 with the 2016 JSIG mapped in.
 // Lesson IDs stay training:rmf-boe-ato:<module> so saved progress survives.
 const rmfParts = catalog.courses.filter(c => c.categoryId === 'network-authorization').sort((a, b) => a.categoryOrder - b.categoryOrder);
 if (rmfParts[0]?.id !== 'rmf-boe-ato') fail('The first Network Authorization part must keep the rmf-boe-ato ID.');
-if (rmfParts.flatMap(p => p.moduleIds).join() !== CATALOG.map(m => m.id).join()) fail('RMF parts must cover every module once, in order.');
+// Since 15 October 2026 the Site publishes Network Authorization as one course, 2.1 "RMF to ATO", with every module.
+const moduleIdsOf = part => part.moduleIds ?? (rmfParts.length === 1 ? CATALOG.map(m => m.id) : fail(`${part.id} lists no modules`));
+if (rmfParts.flatMap(moduleIdsOf).join() !== CATALOG.map(m => m.id).join()) fail('RMF parts must cover every module once, in order.');
 // The Site's own entry for a destination (bookmark ID, title, description), so saved materials match the Site.
 const siteResource = url => {
   const r = siteResources.find(x => x.url === base + url && !x.retired) ?? fail(`The Site has no training resource for ${url}`);
@@ -101,15 +76,16 @@ const rmfStep = m => {
 };
 const rmfCourses = rmfParts.map(part => {
   const layout = CATALOG_PARTS.find(p => p.id === part.id) ?? fail(`${part.id} is missing from CATALOG_PARTS`);
-  const page = `/training/${layout.folder}/index.html`;
-  const modules = CATALOG.filter(m => part.moduleIds.includes(m.id));
+  const page = `/grc-rmf-training/${layout.folder}/index.html`;
+  const modules = CATALOG.filter(m => moduleIdsOf(part).includes(m.id));
   const topics = modules.reduce((n, m) => n + m.lessons.length, 0);
   const hours = modules.reduce((n, m) => n + Number(m.hours), 0) + (part.capstoneHours ?? 0);
   if (topics !== part.lessonCount || hours !== part.estimatedHours) fail(`${part.id} counts differ from the module catalog`);
   return {
     ...part, category: 'Network authorization', icon: 'risk',
     studyTime: `${modules.length} modules · ${topics} topics · ${hours} study hours`,
-    topics, materials: [siteResource(page), siteResource(part.training.word), ...part.training.relatedResources.map(r => siteResource(r.href))],
+    // The course page, its Word workbook, and the related pages the Site catalogs as training resources.
+    topics, materials: [siteResource(page), siteResource(part.training.word), ...part.training.relatedResources.filter(r => siteResources.some(x => x.url === base + r.href && !x.retired)).map(r => siteResource(r.href))],
     lessons: modules.map(m => {
       const l = LEARNING[CATALOG.indexOf(m)];
       return {
@@ -122,7 +98,7 @@ const rmfCourses = rmfParts.map(part => {
   };
 });
 
-// 1.2–1.10 · Configuration courses
+// 1.1–1.12 · Configuration courses (the Site's coming-soon tiles are left out)
 const configCourses = configurations.map(config => {
   const course = entry(config.id), t = course.training;
   const materials = [
@@ -150,7 +126,7 @@ const configCourses = configurations.map(config => {
   };
 });
 
-const courses = [dcCourse, ...rmfCourses, ...configCourses];
+const courses = [...rmfCourses, ...configCourses];
 const categoryIndex = c => catalog.categories.findIndex(x => x.id === c.categoryId);
 courses.sort((a, b) => categoryIndex(a) - categoryIndex(b) || (a.categoryOrder ?? 0) - (b.categoryOrder ?? 0));
 if (courses.length !== entries.length) fail(`Imported ${courses.length} courses, but the Site publishes ${entries.length} catalog entries.`);
