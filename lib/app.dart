@@ -128,7 +128,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'Build your skills with the published Training Library. Explore the network, save useful materials, and continue your learning across devices.',
+                  'Build your skills with the courses in the Training Hub. Explore the network, save useful materials, and continue your learning across devices.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 16,
