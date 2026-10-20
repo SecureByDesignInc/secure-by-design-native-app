@@ -87,12 +87,12 @@ void main() {
       await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
-      expect(find.text('1 of 5 chapters complete'), findsOneWidget);
+      expect(find.text('1 of 46 lessons complete'), findsOneWidget); // course 1.1 counts lessons since 20 October 2026
       await tester.pageBack();
       await tester.pumpAndSettle();
       await tester.tap(find.text('My Account').last);
       await tester.pumpAndSettle();
-      expect(find.text('1 of 5 lessons complete'), findsOneWidget);
+      expect(find.text('1 of 46 lessons complete'), findsOneWidget);
       final reloaded = await LearningStore.load();
       expect(reloaded.completed, {'training:identity-foundation:dc-design'});
       expect(tester.takeException(), isNull);
