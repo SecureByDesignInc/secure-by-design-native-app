@@ -75,7 +75,10 @@ void main() {
       await tester.tap(complete);
       await tester.pumpAndSettle();
       expect(store.completed, {'training:identity-foundation:dc-design'});
+      // One click for the wrong answer and one for each of the lesson's three right answers, then success.
       expect(pulses, [
+        'HapticFeedbackType.selectionClick',
+        'HapticFeedbackType.selectionClick',
         'HapticFeedbackType.selectionClick',
         'HapticFeedbackType.selectionClick',
         'HapticFeedbackType.successNotification',
