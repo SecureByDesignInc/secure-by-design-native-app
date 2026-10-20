@@ -53,22 +53,28 @@ void main() {
       final complete = find.widgetWithText(FilledButton, 'Complete lesson');
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
       await tester.scrollUntilVisible(
-        find.text('Promotion assigns a name and address automatically'),
+        find.text('The domain'),
         260,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.text('Promotion assigns a name and address automatically'));
+      await tester.tap(find.text('The domain'));
       await tester.pumpAndSettle();
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
-      await tester.tap(find.text('Promotion assigns a name and address automatically'));
+      await tester.tap(find.text('The domain'));
       await tester.pumpAndSettle();
       expect(pulses, ['HapticFeedbackType.selectionClick']);
-      await tester.tap(find.text('Changing them on a domain controller later is a separate procedure'));
+      await tester.tap(find.text('The forest'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Delegation and Group Policy'));
+      await tester.tap(find.text('Delegation and Group Policy'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('A domain controller'));
+      await tester.tap(find.text('A domain controller'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(complete);
       await tester.tap(complete);
       await tester.pumpAndSettle();
-      expect(store.completed, {'training:dc01-dc02:prepare'});
+      expect(store.completed, {'training:identity-foundation:dc-design'});
       expect(pulses, [
         'HapticFeedbackType.selectionClick',
         'HapticFeedbackType.selectionClick',
@@ -85,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('1 of 5 lessons complete'), findsOneWidget);
       final reloaded = await LearningStore.load();
-      expect(reloaded.completed, {'training:dc01-dc02:prepare'});
+      expect(reloaded.completed, {'training:identity-foundation:dc-design'});
       expect(tester.takeException(), isNull);
     },
   );

@@ -38,7 +38,7 @@ class OnboardingProfile {
         for (final goal in LearningGoal.values.where(goals.contains))
           switch (goal) {
             LearningGoal.build =>
-              start == LearningStart.foundations ? 'ad' : 'dc01-dc02',
+              start == LearningStart.foundations ? 'ad' : 'identity-foundation',
             LearningGoal.authorize =>
               start == LearningStart.foundations ? 'rmf' : 'rmf-boe-ato',
             LearningGoal.monitor => 'monitoring',

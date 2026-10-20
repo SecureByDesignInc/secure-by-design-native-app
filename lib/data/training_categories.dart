@@ -10,25 +10,20 @@ class TrainingCategory {
 }
 
 /// Every published course belongs to exactly one category; within a category
-/// courses keep the website's order (1.1, 1.2, … 1.19, then 2.1–2.3). The
-/// website's coming-soon tiles (1.16 and 1.17) have no material and aren't in the app.
+/// courses keep the website's order (1.1, 1.2, … 1.12, then 2.1–2.3). The
+/// website's coming-soon tiles (1.9 and 1.10) have no material and aren't in the app.
+/// Course 1.1 holds what courses 1.1–1.8 taught (20 October 2026).
 const trainingCategories = [
   TrainingCategory(
       'foundations',
       'Network Foundations',
-      'Build the network one system at a time: the domain controllers, DNS, '
-          'domain time, STIG measurement and Group Policy hardening, DHCP, '
-          'tiered administration, the Linux repository, the logging pipeline, '
-          'the workstation fleet, Windows updates, the living inventory, '
-          'business services, and proven recovery.',
+      'Build the network one system at a time: the identity foundation '
+          '(domain controllers, DNS, domain time, STIG hardening, PKI, DHCP '
+          'and tiered administration), the Linux repository, the logging '
+          'pipeline, the workstation fleet, Windows updates, the living '
+          'inventory, business services, and proven recovery.',
       'directory', [
-    'dc01-dc02',
-    'dns-configuration',
-    'domain-time',
-    'stig-scap',
-    'harden-baseline',
-    'dhcp',
-    'tiered-admin',
+    'identity-foundation',
     'linux-repository',
     'logging-pipeline',
     'audit-repository',
@@ -39,13 +34,6 @@ const trainingCategories = [
     'business-services',
     'prove-recovery',
   ]),
-  TrainingCategory(
-      'trust',
-      'Certificates & Trust',
-      'Build the two-tier PKI: an offline Root CA, the issuing CA, the '
-          'pki.sbd.test publication site, and certificate templates.',
-      'risk',
-      ['two-tier-pki']),
   TrainingCategory(
       'authorization',
       'Network Authorization',

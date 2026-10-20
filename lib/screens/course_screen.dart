@@ -19,11 +19,10 @@ class CourseScreen extends StatefulWidget {
   State<CourseScreen> createState() => _CourseScreenState();
 }
 
-/// The DC01/DC02 guide has chapters, the authorization course has modules,
-/// and the configuration courses have lessons.
-String _unit(LearningPath path) => path.id == 'dc01-dc02'
-    ? 'chapters'
-    : path.lessons.every((l) => l.id.startsWith('training:rmf-boe-ato:'))
+/// The authorization course has modules and the configuration courses have
+/// lessons (course 1.1 became a configuration course on 20 October 2026).
+String _unit(LearningPath path) =>
+    path.lessons.every((l) => l.id.startsWith('training:rmf-boe-ato:'))
         ? 'modules'
         : 'lessons';
 

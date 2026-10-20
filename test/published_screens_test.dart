@@ -19,36 +19,35 @@ void main() {
 
   test('the app carries every website course in site order with stable progress IDs', () {
     expect(publishedPaths.map((path) => path.id), [
-      'dc01-dc02', 'dns-configuration', 'domain-time', 'stig-scap',
-      'harden-baseline', 'two-tier-pki', 'dhcp', 'tiered-admin',
-      'linux-repository', 'logging-pipeline', 'audit-repository',
+      // 20 October 2026: courses 1.1–1.8 became course 1.1, the identity foundation.
+      'identity-foundation', 'linux-repository', 'logging-pipeline', 'audit-repository',
       'splunk-analysis', 'workstation-fleet', 'patch-protect',
       'management-server', 'business-services',
       'prove-recovery', 'rmf-boe-ato', 'rmf-body-of-evidence',
       'rmf-authorization-to-operate',
     ]);
     expect(publishedPaths.map((path) => path.number), [
-      // 1.16 and 1.17 are coming soon on the website and have no material yet.
-      for (var i = 1; i <= 19; i++) if (i != 16 && i != 17) '1.$i',
+      // 1.9 and 1.10 are coming soon on the website and have no material yet.
+      for (var i = 1; i <= 12; i++) if (i != 9 && i != 10) '1.$i',
       for (var i = 1; i <= 3; i++) '2.$i',
     ]);
     final build = publishedPaths.where((path) => path.category == 'Network build');
-    expect(build.length, 17);
-    expect(course('dns-configuration').lessons.length, 5);
-    expect(course('domain-time').lessons.length, 5);
-    expect(course('two-tier-pki').lessons.length, 10);
+    expect(build.length, 10);
+    expect(course('identity-foundation').lessons.length, 46);
+    expect(course('linux-repository').lessons.length, 5);
+    expect(course('splunk-analysis').lessons.length, 6);
     final ids = publishedPaths.expand((path) => path.lessons).map((lesson) => lesson.id).toList();
-    expect(ids.length, 105);
-    expect(ids, contains('training:domain-time:time'));
+    expect(ids.length, 107);
+    expect(ids, contains('training:identity-foundation:time'));
     expect(ids, isNot(contains('training:dns-configuration:time')));
     expect(ids.where((id) => id.endsWith(':epo') || id.endsWith(':nessus')), isEmpty);
-    expect(ids, contains('training:two-tier-pki:template-admin'));
+    expect(ids, contains('training:identity-foundation:pki-template-admin'));
     expect(ids.where((id) => id.contains('connect-segment') || id.contains('pki-services')), isEmpty);
     expect(ids.toSet().length, ids.length);
-    expect(ids, contains('training:two-tier-pki:sign'));
+    expect(ids, contains('training:identity-foundation:pki-sign'));
     expect(ids, contains('training:prove-recovery:record'));
-    expect(course('two-tier-pki').lessons[3].sourceUrl,
-        'https://securebydesigninc.com/training/two-tier-pki#sign');
+    expect(course('identity-foundation').lessons.firstWhere((l) => l.id == 'training:identity-foundation:pki-sign').sourceUrl,
+        'https://securebydesigninc.com/training/identity-foundation#pki-sign');
     for (final path in publishedPaths) {
       for (final lesson in path.lessons) {
         for (final question in lesson.questions) {
@@ -90,7 +89,7 @@ void main() {
 
   test('configuration courses offer their guide and one download, objectives, recaps, and every knowledge check', () {
     for (final path in publishedPaths.where((path) =>
-        path.category == 'Network build' && path.id != 'dc01-dc02')) {
+        path.category == 'Network build')) {
       final urls = path.materials.map((material) => material.url).toList();
       expect(urls, [
         'https://securebydesigninc.com/training/${path.id}',
@@ -104,9 +103,8 @@ void main() {
       }
     }
     // The website lists every material the app offers, so every bookmark syncs.
-    for (final id in ['dc-guide', 'dc-package', 'dns-configuration-guide', 'two-tier-pki-package',
-        'rmf-guide', 'rmf-boe-ato-package', 'rmf-evidence', 'rmf-capstone', 'harden-guide',
-        'harden-baseline-package']) {
+    for (final id in ['identity-foundation-guide', 'identity-foundation-package', 'linux-repository-package',
+        'rmf-guide', 'rmf-boe-ato-package', 'rmf-evidence', 'rmf-capstone']) {
       expect(resources.firstWhere((resource) => resource.id == id).syncable, isTrue, reason: id);
     }
     expect(resources.every((resource) => resource.syncable), isTrue);
@@ -116,7 +114,7 @@ void main() {
       (tester) async {
     final store = await LearningStore.load(clock: () => DateTime(2026, 10, 7));
     addTearDown(store.dispose);
-    final path = course('dns-configuration'), lesson = path.lessons.first;
+    final path = course('identity-foundation'), lesson = path.lessons.first;
     await tester.pumpWidget(MaterialApp(theme: buildTheme(),
         home: LessonScreen(store: store, path: path, lesson: lesson)));
     await tester.pumpAndSettle();

@@ -185,7 +185,7 @@ void main() {
     await tester.tap(find.byTooltip('Previous step'));
     await tester.pumpAndSettle();
     await tap(tester, 'Close');
-    expect(store.gettingStarted.profile!.pathIds, ['dc01-dc02']);
+    expect(store.gettingStarted.profile!.pathIds, ['identity-foundation']);
     expect(store.completed, isEmpty);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
