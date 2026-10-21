@@ -15,7 +15,8 @@ import 'package:secure_by_design_app/theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  // Past the first-run welcome, as the other app tests are, so the tab bar is on screen.
+  setUp(() => SharedPreferences.setMockInitialValues({'sbd.guidance.enabled.v1': false}));
   setUpAll(() async {
     await (FontLoader('Geist')..addFont(rootBundle.load('assets/fonts/Geist.ttf'))).load();
     await (FontLoader('MaterialIcons')
