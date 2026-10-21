@@ -47,17 +47,19 @@ void main() {
   for (final (w, scale) in [(320.0, 1.0), (320.0, 2.0), (390.0, 1.0), (390.0, 2.0), (768.0, 2.0), (1280.0, 1.0), (1280.0, 2.0)]) {
     testWidgets('a tabs $w $scale', (tester) async {
       await size(tester, w, scale);
-      final store = await LearningStore.load();
-      await tester.pumpWidget(SecureByDesignApp(store: store));
-      await tester.pumpAndSettle();
-      note(tester, '$w@$scale home');
-      for (final tab in AppTab.values.skip(1)) {
-        await tester.tap(find.byKey(ValueKey('tab-${tab.name}')));
+      try {
+        final store = await LearningStore.load();
+        await tester.pumpWidget(SecureByDesignApp(store: store));
         await tester.pumpAndSettle();
-        note(tester, '$w@$scale ${tab.name}');
+        note(tester, '$w@$scale home');
+        for (final tab in AppTab.values.skip(1)) {
+          await tester.tap(find.byKey(ValueKey('tab-${tab.name}')));
+          await tester.pumpAndSettle();
+          note(tester, '$w@$scale ${tab.name}');
+        }
+      } catch (e) {
+        problems.add('$w@$scale threw: ${short(e)}');
       }
-      await tester.pumpWidget(const SizedBox());
-      store.dispose();
     });
   }
 
