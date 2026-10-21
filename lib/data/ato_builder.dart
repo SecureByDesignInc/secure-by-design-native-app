@@ -24,8 +24,9 @@ class RmfStep {
   List<String> get lessonIds =>
       [for (final module in modules) 'training:$rmfCourseId:$module'];
 
-  /// The ATO Template Library has no Authorize section.
-  bool get hasTemplates => id != 'authorize';
+  /// Every step has a section in the ATO Template Library, Authorize included
+  /// (owner direction, 21 October 2026, matching the website).
+  bool get hasTemplates => true;
   String get templatesUrl => '$atoTemplatesUrl#$id';
 }
 
