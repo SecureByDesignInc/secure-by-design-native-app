@@ -132,6 +132,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('lab-next')));
     await tester.pumpAndSettle();
     expect(find.text(lesson.guide!.checklist.first), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('lab-check-0')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('lab-check-0')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const ValueKey('lab-observations')));

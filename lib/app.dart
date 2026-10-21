@@ -282,7 +282,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                               right: BorderSide(color: SbdColors.border),
                             ),
                           ),
-                          child: Column(
+                          // Six hub names wrap at large text sizes, so the
+                          // sidebar scrolls instead of running off the screen.
+                          child: CustomScrollView(slivers: [
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Padding(
@@ -335,6 +340,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                               ),
                             ],
                           ),
+                            ),
+                          ]),
                         ),
                         Expanded(child: content),
                       ],
