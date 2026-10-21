@@ -10,6 +10,7 @@ import 'package:secure_by_design_app/data/catalog.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
 import 'package:secure_by_design_app/data/onboarding.dart';
 import 'package:secure_by_design_app/screens/onboarding_screen.dart';
+import 'support/sample_paths.dart';
 
 Future<void> tap(WidgetTester tester, String text) async {
   await tester.ensureVisible(find.text(text).last);
@@ -31,6 +32,9 @@ Future<void> capture(WidgetTester tester, GlobalKey key, String name) async {
 }
 
 void main() {
+  // The retired sample courses keep these tests independent of course content.
+  setUpAll(useSampleCatalog);
+  tearDownAll(useBundledCatalog);
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
   setUpAll(() async {
@@ -57,7 +61,8 @@ void main() {
     final multiple = OnboardingProfile(
         goals: {LearningGoal.monitor, LearningGoal.authorize},
         start: LearningStart.practical);
-    expect(multiple.pathIds, ['rmf-boe-ato', 'monitoring']);
+    // October 2026: every goal starts in a website course.
+    expect(multiple.pathIds, ['rmf-boe-ato', 'logging-pipeline']);
     expect(OnboardingProfile.fromJson(multiple.toJson())!.pathIds,
         multiple.pathIds);
     expect(
@@ -129,10 +134,12 @@ void main() {
                   find.widgetWithText(FilledButton, 'Show my plan'))
               .onPressed,
           isNull);
+      final rmf = learningPaths.firstWhere((p) => p.id == 'rmf-boe-ato');
+      final first = rmf.lessons.first;
       await tap(tester, 'Start with the foundations');
       await tap(tester, 'Show my plan');
-      expect(find.text('Make sense of RMF'), findsOneWidget);
-      expect(find.text('START HERE · 3 MIN'), findsOneWidget);
+      expect(find.text(first.title), findsOneWidget);
+      expect(find.text('START HERE · ${first.minutes} MIN'), findsOneWidget);
       if (!largeText) await capture(tester, boundary, 'plan');
       await tap(tester, 'A note from Secure By Design');
       expect(find.text('Hi, we’re Secure By Design.'), findsOneWidget);
@@ -140,9 +147,9 @@ void main() {
       expect(tester.takeException(), isNull);
       await tap(tester, 'Start my first lesson');
       expect(find.text('Your lesson'), findsOneWidget);
-      await tap(tester, 'Prepare');
+      await tap(tester, first.answers[first.correctAnswer]);
       await tap(tester, 'Complete lesson');
-      expect(store.completed, {'rmf-1'});
+      expect(store.completed, {first.id});
       expect(find.text('+45 XP'), findsOneWidget);
       await tap(tester, 'Continue');
       expect(find.text('YOUR FIRST STEPS · 2 OF 3'), findsOneWidget);
@@ -151,8 +158,8 @@ void main() {
       expect(find.text('YOUR FIRST STEPS · 2 OF 3'), findsNothing);
       final restored = await LearningStore.load();
       expect(restored.gettingStarted.shouldPresentWelcome, false);
-      expect(restored.gettingStarted.profile!.pathIds, ['rmf']);
-      expect(restored.currentPath.id, 'rmf');
+      expect(restored.gettingStarted.profile!.pathIds, ['rmf-boe-ato']);
+      expect(restored.currentPath.id, 'rmf-boe-ato');
       expect(restored.haptics.enabled, true);
       expect(restored.analytics.enabled, false);
       expect(tester.takeException(), isNull);

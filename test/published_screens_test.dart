@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/data/catalog.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
 import 'package:secure_by_design_app/data/models.dart';
-import 'package:secure_by_design_app/data/published_catalog.dart';
 import 'package:secure_by_design_app/screens/course_screen.dart';
 import 'package:secure_by_design_app/screens/training_screens.dart';
 import 'package:secure_by_design_app/screens/network_screen.dart';
@@ -152,9 +151,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsNWidgets(1));
     expect(find.text('Configure DNS and time'), findsNothing);
-    // 20 October 2026: the PKI is part 6 of course 1.1, in Network Foundations.
-    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Network Foundations'));
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Network Foundations'));
+    // 20 October 2026: the PKI is part 6 of course 1.1, in Build the Network (the website's category).
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Build the Network'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Build the Network'));
     await tester.enterText(find.byType(TextField), 'two-tier PKI');
     await tester.pumpAndSettle();
     expect(find.byType(TrainingCard), findsOneWidget);

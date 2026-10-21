@@ -9,6 +9,7 @@ import '../data/learning_store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'course_screen.dart';
+import 'lab_mode_screen.dart';
 
 Future<void> openLearningPath(
   BuildContext context,
@@ -457,6 +458,34 @@ class _LessonScreenState extends State<LessonScreen> {
                   const SizedBox(height: 12),
                   for (final objective in lesson.objectives)
                     _Bullet(objective),
+                ])),
+          ],
+          if (!widget.practice && lesson.labSteps.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Panel(
+                gradient: true,
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  const Kicker('Follow along at your keyboard'),
+                  const SizedBox(height: 10),
+                  Text('Lab mode', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Text(
+                      '${lesson.labSteps.length} steps, one at a time, with copy buttons for the commands. '
+                      'The screen stays on, and your checks and notes match the website’s course guide.',
+                      style: const TextStyle(color: SbdColors.muted, height: 1.6)),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                      key: const ValueKey('start-lab-mode'),
+                      onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                              builder: (_) => LabModeScreen(
+                                  store: widget.store,
+                                  path: widget.path,
+                                  lesson: lesson))),
+                      icon: const Icon(Icons.science_outlined, size: 19),
+                      label: const Text('Start lab mode')),
                 ])),
           ],
           const SizedBox(height: 32),

@@ -145,3 +145,57 @@ class _TrainingCardState extends State<TrainingCard> {
             ]));
       });
 }
+
+/// A catalog tile the website labels "Coming soon": shown in its place in the
+/// course order so learners see what's next, with nothing to open yet.
+class ComingSoonCard extends StatelessWidget {
+  const ComingSoonCard({super.key, required this.course});
+  final ComingSoonCourse course;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+      container: true,
+      label: '${course.number} ${course.title}. Coming soon.',
+      excludeSemantics: true,
+      child: Opacity(
+          opacity: 0.86,
+          child: Panel(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const TopicBadge('directory', size: 38),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                            Text('${course.number} · Coming soon',
+                                style: const TextStyle(
+                                    color: SbdColors.cyan, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(course.title,
+                                style: Theme.of(context).textTheme.titleMedium),
+                          ])),
+                    ]),
+                    if (course.subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(course.subtitle, style: const TextStyle(fontSize: 13)),
+                    ],
+                    const SizedBox(height: 12),
+                    Text(course.description,
+                        style: const TextStyle(color: SbdColors.muted, height: 1.5)),
+                    const SizedBox(height: 16),
+                    // Flexible, so the label wraps instead of overflowing at large text sizes.
+                    const Row(children: [
+                      Icon(Icons.schedule_outlined, size: 16, color: SbdColors.cyan),
+                      SizedBox(width: 6),
+                      Flexible(
+                          child: Text('Coming soon',
+                              style: TextStyle(
+                                  color: SbdColors.cyan,
+                                  fontWeight: FontWeight.w600))),
+                    ]),
+                  ]))));
+}

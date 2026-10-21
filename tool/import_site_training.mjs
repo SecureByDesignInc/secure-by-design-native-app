@@ -1,155 +1,41 @@
 // Imports the published Secure By Design training catalog and the Inside the Network
 // reference from a Site checkout into the native app.
 //
-//   node tool/import_site_training.mjs /path/to/site [--write-site]
+//   node tool/import_site_training.mjs /path/to/site
 //
 // Writes lib/data/published_catalog.dart and assets/training/network.json in this
-// repository. The Site maintains content/training-progress.json and
-// content/training-resources.json itself; they are only read here. Pass --write-site
-// to regenerate them from the app's catalog (not part of the normal workflow).
+// repository. The catalog comes from the Site's scripts/prepare-app-content.mjs, the same
+// code that publishes public/app-content/v1/catalog.json for the app to download, so the
+// catalog built into the app and the one it downloads can never drift apart. The Site
+// maintains content/training-progress.json and content/training-resources.json itself.
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
 import {pathToFileURL} from 'node:url';
 
-const args = process.argv.slice(2);
-const writeSite = args.includes('--write-site');
-const siteArg = args.find(arg => !arg.startsWith('--'));
+const siteArg = process.argv.slice(2).find(arg => !arg.startsWith('--'));
 if (!siteArg) {
-  console.error('Usage: node tool/import_site_training.mjs /path/to/site [--write-site]');
+  console.error('Usage: node tool/import_site_training.mjs /path/to/site');
   process.exit(2);
 }
 const site = path.resolve(siteArg);
 const root = path.resolve(import.meta.dirname, '..');
-const read = p => JSON.parse(fs.readFileSync(path.join(site, p), 'utf8'));
-const fail = message => { throw new Error(message); };
+const {appContent, APP_CONTENT_SCHEMA} = await import(pathToFileURL(path.join(site, 'scripts/prepare-app-content.mjs')));
+const {content, materials, manifest} = appContent(site);
+const {categories, courses, comingSoon} = content;
+// The Community & Careers Hub's state pages (the Site's content/community-states.json).
+const states = JSON.parse(fs.readFileSync(path.join(site, 'content/community-states.json'), 'utf8'))
+  .map(({code, name, slug}) => ({code, name, slug}));
+if (states.length < 51 || states.some(st => !/^[a-z-]+$/.test(st.slug))) throw new Error('Unexpected community state list');
 
-const catalog = read('content/videos.json');
-const configurations = read('content/configuration-courses.json');
-const siteProgress = read('content/training-progress.json');
-const siteResources = read('content/training-resources.json');
-const context = {window: {}};
-for (const p of ['catalog-data.js', 'learning-data.js']) {
-  vm.runInNewContext(fs.readFileSync(path.join(site, 'public/grc-rmf-training/rmf', p), 'utf8'), context);
-}
-const {CATALOG, CATALOG_PARTS, LEARNING} = context.window;
-
-const base = 'https://securebydesigninc.com';
 const q = s => JSON.stringify(String(s)).replace(/\$/g, '\\$');
-const section = (heading, body) => ({heading, body});
-const quiz = (question, answers, correct, explanation) => {
-  if (!Array.isArray(answers) || !(correct >= 0 && correct < answers.length)) fail(`Invalid quiz: ${question}`);
-  return {question, answers, correct, explanation};
-};
-const resource = (id, title, url, description) =>
-  ({id, title, url: url.startsWith('http') ? url : base + url, description, category: 'Training materials', publisher: 'Secure By Design', icon: 'directory'});
-// Reuse the Site's bookmark ID for a destination it already catalogs.
-const siteIdFor = (url, fallback) => siteResources.find(r => r.url === base + url)?.id ?? fallback;
-// Coming-soon tiles (kind "coming-soon") have no material yet, so the app leaves them out until they do.
-const entries = [...catalog.episodes, ...catalog.courses.filter(c => c.kind !== 'coming-soon')];
-const entry = id => entries.find(e => e.id === id) ?? fail(`Catalog entry ${id} is missing from content/videos.json`);
-
-// Course 1.1 is a configuration course since 20 October 2026 (courses 1.1–1.8 merged), so the Site has no episodes.
-if (catalog.episodes.length) fail('The Site publishes episodes again: restore their import.');
-
-// Lesson IDs stay training:rmf-boe-ato:<module> so saved progress survives.
-const rmfParts = catalog.courses.filter(c => c.categoryId === 'network-authorization').sort((a, b) => a.categoryOrder - b.categoryOrder);
-if (rmfParts[0]?.id !== 'rmf-boe-ato') fail('The first Network Authorization part must keep the rmf-boe-ato ID.');
-// Since 15 October 2026 the Site publishes Network Authorization as one course, 2.1 "RMF to ATO", with every module.
-const moduleIdsOf = part => part.moduleIds ?? (rmfParts.length === 1 ? CATALOG.map(m => m.id) : fail(`${part.id} lists no modules`));
-if (rmfParts.flatMap(moduleIdsOf).join() !== CATALOG.map(m => m.id).join()) fail('RMF parts must cover every module once, in order.');
-// The Site's own entry for a destination (bookmark ID, title, description), so saved materials match the Site.
-const siteResource = url => {
-  const r = siteResources.find(x => x.url === base + url && !x.retired) ?? fail(`The Site has no training resource for ${url}`);
-  return resource(r.id, r.title, url, r.description);
-};
-const taskLines = tasks => tasks.map(([id, name]) => `${id} · ${name}`).join('\n');
-const rmfStep = m => {
-  const r = m.rmf;
-  return [
-    section(m.phase === 'Foundations' ? 'Before the RMF steps' : `The RMF step · ${r.step}`, r.roles),
-    ...(r.nist.length ? [section('NIST SP 800-37 Rev. 2 tasks', taskLines(r.nist))] : []),
-    ...(r.jsig.length ? [section('JSIG (11 April 2016) tasks', taskLines(r.jsig))] : m.phase === 'Prepare' ? [section('JSIG (11 April 2016) tasks', 'The 2016 JSIG has no Prepare step.')] : []),
-    section('What this module produces', r.outputs.map(o => `• ${o}`).join('\n') + (r.jsigOutputs.length ? `\n\nJSIG step outputs: ${r.jsigOutputs.join('; ')}` : '')),
-    ...(r.difference ? [section('Where the JSIG and NIST differ', r.difference)] : []),
-  ];
-};
-const rmfCourses = rmfParts.map(part => {
-  const layout = CATALOG_PARTS.find(p => p.id === part.id) ?? fail(`${part.id} is missing from CATALOG_PARTS`);
-  const page = `/grc-rmf-training/${layout.folder}/index.html`;
-  const modules = CATALOG.filter(m => moduleIdsOf(part).includes(m.id));
-  const topics = modules.reduce((n, m) => n + m.lessons.length, 0);
-  const hours = modules.reduce((n, m) => n + Number(m.hours), 0) + (part.capstoneHours ?? 0);
-  if (topics !== part.lessonCount || hours !== part.estimatedHours) fail(`${part.id} counts differ from the module catalog`);
-  return {
-    ...part, category: 'Network authorization', icon: 'risk',
-    studyTime: `${modules.length} modules · ${topics} topics · ${hours} study hours`,
-    // The course page, its Word workbook, and the related pages the Site catalogs as training resources.
-    topics, materials: [siteResource(page), siteResource(part.training.word), ...part.training.relatedResources.filter(r => siteResources.some(x => x.url === base + r.href && !x.retired)).map(r => siteResource(r.href))],
-    lessons: modules.map(m => {
-      const l = LEARNING[CATALOG.indexOf(m)];
-      return {
-        id: `training:rmf-boe-ato:${m.id}`, title: `${m.id} · ${m.title}`, minutes: Math.round(Number(m.hours) * 60), summary: m.outcome,
-        sections: [...rmfStep(m), ...l.learn.map(a => section(a[0], a.slice(1).join('\n\n'))), section(l.example[0], l.example[1].map(a => a.join(': ')).join('\n\n')), section('Build', m.build), section('Prove', m.prove)],
-        quizzes: [quiz(...l.quiz)],
-        source: base + page + '#catalog/' + m.id,
-      };
-    }),
-  };
-});
-
-// 1.1–1.12 · Configuration courses (the Site's coming-soon tiles are left out)
-const configCourses = configurations.map(config => {
-  const course = entry(config.id), t = course.training;
-  const materials = [
-    resource(siteIdFor(t.guide, `${course.id}-guide`), `${course.title} · Interactive guide`, t.guide, course.subtitle),
-    resource(`${course.id}-package`, `${course.title} · Workbook (Word)`, t.word ?? fail(`${course.id} has no Word workbook`), `${t.pages}-page companion workbook.`),
-  ];
-  return {
-    ...course, category: 'Network build', icon: course.id.includes('pki') ? 'risk' : course.id === 'logging-pipeline' ? 'monitoring' : 'directory',
-    studyTime: `${config.lessons.length} guided lessons · Self-paced`, topics: config.lessons.length, materials,
-    lessons: config.lessons.map(l => {
-      if (!Array.isArray(l.quizzes) || !l.quizzes.length) fail(`${config.id}/${l.id} has no knowledge checks`);
-      return {
-        id: `training:${course.id}:${l.id}`, title: l.title, minutes: l.minutes, summary: l.summary,
-        objectives: l.objectives ?? [], recap: l.recap ?? [], next: l.next ?? '',
-        sections: [
-          section('Before you start', config.prerequisites.join('\n\n')), section('The lab plan', config.labNote),
-          ...l.steps.map((s, i) => section(`Step ${i + 1}`, s)),
-          section('Inspect your configuration', l.command), section('What success looks like', l.check), section('Keep your evidence', l.evidence),
-          section('Source documentation', config.sources.filter(s => l.sources.includes(s.id)).map(s => `${s.title}\n${s.url}`).join('\n\n')),
-        ],
-        quizzes: l.quizzes.map(x => quiz(x.question, x.answers, x.correct, x.explanation)),
-        source: base + t.guide + '#' + l.id,
-      };
-    }),
-  };
-});
-
-const courses = [...rmfCourses, ...configCourses];
-const categoryIndex = c => catalog.categories.findIndex(x => x.id === c.categoryId);
-courses.sort((a, b) => categoryIndex(a) - categoryIndex(b) || (a.categoryOrder ?? 0) - (b.categoryOrder ?? 0));
-if (courses.length !== entries.length) fail(`Imported ${courses.length} courses, but the Site publishes ${entries.length} catalog entries.`);
-
-// IDs must already be known to the Site's sync endpoints, or account sync would reject the batch.
-const lessons = courses.flatMap(c => c.lessons);
-const lessonIds = lessons.map(l => l.id);
-if (new Set(lessonIds).size !== lessonIds.length) fail('Duplicate lesson IDs');
-const knownLessons = new Set(siteProgress.map(p => p.id));
-const unknownLessons = lessonIds.filter(id => !knownLessons.has(id));
-if (unknownLessons.length && !writeSite) fail(`Lessons missing from the Site progress catalog: ${unknownLessons.join(', ')}`);
-const materialsById = new Map();
-for (const r of courses.flatMap(c => c.materials)) {
-  const existing = materialsById.get(r.id);
-  if (existing && JSON.stringify(existing) !== JSON.stringify(r)) fail(`Material ID ${r.id} is used for different destinations`);
-  materialsById.set(r.id, r);
-}
-const knownResources = new Set(siteResources.map(r => r.id));
-const syncable = id => writeSite || knownResources.has(id);
-
 const list = (items, render = q) => `[${items.map(render).join(', ')}]`;
-const materialDart = r => `LearningResource(id: ${q(r.id)}, title: ${q(r.title)}, publisher: ${q(r.publisher)}, description: ${q(r.description)}, url: ${q(r.url)}, category: ${q(r.category)}, icon: ${q(r.icon)}${syncable(r.id) ? '' : ', syncable: false'})`;
+// Category icons stay app presentation; the Site supplies the IDs, titles and descriptions.
+const categoryIcon = id => id === 'network-authorization' ? 'journal' : 'directory';
+const categoryDart = c => `  TrainingCategory(${q(c.id)}, ${q(c.title)}, ${q(c.description)}, icon: ${q(categoryIcon(c.id))})`;
+const soonDart = c => `  ComingSoonCourse(id: ${q(c.id)}, number: ${q(c.number)}, title: ${q(c.title)}, subtitle: ${q(c.subtitle)}, description: ${q(c.description)}, categoryId: ${q(c.categoryId)})`;
+const materialDart = r => `LearningResource(id: ${q(r.id)}, title: ${q(r.title)}, publisher: ${q(r.publisher)}, description: ${q(r.description)}, url: ${q(r.url)}, category: ${q(r.category)}, icon: ${q(r.icon)}${r.syncable ? '' : ', syncable: false'})`;
 const questionDart = x => `QuizQuestion(${q(x.question)}, ${list(x.answers)}, ${x.correct}, ${q(x.explanation)})`;
+const guideDart = g => `LessonGuide(id: ${q(g.id)}, chapter: ${q(g.chapter)}, checklist: ${list(g.checklist)}, stepTitles: ${list(g.stepTitles)})`;
 const lessonDart = l => {
   const [first, ...more] = l.quizzes;
   return `Lesson(id: ${q(l.id)}, title: ${q(l.title)}, minutes: ${l.minutes}, summary: ${q(l.summary)}, ` +
@@ -159,12 +45,43 @@ const lessonDart = l => {
     (more.length ? `moreQuestions: ${list(more, questionDart)}, ` : '') +
     (l.recap?.length ? `recap: ${list(l.recap)}, ` : '') +
     (l.next ? `nextStep: ${q(l.next)}, ` : '') +
+    (l.youtubeId ? `youtubeId: ${q(l.youtubeId)}, ` : '') +
+    (l.guide ? `guide: ${guideDart(l.guide)}, ` : '') +
     `sourceUrl: ${q(l.source)}, sourceLabel: 'Open the complete guide')`;
 };
-const pathDart = c => `  LearningPath(id: ${q(c.id)}, number: ${q(c.number)}, title: ${q(c.title)}, subtitle: ${q(c.subtitle)}, category: ${q(c.category)}, description: ${q(c.description)}, icon: ${q(c.icon)}, published: true, studyTime: ${q(c.studyTime)}, topics: ${c.topics},\n` +
+const pathDart = c => `  LearningPath(id: ${q(c.id)}, number: ${q(c.number)}, title: ${q(c.title)}, subtitle: ${q(c.subtitle)}, category: ${q(c.category)}, categoryId: ${q(c.categoryId)}, description: ${q(c.description)}, icon: ${q(c.icon)}, published: true, studyTime: ${q(c.studyTime)}, topics: ${c.topics},` +
+  (c.trailerYoutubeId ? ` trailerYoutubeId: ${q(c.trailerYoutubeId)},` : '') + '\n' +
   `    materials: [\n${c.materials.map(r => '      ' + materialDart(r)).join(',\n')}\n    ],\n` +
   `    lessons: [\n${c.lessons.map(l => '      ' + lessonDart(l)).join(',\n')}\n    ])`;
-const output = `// Generated from the published Secure By Design training catalog.\n// Run: node tool/import_site_training.mjs /path/to/site\nimport 'models.dart';\n\nconst publishedPaths = <LearningPath>[\n${courses.map(pathDart).join(',\n')}\n];\n`;
+const output = `// Generated from the published Secure By Design training catalog.
+// Run: node tool/import_site_training.mjs /path/to/site
+// The app downloads newer versions of this catalog from
+// https://securebydesigninc.com/app-content/v1/ (lib/data/content_feed.dart).
+import 'models.dart';
+
+/// The schema and version (the first 16 hex digits of the catalog's SHA-256)
+/// of the website catalog this build ships.
+const bundledCatalogSchema = ${APP_CONTENT_SCHEMA};
+const bundledCatalogVersion = ${q(manifest.version)};
+
+const bundledCategories = <TrainingCategory>[
+${categories.map(categoryDart).join(',\n')}
+];
+
+/// Catalog tiles labeled "Coming soon": shown, never opened, until they have lessons.
+const bundledComingSoon = <ComingSoonCourse>[
+${comingSoon.map(soonDart).join(',\n')}
+];
+
+const bundledPaths = <LearningPath>[
+${courses.map(pathDart).join(',\n')}
+];
+
+/// The Community & Careers Hub's state pages, \`/community/<slug>\` on the website.
+const bundledCommunityStates = <CommunityState>[
+${states.map(st => `  CommunityState(${q(st.code)}, ${q(st.name)}, ${q(st.slug)})`).join(',\n')}
+];
+`;
 fs.writeFileSync(path.join(root, 'lib/data/published_catalog.dart'), output);
 
 // Inside the Network: the same modules the Site's 3D model and text view use.
@@ -190,13 +107,9 @@ fs.writeFileSync(path.join(root, 'assets/training/network.json'), JSON.stringify
   scenarios: scenarios.map(withPolicy), whatIfs: whatIfs.map(withPolicy), policy, technical,
 }, null, 2) + '\n');
 
-if (writeSite) {
-  const progress = courses.flatMap(c => c.lessons.map(l => ({id: l.id, title: l.title, href: l.source.replace(base, ''), group: c.category})));
-  fs.writeFileSync(path.join(site, 'content/training-progress.json'), JSON.stringify(progress, null, 2) + '\n');
-  fs.writeFileSync(path.join(site, 'content/training-resources.json'), JSON.stringify([...materialsById.values()], null, 2) + '\n');
-  console.log('Wrote the Site progress and resource catalogs (--write-site).');
-}
-const localOnly = [...materialsById.keys()].filter(id => !syncable(id));
-console.log(`Imported ${courses.length} courses, ${lessons.length} lessons, ${lessons.reduce((n, l) => n + l.quizzes.length, 0)} knowledge checks, ` +
-  `${materialsById.size} materials, ${scenarios.length} traffic processes, ${whatIfs.length} what-ifs, ${policy.length} policy rules, and ${nodes.length} systems.`);
+const lessonCount = courses.reduce((n, c) => n + c.lessons.length, 0);
+const localOnly = materials.filter(r => !r.syncable).map(r => r.id);
+console.log(`Imported catalog ${manifest.version}: ${courses.length} courses, ${comingSoon.length} coming soon, ${lessonCount} lessons, ` +
+  `${courses.reduce((n, c) => n + c.lessons.reduce((m, l) => m + l.quizzes.length, 0), 0)} knowledge checks, ${materials.length} materials, ` +
+  `${scenarios.length} traffic processes, ${whatIfs.length} what-ifs, ${policy.length} policy rules, and ${nodes.length} systems.`);
 if (localOnly.length) console.log(`Materials not in the Site bookmark catalog (saved on this device only): ${localOnly.join(', ')}`);

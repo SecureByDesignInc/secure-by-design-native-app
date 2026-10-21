@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
+import '../app_tabs.dart';
 import '../data/catalog.dart';
 import '../data/getting_started.dart';
 import '../data/learning_store.dart';
-import '../data/published_catalog.dart';
 import '../data/training_categories.dart';
 import '../widgets/training_card.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/getting_started.dart';
 import '../widgets/learning_rewards.dart';
-import 'main_screens.dart' show ResourcesScreen;
-import 'network_screen.dart';
 import 'threat_map_screen.dart';
 import 'path_screen.dart';
 
-export '../widgets/training_card.dart' show TrainingCard;
+export '../widgets/training_card.dart' show TrainingCard, ComingSoonCard;
 export 'my_account_screen.dart' show MyLearningScreen;
 
 class TrainingHome extends StatelessWidget {
@@ -110,7 +108,9 @@ class TrainingHome extends StatelessWidget {
           Expanded(
               child: Text('Up next',
                   style: Theme.of(context).textTheme.titleLarge)),
-          TextButton(onPressed: () => onTab(1), child: const Text('View all'))
+          TextButton(
+              onPressed: () => onTab(AppTab.training.index),
+              child: const Text('View all'))
         ]),
         const SizedBox(height: 10),
         for (final p in upNext)
@@ -155,6 +155,28 @@ class TrainingHome extends StatelessWidget {
               .map((p) => TrainingCard(path: p, store: store))
               .toList()),
       const SizedBox(height: 28),
+      // The website's homepage carries the map too. It opens on Radware's own
+      // site (owner decision, 20 October 2026: link out, don't embed or alter it).
+      Panel(
+          onTap: () => openThreatMap(context),
+          child: Row(children: [
+            const Icon(Icons.public, color: SbdColors.cyan, size: 30),
+            const SizedBox(width: 16),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text('Live Threat Map',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  const Text(
+                      'Watch attacks detected around the world on Radware’s live map, then learn the defenses in your training.',
+                      style: TextStyle(color: SbdColors.muted, height: 1.5)),
+                ])),
+            const SizedBox(width: 8),
+            const Icon(Icons.open_in_new, size: 18, color: SbdColors.muted),
+          ])),
+      const SizedBox(height: 28),
       if (resources.any((r) => store.isSaved(r.id))) ...[
         Text('Saved for your next session',
             style: Theme.of(context).textTheme.titleLarge),
@@ -184,14 +206,31 @@ class TrainingLibraryScreen extends StatefulWidget {
 class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
   String query = '';
   String category = '';
+
+  bool _matches(String text) =>
+      text.toLowerCase().contains(query.trim().toLowerCase());
+
+  /// Course numbers in the website's order: 1.9 and 1.10 sit between 1.8 and 1.11.
+  static List<int> _order(String number) =>
+      number.split('.').map((part) => int.tryParse(part) ?? 0).toList();
+  static int _compare(String a, String b) {
+    final x = _order(a), y = _order(b);
+    for (var i = 0; i < x.length && i < y.length; i++) {
+      if (x[i] != y[i]) return x[i].compareTo(y[i]);
+    }
+    return x.length.compareTo(y.length);
+  }
+
   @override
   Widget build(BuildContext context) {
     final matches = publishedPaths.where((path) {
       final group = categoryFor(path);
       return (category.isEmpty || group.id == category) &&
-          '${path.title} ${path.subtitle} ${path.description} ${group.title}'
-              .toLowerCase().contains(query.trim().toLowerCase());
+          _matches('${path.title} ${path.subtitle} ${path.description} ${group.title}');
     }).toList();
+    final soon = currentCatalog.comingSoon.where((course) =>
+        (category.isEmpty || course.categoryId == category) &&
+        _matches('${course.number} ${course.title} ${course.subtitle} ${course.description} coming soon'));
     return PageContent(children: [
       Text('Training Hub', style: Theme.of(context).textTheme.headlineMedium),
       const SizedBox(height: 8),
@@ -215,10 +254,10 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
         ],
       ])),
       const SizedBox(height: 28),
-      if (matches.isEmpty)
+      if (matches.isEmpty && soon.isEmpty)
         const Text('No matching training. Try another topic.'),
       for (final group in trainingCategories)
-        if (matches.any(group.contains)) ...[
+        if (matches.any(group.contains) || soon.any((c) => c.categoryId == group.id)) ...[
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             TopicBadge(group.icon, size: 40),
             const SizedBox(width: 12),
@@ -226,168 +265,28 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
                 children: [
               Text(group.title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
-              Text('${matches.where(group.contains).length} '
-                  '${matches.where(group.contains).length == 1 ? 'course' : 'courses'}'),
+              Text(_countLabel(matches.where(group.contains).length,
+                  soon.where((c) => c.categoryId == group.id).length)),
             ])),
           ]),
           const SizedBox(height: 16),
-          ResponsiveCards(children: matches.where(group.contains)
-              .map((path) => TrainingCard(key: ValueKey(path.id),
-                  path: path, store: widget.store)).toList()),
+          ResponsiveCards(children: [
+            for (final (_, card) in <(String, Widget)>[
+              for (final path in matches.where(group.contains))
+                (path.number, TrainingCard(key: ValueKey(path.id),
+                    path: path, store: widget.store)),
+              for (final course in soon.where((c) => c.categoryId == group.id))
+                (course.number, ComingSoonCard(key: ValueKey(course.id), course: course)),
+            ]..sort((a, b) => _compare(a.$1, b.$1)))
+              card,
+          ]),
           const SizedBox(height: 32),
         ],
-      const SizedBox(height: 30),
-      ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: const Text('Foundation lessons'),
-          subtitle: const Text('Keep building on your earlier learning.'),
-          children: foundationPaths
-              .map((p) => ListTile(
-                  title: Text(p.title),
-                  subtitle: Text(
-                      '${widget.store.completedIn(p)} of ${p.lessons.length} complete'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => openLearningPath(context, widget.store, p)))
-              .toList()),
     ]);
   }
-}
 
-class ExploreScreen extends StatelessWidget {
-  const ExploreScreen({super.key, required this.store});
-  final LearningStore store;
-  Widget link(BuildContext context, String title, String subtitle,
-          IconData icon, VoidCallback onTap) =>
-      Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Panel(
-              padding: const EdgeInsets.all(18),
-              onTap: onTap,
-              child: Row(children: [
-                Icon(icon, color: SbdColors.cyan),
-                const SizedBox(width: 16),
-                Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                      Text(title,
-                          style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 6),
-                      Text(subtitle,
-                          style: const TextStyle(
-                              color: SbdColors.muted, height: 1.5))
-                    ])),
-                const Icon(Icons.chevron_right)
-              ])));
-  @override
-  Widget build(BuildContext context) => PageContent(children: [
-        const PageTitle('Explore',
-            'Follow a connection. Find a useful resource. Bring your experience.',
-            kicker: 'Keep your curiosity moving'),
-        // The map is the most distinctive feature here, so it leads.
-        Panel(
-            gradient: true,
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute<void>(builder: (_) => const NetworkScreen())),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    const Expanded(child: Kicker('Interactive map')),
-                    Icon(Icons.hub_outlined,
-                        color: SbdColors.cyan.withValues(alpha: 0.7),
-                        size: 34),
-                  ]),
-                  const SizedBox(height: 10),
-                  Text('Inside the Network',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  const Text(
-                      'Walk the systems, traffic processes, what-ifs, and policy rules behind every lesson.',
-                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
-                  const SizedBox(height: 18),
-                  FilledButton.icon(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute<void>(
-                              builder: (_) => const NetworkScreen())),
-                      icon: const Icon(Icons.explore_outlined, size: 19),
-                      label: const Text('Open the map')),
-                ])),
-        const SizedBox(height: 14),
-        Panel(
-            gradient: true,
-            onTap: () => openThreatMap(context),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    const Expanded(child: Kicker('Live from Radware')),
-                    Icon(Icons.public,
-                        color: SbdColors.cyan.withValues(alpha: 0.7),
-                        size: 34),
-                  ]),
-                  const SizedBox(height: 10),
-                  Text('Live Threat Map',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  const Text(
-                      'Watch attacks detected around the world as they happen, then learn the defenses in your training.',
-                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
-                  const SizedBox(height: 18),
-                  OutlinedButton.icon(
-                      onPressed: () => openThreatMap(context),
-                      icon: const Icon(Icons.public, size: 19),
-                      label: const Text('Watch live attacks')),
-                ])),
-        const SizedBox(height: 28),
-        Text('Your library', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 12),
-        link(
-            context,
-            'Saved resources & materials',
-            'Your bookmarks, workbooks, and reference links.',
-            Icons.bookmarks_outlined,
-            () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                    builder: (_) => Scaffold(
-                        appBar: AppBar(title: const Text('Resources')),
-                        body: AnimatedBuilder(
-                            animation: store,
-                            builder: (context, child) =>
-                                ResourcesScreen(store: store)))))),
-        link(
-            context,
-            'Cybersecurity Resources',
-            'Find practical tools and learning material.',
-            Icons.menu_book_outlined,
-            () => openResource(
-                context, 'https://securebydesigninc.com/careers#resources')),
-        const SizedBox(height: 14),
-        Text('Community', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 12),
-        link(
-            context,
-            'Career Goals & Support',
-            'Explore your goals and start a conversation.',
-            Icons.explore_outlined,
-            () => openResource(
-                context, 'https://securebydesigninc.com/careers#goals')),
-        link(
-            context,
-            'Share What You Know',
-            'Contribute a resource, idea, or lesson from your work.',
-            Icons.people_outline,
-            () => openResource(
-                context, 'https://securebydesigninc.com/careers#contribute')),
-        link(
-            context,
-            'Cyber Range · Request access',
-            'Explore the learning-path setup and request access.',
-            Icons.terminal_outlined,
-            () => openResource(
-                context, 'https://securebydesigninc.com/cyber-range')),
-      ]);
+  static String _countLabel(int courses, int soon) {
+    final open = '$courses ${courses == 1 ? 'course' : 'courses'}';
+    return soon == 0 ? open : '$open · $soon coming soon';
+  }
 }
-

@@ -10,55 +10,33 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('the map is Radware’s, opened only over HTTPS', () {
-    expect(ThreatMapScreen.url, 'https://livethreatmap.radware.com/');
-    expect(Uri.parse(ThreatMapScreen.url).host, ThreatMapScreen.host);
+  // Owner decision, 20 October 2026: the map opens on Radware's own site,
+  // never embedded or with parts of Radware's page covered.
+  test('the map is Radware’s own page, opened over HTTPS', () {
+    expect(threatMapUrl, 'https://livethreatmap.radware.com/');
+    expect(Uri.parse(threatMapUrl).scheme, 'https');
   });
 
-  test('the in-app map blurs Radware’s contact-sales box and blocks its taps',
-      () {
-    const script = ThreatMapScreen.hideSalesBoxScript;
-    expect(script, contains(r'contact\s*sales'));
-    expect(script, contains("'filter', 'blur(8px)'"));
-    expect(script, contains("'pointer-events', 'none'"));
-    expect(script, contains('MutationObserver'));
-  });
-
-  testWidgets('Explore offers the Live Threat Map after Inside the Network',
-      (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final store = await LearningStore.load();
-    await tester.pumpWidget(MaterialApp(
-        theme: buildTheme(),
-        home: Scaffold(body: ExploreScreen(store: store))));
-    await tester.pumpAndSettle();
-    expect(find.text('Live Threat Map'), findsOneWidget);
-    expect(find.text('Watch live attacks'), findsOneWidget);
-    expect(
-        tester.getTopLeft(find.text('Live Threat Map')).dy,
-        greaterThan(tester.getTopLeft(find.text('Inside the Network')).dy));
-    expect(tester.takeException(), isNull);
-  });
-
-  for (final width in [320.0, 390.0]) {
-    testWidgets('without a web view the map offers the browser ($width)',
+  for (final (width, scale) in [(320.0, 2.0), (390.0, 1.0)]) {
+    testWidgets('Home offers the Live Threat Map as a link out ($width, ${scale}x)',
         (tester) async {
-      tester.view.physicalSize = Size(width, 740);
+      tester.view.physicalSize = Size(width, 844);
       tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final store = await LearningStore.load();
+      addTearDown(store.dispose);
       await tester.pumpWidget(MaterialApp(
-          theme: buildTheme(), home: const ThreatMapScreen(embedded: false)));
+          theme: buildTheme(),
+          home: Scaffold(body: TrainingHome(store: store, onTab: (_) {}))));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('Live Threat Map'), 300,
+          scrollable: find.byType(Scrollable).first);
       await tester.pumpAndSettle();
       expect(find.text('Live Threat Map'), findsOneWidget);
-      expect(find.textContaining('not affiliated with Radware'),
-          findsOneWidget);
-      expect(find.text('Open the live map'), findsOneWidget);
-      expect(find.byTooltip('Open on Radware'), findsOneWidget);
-      expect(find.byTooltip('Reload the map'), findsNothing);
+      expect(find.textContaining('Radware’s live map'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }

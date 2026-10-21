@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import 'app_tabs.dart';
 import 'data/learning_store.dart';
 import 'data/account.dart';
+import 'screens/hub_screens.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/training_screens.dart';
 import 'widgets/account_navigation.dart';
@@ -24,7 +26,8 @@ class _SecureByDesignAppState extends State<SecureByDesignApp> {
   @override
   Widget build(BuildContext context) => AccountNavigation(
       onAccount: () => _shellKey.currentState?._openAccount(),
-      onTraining: () => _shellKey.currentState?._select(1),
+      onTraining: () =>
+          _shellKey.currentState?._select(AppTab.training.index),
       child: MaterialApp(
         title: 'Secure By Design',
         debugShowCheckedModeBanner: false,
@@ -85,13 +88,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
   int _tab = 0;
   int _accountVisit = 0;
-  static const labels = ['Home', 'Training', 'Explore', 'My Account'];
-  static const icons = [
-    Icons.home_outlined,
-    Icons.auto_stories_outlined,
-    Icons.explore_outlined,
-    Icons.person_outline,
-  ];
   void _select(int index) {
     if (index == _tab) return;
     widget.store.haptics.selectionChanged();
@@ -103,7 +99,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _openAccount() {
     widget.store.haptics.selectionChanged();
     setState(() {
-      _tab = 3;
+      _tab = AppTab.account.index;
       _accountVisit++;
     });
   }
@@ -199,11 +195,14 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         animation: widget.store,
         builder: (context, _) {
           final wide = MediaQuery.sizeOf(context).width >= 860;
-          final page = switch (_tab) {
-            0 => TrainingHome(store: widget.store, onTab: _select),
-            1 => TrainingLibraryScreen(store: widget.store),
-            2 => ExploreScreen(store: widget.store),
-            _ => MyLearningScreen(
+          final tab = AppTab.values[_tab];
+          final page = switch (tab) {
+            AppTab.home => TrainingHome(store: widget.store, onTab: _select),
+            AppTab.systemHub => SystemHubScreen(store: widget.store),
+            AppTab.training => TrainingLibraryScreen(store: widget.store),
+            AppTab.ato => AtoBuilderHubScreen(store: widget.store),
+            AppTab.community => CommunityHubScreen(store: widget.store),
+            AppTab.account => MyLearningScreen(
                 key: ValueKey(_accountVisit),
                 store: widget.store,
                 account: _account),
@@ -220,7 +219,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                     Expanded(
                       child: wide
                           ? Text(
-                              labels[_tab],
+                              tab.title,
                               style: Theme.of(context).textTheme.titleMedium,
                             )
                           : const Brand(),
@@ -283,30 +282,36 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                               right: BorderSide(color: SbdColors.border),
                             ),
                           ),
-                          child: Column(
+                          // Six hub names wrap at large text sizes, so the
+                          // sidebar scrolls instead of running off the screen.
+                          child: CustomScrollView(slivers: [
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Padding(
                                 padding: EdgeInsets.fromLTRB(22, 25, 12, 30),
                                 child: Brand(),
                               ),
-                              for (var i = 0; i < labels.length; i++)
+                              for (final item in AppTab.values)
                                 Padding(
                                   padding:
                                       const EdgeInsets.fromLTRB(16, 4, 16, 4),
                                   child: SizedBox(
                                     width: double.infinity,
                                     child: TextButton.icon(
-                                      onPressed: () => _select(i),
-                                      icon: Icon(icons[i], size: 23),
-                                      label: Text(labels[i]),
+                                      key: ValueKey('tab-${item.name}'),
+                                      onPressed: () => _select(item.index),
+                                      icon: Icon(item.icon, size: 23),
+                                      label: Text(item.title),
                                       style: TextButton.styleFrom(
                                         alignment: Alignment.centerLeft,
                                         minimumSize: const Size(0, 52),
-                                        foregroundColor: i == _tab
+                                        foregroundColor: item.index == _tab
                                             ? SbdColors.cyan
                                             : SbdColors.muted,
-                                        backgroundColor: i == _tab
+                                        backgroundColor: item.index == _tab
                                             ? SbdColors.cyan
                                                 .withValues(alpha: 0.08)
                                             : Colors.transparent,
@@ -335,6 +340,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                               ),
                             ],
                           ),
+                            ),
+                          ]),
                         ),
                         Expanded(child: content),
                       ],
@@ -353,16 +360,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                         child: MediaQuery.removePadding(
                           context: context,
                           removeBottom: true,
-                          child: NavigationBar(
-                            selectedIndex: _tab,
-                            onDestinationSelected: _select,
-                            destinations: List.generate(
-                              labels.length,
-                              (i) => NavigationDestination(
-                                icon: Icon(icons[i]),
-                                label: labels[i],
-                              ),
-                            ),
+                          child: AppTabBar(
+                            selected: _tab,
+                            onSelected: _select,
                           ),
                         ),
                       ),

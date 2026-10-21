@@ -14,6 +14,34 @@ class QuizQuestion {
   final String explanation;
 }
 
+/// The website's interactive course guide for one lesson: the checklist and
+/// observations it keeps in the account (scripts/course-guide/renderer.js),
+/// keyed by [chapter]. Lab mode reads and writes the same records.
+class LessonGuide {
+  const LessonGuide({
+    required this.id,
+    required this.chapter,
+    this.checklist = const [],
+    this.stepTitles = const [],
+  });
+
+  /// The guide's account record, `sbd-<course>`.
+  final String id;
+
+  /// The lesson's chapter in that guide; checks are `<chapter>-<index>`.
+  final String chapter;
+  final List<String> checklist;
+  final List<String> stepTitles;
+  String checkKey(int index) => '$chapter-$index';
+}
+
+/// One step of a lesson, as lab mode presents it.
+class LabStep {
+  const LabStep(this.title, this.body);
+  final String title;
+  final String body;
+}
+
 class Lesson {
   const Lesson({
     required this.id,
@@ -32,6 +60,7 @@ class Lesson {
     this.moreQuestions = const [],
     this.recap = const [],
     this.nextStep = '',
+    this.guide,
   });
   final String id;
   final String title;
@@ -59,6 +88,33 @@ class Lesson {
   final List<String> recap;
   final String nextStep;
 
+  /// The website guide's checklist for this lesson, when it has one.
+  final LessonGuide? guide;
+
+  static final _stepHeading = RegExp(r'^Step (\d+)$');
+
+  /// The numbered build steps, titled from the website guide where it names
+  /// them, for lab mode's one-step-at-a-time view.
+  List<LabStep> get labSteps {
+    final steps = sections.where((s) => _stepHeading.hasMatch(s.heading)).toList();
+    final titles = guide?.stepTitles ?? const <String>[];
+    return [
+      for (var i = 0; i < steps.length; i++)
+        LabStep(i < titles.length && titles[i].isNotEmpty ? titles[i] : steps[i].heading,
+            steps[i].body),
+    ];
+  }
+
+  String _section(String heading) => sections
+      .firstWhere((s) => s.heading == heading,
+          orElse: () => const LessonSection('', ''))
+      .body;
+
+  /// The commands that inspect the result, shown with a copy button.
+  String get labCommands => _section('Inspect your configuration');
+  String get labSuccess => _section('What success looks like');
+  String get labEvidence => _section('Keep your evidence');
+
   /// Every knowledge check in order. All must be answered correctly to
   /// complete the lesson; rewards are still earned once per lesson.
   List<QuizQuestion> get questions => [
@@ -82,10 +138,14 @@ class LearningPath {
     this.materials = const [],
     this.number = '',
     this.trailerYoutubeId = '',
+    this.categoryId = '',
   });
   final String id;
   final String title;
   final String category;
+
+  /// The website's Training Hub category, such as `network-build`.
+  final String categoryId;
   final String description;
   final String icon;
   final List<Lesson> lessons;
@@ -124,4 +184,33 @@ class LearningResource {
   /// False when the website's bookmark catalog does not list this material
   /// yet. It can still be saved, but only on this device.
   final bool syncable;
+}
+
+/// A Training Hub category, with the website's ID, title and description.
+class TrainingCategory {
+  const TrainingCategory(this.id, this.title, this.description,
+      {this.icon = 'directory'});
+  final String id, title, description, icon;
+  bool contains(LearningPath path) => path.categoryId == id;
+}
+
+/// A catalog tile the website labels "Coming soon": it has no lessons yet, so
+/// the app shows it in its place and never opens it.
+class ComingSoonCourse {
+  const ComingSoonCourse({
+    required this.id,
+    required this.number,
+    required this.title,
+    required this.description,
+    required this.categoryId,
+    this.subtitle = '',
+  });
+  final String id, number, title, subtitle, description, categoryId;
+}
+
+/// A state page in the website's Community & Careers Hub.
+class CommunityState {
+  const CommunityState(this.code, this.name, this.slug);
+  final String code, name, slug;
+  String get url => 'https://securebydesigninc.com/community/$slug';
 }

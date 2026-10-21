@@ -6,12 +6,16 @@ import 'package:secure_by_design_app/data/account.dart';
 import 'package:secure_by_design_app/data/learning_activity.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
 import 'progress_sync_test.dart' show Cloud, settled;
+import 'support/sample_paths.dart';
 
 LearningActivity activity(String day,
         {String id = 'ad-1', bool review = false, bool perfect = false}) =>
     LearningActivity(day: day, lessonId: id, review: review, perfect: perfect);
 
 void main() {
+  // The retired sample courses keep these tests independent of course content.
+  setUpAll(useSampleCatalog);
+  tearDownAll(useBundledCatalog);
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 

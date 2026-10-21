@@ -2,8 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
 import 'package:secure_by_design_app/data/catalog.dart';
+import 'support/sample_paths.dart';
 
 void main() {
+  // The retired sample courses keep these tests independent of course content.
+  setUpAll(useSampleCatalog);
+  tearDownAll(useBundledCatalog);
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -19,8 +23,8 @@ void main() {
       expect(reloaded.completed, {'ad-1'});
       expect(reloaded.saved, {'nist-rmf'});
       expect(reloaded.currentPath.id, 'rmf');
-      expect(reloaded.completedIn(foundationPaths.first), 1);
-      expect(reloaded.nextLesson(foundationPaths.first)?.id, 'ad-2');
+      expect(reloaded.completedIn(samplePaths.first), 1);
+      expect(reloaded.nextLesson(samplePaths.first)?.id, 'ad-2');
     },
   );
 

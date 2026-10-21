@@ -39,11 +39,48 @@ class LearningStore extends ChangeNotifier {
   void refreshDay() => _notify();
   bool rewardedToday(String id) =>
       _activities.containsKey('${learningDay(_clock())}|$id');
+  /// Days to wait after a lesson's last session before it is due again: the
+  /// gaps widen with each review (spaced retrieval practice).
+  static const reviewIntervals = [1, 3, 7, 21, 60];
+
+  /// How many days past its next review a completed lesson is (0 means due
+  /// today), or null when it isn't due yet.
+  int? _overdue(Lesson lesson, DateTime today) {
+    final sessions = _activities.values.where((a) => a.lessonId == lesson.id).toList();
+    final days = [
+      for (final a in sessions)
+        if (parseLearningDay(a.day) case final DateTime day) day,
+    ]..sort();
+    if (days.isEmpty) return null;
+    final reviews = sessions.where((a) => a.review).length;
+    final wait = reviewIntervals[reviews.clamp(0, reviewIntervals.length - 1)];
+    final overdueDays = today.difference(days.last).inDays - wait;
+    return overdueDays >= 0 ? overdueDays : null;
+  }
+
+  DateTime get _today => parseLearningDay(learningDay(_clock()))!;
+
+  /// Completed lessons whose next review has come round.
+  int get reviewsDue {
+    final today = _today;
+    return learningPaths
+        .expand((p) => p.lessons)
+        .where((l) => isCompleted(l.id) && _overdue(l, today) != null)
+        .length;
+  }
+
+  /// The most overdue review, or else the completed lesson practiced longest ago.
   Lesson? get practiceLesson {
     final lessons = learningPaths
         .expand((p) => p.lessons)
         .where((l) => isCompleted(l.id))
         .toList();
+    final today = _today;
+    final due = [
+      for (final lesson in lessons)
+        if (_overdue(lesson, today) case final int overdueDays) (lesson, overdueDays),
+    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    if (due.isNotEmpty) return due.first.$1;
     String lastDay(Lesson lesson) {
       final dates = _activities.values
           .where((a) => a.lessonId == lesson.id)
@@ -195,6 +232,10 @@ class LearningStore extends ChangeNotifier {
   String _key(String suffix) =>
       _scope == null ? 'sbd.$suffix.v1' : 'sbd.account.$_scope.$suffix.v1';
   bool get cloudConnected => _scope != null;
+
+  /// The connected account, for features that keep data beside progress
+  /// (lab mode's checks and notes); null while progress stays on this device.
+  AccountStore? get account => cloudConnected ? _account : null;
   String? get accountScope => _scope;
   String get storageLabel => cloudConnected
       ? 'Account progress · available offline on this device'

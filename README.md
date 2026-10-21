@@ -6,19 +6,23 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 
 ## What works
 
-- Home, Training, Explore, and My Account with the website's navy/cyan design.
-- All 13 published Training Library courses: Build the Network 1.1–1.10 (the DC01/DC02 identity build and nine configuration courses) and Network Authorization 2.1–2.3 (Risk Management Framework, Body of Evidence, and Authorization to Operate). The app groups them into three training categories.
-- Overview, Lessons, and Materials views; recordings are honestly labeled Video coming soon.
-- Bundled course text and knowledge checks, plus the nine original foundation lessons.
-- Inside the Network: seven offline traffic processes, five what-ifs, 23 system references, and the policy register (F01–F20 plus administrative and deny rules); the complete website 3D explorer opens in-app on iOS, Android, and macOS.
-- Live Threat Map: Radware's live cyber threat map (the same map as the Live Threat Map on the website's homepage) opens from Explore, in-app on iOS, Android, and macOS and in the browser elsewhere. Only the map loads in the view; other links open in the browser. Radware's red "Contact sales" box is blurred and can't be tapped. If Radware's site is unreachable, the screen offers the browser link.
-- Saved materials and native homepage sharing: Learn it. Share it. Pay it forward.
-- Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import.
+- Six tabs in the website's navigation order with its navy/cyan design: Home, System Hub, Training Hub, ATO Package Builder Hub, Community & Careers Hub, and My Account. Phones show short labels (Home · Systems · Training · ATO · Community · Account) that stay on one line at any text size; screen readers and the wide-screen sidebar use the full hub names.
+- The website's Training Hub catalog: Build the Network 1.1–1.12 and Network Authorization 2.1 (11 courses, 107 lessons), in the website's two categories, with 1.9 (SBD-EPO01) and 1.10 (SBD-NESSUS01) shown in course order as "Coming soon" tiles that don't open.
+- Training updates without a new build: the app checks `securebydesigninc.com/app-content/v1/manifest.json` in the background, downloads a changed catalog, verifies its SHA-256 and that every course parses, and uses it from the next launch. Offline or on any error it keeps the catalog it shipped with (see Course content updates).
+- Lab mode on every Build the Network lesson: the phone as a second screen. One step at a time, the inspection commands with a copy button per command, then the lesson's checklist and observations from the website's course guide. For a signed-in learner, checks and notes sync with the website guide's own records, so ticking a check in the app ticks it on the website. The screen stays on while lab mode is open.
+- Practice comes round on a widening schedule (1, 3, 7, 21, then 60 days after each session); the most overdue lesson comes first.
+- Overview, Lessons, and Materials views; lessons play their YouTube walkthrough (privacy-enhanced embed) once the website lists one, and are honestly labeled Video coming soon until then.
+- System Hub: Inside the Network — seven offline traffic processes, five what-ifs, the system references, and the policy register; the complete website 3D explorer opens in-app on iOS, Android, and macOS.
+- ATO Package Builder Hub: the seven RMF steps, each with its course 2.1 lessons (opened in the app), its templates, and the package builder (opened on the website, where it saves to the learner's account).
+- Community & Careers Hub: the Discord, LinkedIn, Book a call, all 51 state pages, what every state page holds, and what's coming soon to the hub.
+- Live Threat Map: a Home card opens Radware's map on Radware's own site (owner decision, 20 October 2026: link out; the app no longer embeds the map or covers parts of it).
+- Resources & references and saved materials in My Account; native homepage sharing: Learn it. Share it. Pay it forward.
+- Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import. In-app account deletion.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
-- A skippable first-run welcome: goals, starting level, real lesson recommendations, and an optional note from Secure By Design. The Home checklist follows actual lesson and bookmark progress.
-- Returning learners keep their place. Reopen the welcome through the info button → Personalize my learning; the creator note is also available there.
+- A skippable first-run welcome: goals, starting level, recommendations from the website's courses, and an optional note from Secure By Design. The Home checklist follows actual lesson and bookmark progress. The three app-only sample courses were retired on 20 October 2026; tests keep them as a fixture (`test/support/sample_paths.dart`).
 - Device-only onboarding choices, getting-started prompts, optional anonymous analytics, and existing feedback flow.
-- Optional haptic feedback on supported iOS and Android devices: selection taps, saved bookmark confirmations, and successful lesson completion. Use the info button → Haptic feedback to turn it off; the preference stays on this device across account changes and app restarts. Background synchronization and unsupported platforms remain silent.
+- Optional haptic feedback on supported iOS and Android devices. Use the info button → Haptic feedback to turn it off.
+- An app privacy manifest (`ios/Runner/PrivacyInfo.xcprivacy`): no tracking; optional analytics; email, progress and lab notes only for a signed-in learner. Keep it in step with the App Store privacy label.
 
 Course text and the network reference work offline. 3D, downloads, external resources, and account synchronization require a connection. Account sessions stay in memory and expire within 12 hours. Lab access remains request-based. This release does not add public store listings or recordings.
 
@@ -103,7 +107,9 @@ The logo mark is the existing website asset's displayed viewport. It is reused f
 
 ## Course content updates
 
-Import from the current Site checkout, then format and validate:
+The website is the one source of the training catalog. Its build (`scripts/prepare-content.mjs` → `scripts/prepare-app-content.mjs`) publishes `public/app-content/v1/catalog.json` and `manifest.json`; the app downloads them, so a website deploy reaches the app without an App Store or Google Play release. The catalog carries content only (text, quizzes, links, video IDs), never code.
+
+To ship the current catalog inside a build, import it from a Site checkout:
 
 ```bash
 node tool/import_site_training.mjs /path/to/site
@@ -111,7 +117,7 @@ flutter analyze
 flutter test
 ```
 
-The importer only reads the Site. The Site maintains `content/training-progress.json` and `content/training-resources.json` itself, and the importer stops if a lesson ID is missing from the Site's progress catalog, because account sync would reject it. Materials the Site's bookmark catalog does not list yet are generated with `syncable: false` and can only be saved on the device; the importer prints them. `--write-site` regenerates both Site catalogs from the app's catalog; it is not part of the normal workflow. Preserve existing lesson and material IDs on content edits.
+The importer runs the Site's own `appContent()` code, so the bundled catalog and the downloaded one are built the same way and share a version (the first 16 hex digits of the catalog's SHA-256). It stops if a lesson ID is missing from the Site's `content/training-progress.json`, because account sync would reject it. Materials the Site's bookmark catalog does not list are generated with `syncable: false`. Preserve existing lesson and material IDs on content edits. A change to the catalog's shape needs a new schema number on both sides; this release reads schema 1 and ignores any other.
 
 ## Release workflow
 
@@ -256,3 +262,10 @@ The bundled catalog and `assets/training/network.json` were re-imported from the
 ## One course per system (October 14, 2026)
 
 The website split its consolidated Build the Network courses into one course per system, so the path now runs 1.1–1.19 (website PR #48). The app imports it with `node tool/import_site_training.mjs <site checkout>`: 17 build courses plus the three Network Authorization parts, 105 lessons. Website tiles 1.16 (SBD-EPO01) and 1.17 (SBD-NESSUS01) are "Coming soon" with no material, so the app leaves them out until they have lessons. Lessons that moved keep their lesson id; `LearningStore._movedLessons` carries device progress to their new course (the website's `content/progress-moves.json` lists the same moves), and progress for the withdrawn endpoint-protection and scanning lessons drops out. Categories in `lib/data/training_categories.dart` list the new courses.
+
+## Revamp: website parity, content feed and lab mode (20 October 2026)
+
+- Navigation, categories, coming-soon tiles and hubs now follow the website (see What works). The Explore tab is gone: Inside the Network is the System Hub, community links moved to the Community & Careers Hub, references to My Account, and the Live Threat Map to Home.
+- `lib/data/content_feed.dart`, `catalog_json.dart`: the downloaded catalog. `lib/data/catalog.dart` holds the catalog in use (`useCatalog`), set once at startup in `lib/bootstrap.dart`.
+- `lib/screens/lab_mode_screen.dart`, `lib/data/guide_state.dart`: lab mode and its checks and notes (`/api/native-progress/guide/<id>` on the website). `lib/data/keep_awake.dart` with handlers in `ios/Runner/AppDelegate.swift` and `MainActivity.kt` keeps the screen on.
+- `lib/app_tabs.dart`, `lib/screens/hub_screens.dart`, `lib/data/ato_builder.dart` (mirrors the website's `package-builder-hub.tsx`).
