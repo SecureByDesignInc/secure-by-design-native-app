@@ -187,12 +187,15 @@ class ComingSoonCard extends StatelessWidget {
                     Text(course.description,
                         style: const TextStyle(color: SbdColors.muted, height: 1.5)),
                     const SizedBox(height: 16),
+                    // Flexible, so the label wraps instead of overflowing at large text sizes.
                     const Row(children: [
                       Icon(Icons.schedule_outlined, size: 16, color: SbdColors.cyan),
                       SizedBox(width: 6),
-                      Text('Coming soon',
-                          style: TextStyle(
-                              color: SbdColors.cyan, fontWeight: FontWeight.w600)),
+                      Flexible(
+                          child: Text('Coming soon',
+                              style: TextStyle(
+                                  color: SbdColors.cyan,
+                                  fontWeight: FontWeight.w600))),
                     ]),
                   ]))));
 }
