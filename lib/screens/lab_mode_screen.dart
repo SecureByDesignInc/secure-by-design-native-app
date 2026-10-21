@@ -269,8 +269,9 @@ class _LabModeScreenState extends State<LabModeScreen> {
               minHeight: 3,
               backgroundColor: SbdColors.border,
               color: SbdColors.cyan,
-              semanticsLabel: 'Lab mode progress',
-              semanticsValue: '${_page + 1} of ${_pages.length}'),
+              // Screen readers need a number here; the label says where you are.
+              semanticsLabel: 'Lab mode, page ${_page + 1} of ${_pages.length}',
+              semanticsValue: '${((_page + 1) * 100 / _pages.length).round()}'),
           Expanded(
             child: PageContent(maxWidth: 760, children: [
               Text(widget.lesson.title,
