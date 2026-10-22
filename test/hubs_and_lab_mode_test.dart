@@ -128,7 +128,16 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('lab-next')));
       await tester.pumpAndSettle();
     }
-    expect(find.text('Check your work'), findsOneWidget);
+    // Site, 22 October 2026: the console check leads, then the commands as the optional route.
+    if (lesson.labConsole.trim().isNotEmpty) {
+      expect(find.text('CHECK IT IN THE CONSOLE'), findsOneWidget); // Kicker shows its text in capitals
+      expect(find.text('Check your work'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('lab-next')));
+      await tester.pumpAndSettle();
+      expect(find.text('COMMAND-LINE ROUTE (OPTIONAL)'), findsOneWidget);
+    } else {
+      expect(find.text('Check your work'), findsOneWidget);
+    }
     expect(find.byTooltip('Copy this command'), findsWidgets);
     await tester.tap(find.byKey(const ValueKey('lab-next')));
     await tester.pumpAndSettle();
