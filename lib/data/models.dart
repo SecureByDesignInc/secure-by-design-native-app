@@ -110,7 +110,11 @@ class Lesson {
           orElse: () => const LessonSection('', ''))
       .body;
 
-  /// The commands that inspect the result, shown with a copy button.
+  /// The console (GUI) check, where the lesson has one (Site, 22 October 2026).
+  String get labConsole => _section('Check it in the console');
+
+  /// The commands that inspect the result, shown with a copy button. With a
+  /// console check they are the optional command-line route.
   String get labCommands => _section('Inspect your configuration');
   String get labSuccess => _section('What success looks like');
   String get labEvidence => _section('Keep your evidence');

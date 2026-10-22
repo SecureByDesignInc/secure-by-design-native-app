@@ -25,12 +25,13 @@ class LabModeScreen extends StatefulWidget {
   State<LabModeScreen> createState() => _LabModeScreenState();
 }
 
-enum _Page { step, commands, checks }
+enum _Page { step, console, commands, checks }
 
 class _LabModeScreenState extends State<LabModeScreen> {
   late final List<LabStep> _steps = widget.lesson.labSteps;
   late final List<(_Page, int)> _pages = [
     for (var i = 0; i < _steps.length; i++) (_Page.step, i),
+    if (widget.lesson.labConsole.trim().isNotEmpty) (_Page.console, 0),
     if (widget.lesson.labCommands.trim().isNotEmpty) (_Page.commands, 0),
     (_Page.checks, 0),
   ];
@@ -126,13 +127,37 @@ class _LabModeScreenState extends State<LabModeScreen> {
     ]);
   }
 
+  /// The console (GUI) check: each console's name, then its numbered steps.
+  Widget _consolePage(BuildContext context) {
+    final blocks = widget.lesson.labConsole.split('\n\n');
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Kicker('Check it in the console'),
+      const SizedBox(height: 12),
+      Text('Check your work', style: Theme.of(context).textTheme.headlineSmall),
+      const SizedBox(height: 16),
+      for (final block in blocks) ...[
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: SbdColors.surfaceLow,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: SbdColors.border),
+          ),
+          child: Text(block, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5)),
+        ),
+        const SizedBox(height: 12),
+      ],
+    ]);
+  }
+
   Widget _commandsPage(BuildContext context) {
     final commands = widget.lesson.labCommands;
     final lines = commands.split('\n');
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Kicker('Inspect your configuration'),
+      Kicker(widget.lesson.labConsole.trim().isNotEmpty ? 'Command-line route (optional)' : 'Inspect your configuration'),
       const SizedBox(height: 12),
-      Text('Check your work', style: Theme.of(context).textTheme.headlineSmall),
+      Text(widget.lesson.labConsole.trim().isNotEmpty ? 'Or check it from PowerShell' : 'Check your work', style: Theme.of(context).textTheme.headlineSmall),
       const SizedBox(height: 10),
       const Text('Run these where the lesson says. Each command has its own copy button.',
           style: TextStyle(color: SbdColors.muted, height: 1.5)),
@@ -279,6 +304,7 @@ class _LabModeScreenState extends State<LabModeScreen> {
               const SizedBox(height: 14),
               switch (kind) {
                 _Page.step => _stepPage(context, index),
+                _Page.console => _consolePage(context),
                 _Page.commands => _commandsPage(context),
                 _Page.checks => _checksPage(context),
               },
