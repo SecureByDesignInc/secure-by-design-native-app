@@ -5,6 +5,7 @@ import 'app_tabs.dart';
 import 'data/learning_store.dart';
 import 'data/account.dart';
 import 'screens/hub_screens.dart';
+import 'screens/range_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/training_screens.dart';
 import 'widgets/account_navigation.dart';
@@ -202,6 +203,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             AppTab.training => TrainingLibraryScreen(store: widget.store),
             AppTab.ato => AtoBuilderHubScreen(store: widget.store),
             AppTab.community => CommunityHubScreen(store: widget.store),
+            AppTab.range => const RangeScreen(),
             AppTab.account => MyLearningScreen(
                 key: ValueKey(_accountVisit),
                 store: widget.store,
