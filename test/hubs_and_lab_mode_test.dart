@@ -42,7 +42,6 @@ void main() {
       'Home',
       'System Hub',
       'Training Hub',
-      'ATO Package Builder Hub',
       'Community & Careers Hub',
       'Cyber Range',
       'My Account',
@@ -54,7 +53,7 @@ void main() {
     (const Size(390, 844), 1.0),
     (const Size(1280, 900), 1.0),
   ]) {
-    testWidgets('seven tabs fit and open each hub (${size.width.toInt()}px, ${scale}x)',
+    testWidgets('six tabs fit and open each hub (${size.width.toInt()}px, ${scale}x)',
         (tester) async {
       await pumpApp(tester, size, scale);
       for (final tab in AppTab.values) {
@@ -63,9 +62,11 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('tab-systemHub')));
       await tester.pumpAndSettle();
       expect(find.text('Open the System Hub'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('tab-ato')));
+      // The ATO Package Builder lives in the Training tab's Tools (website, 27 October 2026).
+      await tester.tap(find.byKey(const ValueKey('tab-training')));
       await tester.pumpAndSettle();
-      expect(find.text('Open the package builder'), findsOneWidget);
+      expect(find.byKey(const ValueKey('tool-ato-builder')), findsOneWidget);
+      expect(find.text('Open the builder'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('tab-community')));
       await tester.pumpAndSettle();
       expect(find.text('Join the Discord'), findsOneWidget);
@@ -78,10 +79,11 @@ void main() {
     });
   }
 
-  testWidgets('the ATO hub lists the seven RMF steps with their course 2.1 lessons',
+  // The seven RMF steps sit in the Training tab's Tools since 27 October 2026, as on the website.
+  testWidgets('the Training tab lists the seven RMF steps with their course 2.1 lessons',
       (tester) async {
     await pumpApp(tester, const Size(390, 844), 1);
-    await tester.tap(find.byKey(const ValueKey('tab-ato')));
+    await tester.tap(find.byKey(const ValueKey('tab-training')));
     await tester.pumpAndSettle();
     for (final step in rmfSteps) {
       await tester.scrollUntilVisible(find.text(step.title), 300,

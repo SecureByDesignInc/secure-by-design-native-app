@@ -222,7 +222,6 @@ void main() {
       AppTab.home: 'home',
       AppTab.systemHub: 'system-hub',
       AppTab.training: 'training',
-      AppTab.ato: 'ato-builder',
       AppTab.community: 'community',
       AppTab.account: 'progress',
     }.entries) {

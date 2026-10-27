@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'theme.dart';
 
 /// The app's top-level destinations, in the website's navigation order
-/// (content/navigation.json): Home, System Hub, Training Hub, ATO Package
-/// Builder Hub, Community & Careers Hub, Cyber Range, My Account. [title] is
+/// (content/navigation.json since 27 October 2026): System Hub, Training Hub,
+/// Community & Careers Hub, Cyber Range, then My Account. The app keeps Home as
+/// its start tab, since it has no logo to tap, and the ATO Package Builder
+/// lives in the Training Hub's Tools, as on the website. [title] is
 /// the website's name; [label] is the short form that fits a phone's tab bar.
 /// Cyber Range (owner direction, 26 October 2026) opens the website's Range
 /// page, so the arena is one build shared by the site and the app.
@@ -13,8 +15,6 @@ enum AppTab {
   systemHub('Systems', 'System Hub', Icons.hub_outlined, Icons.hub),
   training('Training', 'Training Hub', Icons.auto_stories_outlined,
       Icons.auto_stories),
-  ato('ATO', 'ATO Package Builder Hub', Icons.verified_user_outlined,
-      Icons.verified_user),
   community('Community', 'Community & Careers Hub', Icons.groups_outlined,
       Icons.groups),
   range('Range', 'Cyber Range', Icons.sports_esports_outlined,
@@ -26,7 +26,7 @@ enum AppTab {
   final IconData icon, selectedIcon;
 }
 
-/// Seven destinations are two more than a standard phone tab bar holds, so
+/// Six destinations are one more than a standard phone tab bar holds, so
 /// this bar keeps every label on one line at any text size: labels scale up
 /// to 1.3× and then shorten, and each tab announces its full hub name.
 class AppTabBar extends StatelessWidget {
