@@ -44,6 +44,7 @@ void main() {
       'Training Hub',
       'ATO Package Builder Hub',
       'Community & Careers Hub',
+      'Cyber Range',
       'My Account',
     ]);
   });
@@ -53,7 +54,7 @@ void main() {
     (const Size(390, 844), 1.0),
     (const Size(1280, 900), 1.0),
   ]) {
-    testWidgets('six tabs fit and open each hub (${size.width.toInt()}px, ${scale}x)',
+    testWidgets('seven tabs fit and open each hub (${size.width.toInt()}px, ${scale}x)',
         (tester) async {
       await pumpApp(tester, size, scale);
       for (final tab in AppTab.values) {
@@ -69,6 +70,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Join the Discord'), findsOneWidget);
       expect(find.text('Find your state'), findsOneWidget);
+      // No WebView platform under test, so the Range tab shows its open-in-browser card.
+      await tester.tap(find.byKey(const ValueKey('tab-range')));
+      await tester.pumpAndSettle();
+      expect(find.text('Open the Cyber Range'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
