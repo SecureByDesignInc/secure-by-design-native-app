@@ -11,6 +11,7 @@ import '../widgets/getting_started.dart';
 import '../widgets/learning_rewards.dart';
 import 'threat_map_screen.dart';
 import 'path_screen.dart';
+import 'hub_screens.dart';
 
 export '../widgets/training_card.dart' show TrainingCard, ComingSoonCard;
 export 'my_account_screen.dart' show MyLearningScreen;
@@ -197,8 +198,11 @@ class TrainingHome extends StatelessWidget {
 }
 
 class TrainingLibraryScreen extends StatefulWidget {
-  const TrainingLibraryScreen({super.key, required this.store});
+  const TrainingLibraryScreen({super.key, required this.store, this.onSystemHub});
   final LearningStore store;
+
+  /// Opens the System Hub tab from the Tools (website, 27 October 2026).
+  final VoidCallback? onSystemHub;
   @override
   State<TrainingLibraryScreen> createState() => _TrainingLibraryScreenState();
 }
@@ -236,6 +240,10 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
       const SizedBox(height: 8),
       const Text('Build the network. Prepare it for authorization.'),
       const SizedBox(height: 18),
+      // The ATO Package Builder lives here, as on the website (27 October 2026):
+      // the Tools and the seven RMF steps, until a search or a filter is set.
+      if (query.trim().isEmpty && category.isEmpty)
+        AtoBuilderSection(store: widget.store, onSystemHub: widget.onSystemHub),
       TextField(
           decoration: const InputDecoration(
               labelText: 'Search training', prefixIcon: Icon(Icons.search)),

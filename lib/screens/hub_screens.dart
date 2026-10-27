@@ -125,11 +125,14 @@ class SystemHubScreen extends StatelessWidget {
       ]);
 }
 
-/// The website's ATO Package Builder Hub: practice taking the network you
-/// built through the seven RMF steps, with each step's lessons in course 2.1.
-class AtoBuilderHubScreen extends StatelessWidget {
-  const AtoBuilderHubScreen({super.key, required this.store});
+/// The ATO Package Builder in the Training Hub (website, 27 October 2026): the
+/// Tools (the builder, no account needed, and the System Hub) and the seven RMF
+/// steps, each with its course 2.1 lessons, its builder task and its templates.
+/// The separate ATO Package Builder Hub tab is retired, as the website's page is.
+class AtoBuilderSection extends StatelessWidget {
+  const AtoBuilderSection({super.key, required this.store, this.onSystemHub});
   final LearningStore store;
+  final VoidCallback? onSystemHub;
 
   LearningPath? get _course =>
       learningPaths.where((path) => path.id == rmfCourseId).firstOrNull;
@@ -201,43 +204,61 @@ class AtoBuilderHubScreen extends StatelessWidget {
       animation: store,
       builder: (context, child) {
         final course = _course;
-        return PageContent(children: [
-          const PageTitle('Take a system to an ATO. One RMF step at a time.',
-              'Register the Secure By Design enclave in the ATO Package Builder and take it through all seven RMF steps, from naming its roles to the Authorizing Official’s decision and continuous monitoring. Each step pairs its lessons with its templates. Your work is saved privately to your account.',
-              kicker: 'ATO Package Builder Hub · Practice tool'),
-          Wrap(spacing: 12, runSpacing: 12, children: [
-            FilledButton.icon(
-                onPressed: () => openResource(context, atoBuilderUrl),
-                icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text('Open the package builder')),
-            if (course != null)
-              OutlinedButton.icon(
-                  onPressed: () => openLearningPath(context, store, course),
-                  icon: const Icon(Icons.auto_stories_outlined, size: 18),
-                  label: const Text('Course 2.1 in the Training Hub')),
-          ]),
-          const SizedBox(height: 10),
-          const Text(
-              'The package builder opens on the website, where it saves to your Secure By Design account.',
-              style: TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.5)),
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text('Tools', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 12),
+          Panel(
+              key: const ValueKey('tool-ato-builder'),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Kicker('Tool · No account needed'),
+                const SizedBox(height: 10),
+                Text('ATO Package Builder', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 8),
+                const Text(
+                    'Take the Secure By Design enclave through all seven RMF steps, from naming its roles to the authorization decision. Sign in to save your work, or use it without an account for one visit.',
+                    style: TextStyle(color: SbdColors.muted, height: 1.6)),
+                const SizedBox(height: 14),
+                Wrap(spacing: 12, runSpacing: 12, children: [
+                  FilledButton.icon(
+                      onPressed: () => openResource(context, atoBuilderUrl),
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      label: const Text('Open the builder')),
+                  if (course != null)
+                    OutlinedButton.icon(
+                        onPressed: () => openLearningPath(context, store, course),
+                        icon: const Icon(Icons.auto_stories_outlined, size: 18),
+                        label: const Text('Course 2.1')),
+                ]),
+              ])),
+          if (onSystemHub != null) ...[
+            const SizedBox(height: 12),
+            Panel(
+                key: const ValueKey('tool-system-hub'),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Kicker('Tool'),
+                  const SizedBox(height: 10),
+                  Text('System Hub', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  const Text('Explore every system in the lab network and follow the traffic between them.',
+                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                      onPressed: onSystemHub,
+                      icon: const Icon(Icons.arrow_forward, size: 17),
+                      label: const Text('Open the System Hub')),
+                ])),
+          ],
           const SizedBox(height: 28),
-          Text('The seven RMF steps', style: Theme.of(context).textTheme.titleLarge),
+          const Kicker('Network Authorization · Course 2.1 RMF to ATO'),
+          const SizedBox(height: 8),
+          Text('Seven RMF steps: learn it, do it, use its templates',
+              style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 14),
           for (var i = 0; i < rmfSteps.length; i++) _step(context, i, rmfSteps[i]),
-          const SizedBox(height: 14),
-          Text('What the builder keeps for your enclave',
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          for (final (title, text) in builderKeeps)
-            ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.inventory_2_outlined, color: SbdColors.cyan),
-                title: Text(title),
-                subtitle: Text(text)),
-          const SizedBox(height: 12),
           const Text(
               'The reviews and the decision are automated practice rules and carry no authority. Enter practice data only.',
               style: TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.5)),
+          const SizedBox(height: 28),
         ]);
       });
 }

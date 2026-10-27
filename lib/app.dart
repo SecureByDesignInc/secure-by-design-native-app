@@ -200,8 +200,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           final page = switch (tab) {
             AppTab.home => TrainingHome(store: widget.store, onTab: _select),
             AppTab.systemHub => SystemHubScreen(store: widget.store),
-            AppTab.training => TrainingLibraryScreen(store: widget.store),
-            AppTab.ato => AtoBuilderHubScreen(store: widget.store),
+            AppTab.training => TrainingLibraryScreen(
+                store: widget.store,
+                onSystemHub: () => _select(AppTab.systemHub.index)),
             AppTab.community => CommunityHubScreen(store: widget.store),
             AppTab.range => const RangeScreen(),
             AppTab.account => MyLearningScreen(

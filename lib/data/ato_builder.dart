@@ -1,4 +1,5 @@
-/// The ATO Package Builder Hub (owner direction, 19 October 2026: the ATO
+/// The ATO Package Builder in the Training tab's Tools (website, 27 October
+/// 2026; it had its own ATO Package Builder Hub tab from 19 October 2026: the ATO
 /// Package Builder is its own section; course 2.1 and the ATO Template Library
 /// stay in the Training Hub). These mirror the website's
 /// app/grc-rmf-training/package-builder-hub.tsx: keep the two in step.
