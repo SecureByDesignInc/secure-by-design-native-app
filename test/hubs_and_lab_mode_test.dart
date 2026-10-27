@@ -79,10 +79,11 @@ void main() {
     });
   }
 
-  testWidgets('the ATO hub lists the seven RMF steps with their course 2.1 lessons',
+  // The seven RMF steps sit in the Training tab's Tools since 27 October 2026, as on the website.
+  testWidgets('the Training tab lists the seven RMF steps with their course 2.1 lessons',
       (tester) async {
     await pumpApp(tester, const Size(390, 844), 1);
-    await tester.tap(find.byKey(const ValueKey('tab-ato')));
+    await tester.tap(find.byKey(const ValueKey('tab-training')));
     await tester.pumpAndSettle();
     for (final step in rmfSteps) {
       await tester.scrollUntilVisible(find.text(step.title), 300,
