@@ -90,24 +90,30 @@ class _RangeScreenState extends State<RangeScreen>
       ]),
       body: SafeArea(
         child: _controller == null || _error
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.sports_esports_outlined,
-                        size: 40, color: SbdColors.cyan),
-                    const SizedBox(height: 16),
-                    Text(
-                      _error
-                          ? 'The Cyber Range could not load. Check your connection, or open it in your browser.'
-                          : 'The Cyber Range runs on the website: checkpoints, sparring, runs and decks built from the lab network, open to everyone.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    FilledButton(
-                        onPressed: () => openResource(context, rangePageUrl),
-                        child: const Text('Open the Cyber Range')),
-                  ]),
+            // Scrolls so the card fits narrow screens at large text sizes.
+            ? SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child:
+                        Column(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.sports_esports_outlined,
+                          size: 40, color: SbdColors.cyan),
+                      const SizedBox(height: 16),
+                      Text(
+                        _error
+                            ? 'The Cyber Range could not load. Check your connection, or open it in your browser.'
+                            : 'The Cyber Range runs on the website: checkpoints, sparring, runs and decks built from the lab network, open to everyone.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      FilledButton(
+                          onPressed: () =>
+                              openResource(context, rangePageUrl),
+                          child: const Text('Open the Cyber Range')),
+                    ]),
+                  ),
                 ),
               )
             : Column(children: [

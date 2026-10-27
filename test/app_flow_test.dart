@@ -158,6 +158,8 @@ void main() {
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
           for (final tab in AppTab.values.skip(1)) {
+            // Seven hub names wrap at large text sizes and the sidebar scrolls.
+            await tester.ensureVisible(find.byKey(ValueKey('tab-${tab.name}')));
             await tester.tap(find.byKey(ValueKey('tab-${tab.name}')));
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
