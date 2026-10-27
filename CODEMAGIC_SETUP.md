@@ -143,3 +143,7 @@ Do not share:
 - Certificate files or passwords
 - Apple Account passwords or verification codes
 - GitHub personal access tokens
+
+## TestFlight builds start from GitHub (27 October 2026)
+
+Codemagic was not receiving GitHub's push events, so `ios-testflight` stopped building on its own after merges. `.github/workflows/testflight.yml` now starts it through Codemagic's API whenever something merges into `main` (skipping changes to Markdown, workflows and preview images), using the `CM_API_TOKEN` secret. It waits a minute and skips the request if Codemagic already has a build for that commit, so a repaired webhook won't cause double builds. To build by hand, run the "TestFlight build" workflow from the Actions tab.

@@ -1,0 +1,53 @@
+# Start the TestFlight build whenever something merges into main (owner direction, 27 October 2026).
+#
+# codemagic.yaml's ios-testflight workflow is set to build on pushes to main, but Codemagic was not receiving GitHub's
+# push events, so every build since 21 October was started by hand. This asks Codemagic's API to start the same
+# workflow for the merged commit, using the CM_API_TOKEN secret. If Codemagic's own webhook starts working again, the
+# check below sees its build for this commit and does not start a second one.
+name: TestFlight build
+on:
+  push:
+    branches: [main]
+    # Documentation, workflow and preview-image changes do not change the app.
+    paths-ignore:
+      - '**/*.md'
+      - '.github/**'
+      - 'previews/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: testflight-build
+  cancel-in-progress: false
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    env:
+      CM_TOKEN: ${{ secrets.CM_API_TOKEN }}
+      APP_ID: 6ac115f2b13f02f748819eff   # Codemagic app: secure-by-design-native-app
+      COMMIT: ${{ github.sha }}
+    steps:
+      - name: Start the Codemagic TestFlight workflow
+        run: |
+          set -euo pipefail
+          if [ -z "$CM_TOKEN" ]; then
+            echo "::error title=TestFlight build::The CM_API_TOKEN secret is missing, so no build was started."
+            exit 1
+          fi
+          # Give a working Codemagic webhook a minute to start its own build first.
+          sleep 60
+          curl -sS --fail -H "x-auth-token: $CM_TOKEN" "https://api.codemagic.io/builds?appId=$APP_ID" > builds.json
+          already=$(python3 -c "import json,os; b=json.load(open('builds.json')).get('builds') or []; print(sum(1 for x in b if ((x.get('commit') or {}).get('hash') or '') == os.environ['COMMIT']))")
+          if [ "$already" != "0" ]; then
+            echo "::notice title=TestFlight build::Codemagic already has a build for ${COMMIT:0:9}; not starting another."
+            exit 0
+          fi
+          curl -sS --fail -H "Content-Type: application/json" -H "x-auth-token: $CM_TOKEN" \
+            -d "{\"appId\": \"$APP_ID\", \"workflowId\": \"ios-testflight\", \"branch\": \"main\"}" \
+            https://api.codemagic.io/builds > started.json
+          build=$(python3 -c "import json; print(json.load(open('started.json')).get('buildId', ''))")
+          if [ -z "$build" ]; then
+            echo "::error title=TestFlight build::Codemagic did not start a build: $(cat started.json)"
+            exit 1
+          fi
+          echo "::notice title=TestFlight build::Started Codemagic build $build for ${COMMIT:0:9}: https://codemagic.io/app/$APP_ID/build/$build"
