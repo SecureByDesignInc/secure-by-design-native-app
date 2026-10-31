@@ -143,7 +143,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Sign-in and progress sync are optional. Device-only records remain separate until you choose to add them. Cyber Range remains a request-access preview.',
+                  'Sign-in and progress sync are optional. Device-only records remain separate until you choose to add them.',
                   style: TextStyle(
                     color: SbdColors.muted,
                     fontSize: 14,

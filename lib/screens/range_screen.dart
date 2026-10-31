@@ -7,13 +7,14 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
-/// The Cyber Range tab (owner direction, 26 October 2026): the website's arena,
-/// opened in a WebView the way the System Hub's 3D view is. One build of the
-/// Range serves the site and the app, so checkpoints, sparring, runs, decks and
-/// the ladder stay identical. Inside the app the Range plays as a guest for
-/// now; its sign-in link opens the website in the browser, where a Community
-/// account keeps the operator, badges and points. Handing the app's own session
-/// into the Range is a later change.
+/// The Cyber Range tab (owner direction, 26 October 2026; the battle, 30
+/// October 2026): the website's Range, opened in a WebView the way the System
+/// Hub's 3D view is. One build serves the site and the app, so the battle is
+/// identical: you against the computer, seven multiple-choice rounds. Inside
+/// the app the Range plays as a guest, with a random operator and callsign
+/// kept on this device; its sign-in link opens the website in the browser,
+/// where a Community account keeps them. Handing the app's own session into
+/// the Range is a later change.
 const rangeUrl = 'https://securebydesigninc.com/range-app/?app=1';
 const rangePageUrl = 'https://securebydesigninc.com/cyber-range';
 
@@ -104,7 +105,7 @@ class _RangeScreenState extends State<RangeScreen>
                       Text(
                         _error
                             ? 'The Cyber Range could not load. Check your connection, or open it in your browser.'
-                            : 'The Cyber Range runs on the website: checkpoints, sparring, runs and decks built from the lab network, open to everyone.',
+                            : 'The Cyber Range runs on the website: battle the computer in seven rounds of multiple choice from the lab network, open to everyone.',
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
