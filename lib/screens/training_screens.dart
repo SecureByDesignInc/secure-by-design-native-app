@@ -9,7 +9,6 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/getting_started.dart';
 import '../widgets/learning_rewards.dart';
-import 'threat_map_screen.dart';
 import 'path_screen.dart';
 import 'hub_screens.dart';
 
@@ -155,28 +154,6 @@ class TrainingHome extends StatelessWidget {
           children: publishedPaths
               .map((p) => TrainingCard(path: p, store: store))
               .toList()),
-      const SizedBox(height: 28),
-      // The website's homepage carries the map too. It opens on Radware's own
-      // site (owner decision, 20 October 2026: link out, don't embed or alter it).
-      Panel(
-          onTap: () => openThreatMap(context),
-          child: Row(children: [
-            const Icon(Icons.public, color: SbdColors.cyan, size: 30),
-            const SizedBox(width: 16),
-            Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Text('Live Threat Map',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 6),
-                  const Text(
-                      'Watch attacks detected around the world on Radware’s live map, then learn the defenses in your training.',
-                      style: TextStyle(color: SbdColors.muted, height: 1.5)),
-                ])),
-            const SizedBox(width: 8),
-            const Icon(Icons.open_in_new, size: 18, color: SbdColors.muted),
-          ])),
       const SizedBox(height: 28),
       if (resources.any((r) => store.isSaved(r.id))) ...[
         Text('Saved for your next session',
