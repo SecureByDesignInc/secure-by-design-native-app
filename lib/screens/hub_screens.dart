@@ -365,8 +365,8 @@ class CommunityHubScreen extends StatelessWidget {
           onTap: () => openResource(context, 'https://securebydesigninc.com/career-goals')),
       HubLink(
           icon: Icons.terminal_outlined,
-          title: 'Cyber Range · Request access',
-          subtitle: 'Explore the learning-path setup and request access.',
+          title: 'Cyber Range',
+          subtitle: 'Battle the computer in seven rounds of multiple choice.',
           external: true,
           onTap: () => openResource(context, 'https://securebydesigninc.com/cyber-range')),
       HubLink(
