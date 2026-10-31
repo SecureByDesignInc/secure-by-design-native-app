@@ -16,7 +16,6 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 - System Hub: Inside the Network — seven offline traffic processes, five what-ifs, the system references, and the policy register; the complete website 3D explorer opens in-app on iOS, Android, and macOS.
 - ATO Package Builder Hub: the seven RMF steps, each with its course 2.1 lessons (opened in the app), its templates, and the package builder (opened on the website, where it saves to the learner's account).
 - Community & Careers Hub: the Discord, LinkedIn, Book a call, all 51 state pages, what every state page holds, and what's coming soon to the hub.
-- Live Threat Map: a Home card opens Radware's map on Radware's own site (owner decision, 20 October 2026: link out; the app no longer embeds the map or covers parts of it).
 - Resources & references and saved materials in My Account; native homepage sharing: Learn it. Share it. Pay it forward.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import. In-app account deletion.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
