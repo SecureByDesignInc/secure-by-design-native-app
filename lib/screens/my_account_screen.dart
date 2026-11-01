@@ -7,11 +7,9 @@ import '../theme.dart';
 import '../widgets/app_support.dart';
 import '../widgets/common.dart';
 import '../widgets/community_account.dart';
-import '../widgets/getting_started.dart';
-import '../widgets/learning_rewards.dart';
+import '../widgets/site_footer.dart';
 import 'account_screen.dart';
 import 'main_screens.dart' show openResources;
-import 'onboarding_screen.dart';
 import 'path_screen.dart';
 
 class MyLearningScreen extends StatefulWidget {
@@ -95,20 +93,12 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
 
   Widget _preferences(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start, children: [
-    _AccountRow(icon: Icons.route_outlined, title: 'Personalize my learning',
-        subtitle: 'Change your goals and starting level',
-        onTap: () => openOnboarding(context, store)),
+    if (store.haptics.supported)
+      HapticsSetting(haptics: store.haptics)
+    else
+      const Text('Haptic feedback isn’t available on this device.'),
     const Divider(height: 32),
-    _AccountRow(icon: Icons.bolt_outlined, title: 'Daily learning goal',
-        subtitle: '${store.dailyGoal} XP per day',
-        onTap: () => chooseDailyGoal(context, store)),
-    const Divider(height: 32),
-    GettingStartedSetting(store: store.gettingStarted),
-    const SizedBox(height: 12),
-    const Text('Learning tips and reminders appear inside the app.'),
-    if (store.haptics.supported) ...[
-      const Divider(height: 32), HapticsSetting(haptics: store.haptics),
-    ],
+    const Text('Analytics are optional and off by default. Change them under Account & security.'),
   ]);
 
   Future<void> _confirmDelete(BuildContext context) async {
@@ -191,14 +181,15 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
       animation: Listenable.merge([store, account]),
       builder: (context, _) {
         final path = store.currentPath;
-        final stats = store.stats;
-        return PageContent(children: [
+        return PageContent(
+            footer: SiteFooter(analytics: store.analytics),
+            children: [
           Text('My Account', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 20),
-          Panel(gradient: true, child: Column(
+          Panel(gradient: true, radius: 20, child: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const CircleAvatar(radius: 26, backgroundColor: SbdColors.surface,
+              const CircleAvatar(radius: 26, backgroundColor: SbdColors.surfaceSelected,
                   child: Icon(Icons.person_outline, size: 30, color: SbdColors.cyan)),
               const SizedBox(width: 16),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +209,7 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
               const SizedBox(height: 16),
               for (final benefit in const [
                 'Your lessons and bookmarks sync across devices',
-                'Your streak and XP follow you',
+                'Your guide checks and notes follow you',
                 'Pick up on the web right where you stopped',
               ])
                 Padding(
@@ -244,23 +235,6 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
             ],
           ])),
           const SizedBox(height: 20),
-          // Zeros demotivate: the stat row appears once there is something
-          // real to show.
-          if (store.completed.isNotEmpty ||
-              stats.streak > 0 ||
-              stats.totalXp > 0) ...[
-            LayoutBuilder(builder: (context, constraints) {
-              final oneColumn = constraints.maxWidth < 300 ||
-                  MediaQuery.textScalerOf(context).scale(16) > 21;
-              final width = oneColumn ? constraints.maxWidth : (constraints.maxWidth - 20) / 3;
-              return Wrap(spacing: 10, runSpacing: 10, children: [
-                _AccountStat(width: width, value: '${store.completed.length}', label: 'Lessons'),
-                _AccountStat(width: width, value: '${stats.streak}', label: 'Day streak'),
-                _AccountStat(width: width, value: '${stats.totalXp}', label: 'Total XP'),
-              ]);
-            }),
-            const SizedBox(height: 24),
-          ],
           Panel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Kicker('Continue learning'),
             const SizedBox(height: 12),
@@ -286,16 +260,12 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
             _AccountRow(icon: Icons.menu_book_outlined, title: 'Resources & references',
                 subtitle: 'Official guides and course materials to save for later',
                 onTap: () => openResources(context, store)),
-            _AccountRow(icon: Icons.emoji_events_outlined, title: 'Quests & rewards',
-                subtitle: 'Streaks, achievements, and your daily goal',
-                onTap: () => _detail('Quests & rewards', (context) => LearningDashboard(
-                    store: store, onPractice: () => openPractice(context, store)))),
           ]),
           const SizedBox(height: 24),
           _AccountGroup(title: 'Preferences & support', children: [
-            _AccountRow(icon: Icons.tune, title: 'Learning preferences',
-                subtitle: 'Goals, starting level, and in-app reminders',
-                onTap: () => _detail('Learning preferences', _preferences)),
+            _AccountRow(icon: Icons.tune, title: 'App preferences',
+                subtitle: 'Haptic feedback on this device',
+                onTap: () => _detail('App preferences', _preferences)),
             _AccountRow(icon: Icons.manage_accounts_outlined, title: 'Account & security',
                 subtitle: 'Sign-in, password help, and privacy',
                 onTap: () => _detail('Account & security', _accountAndSecurity)),
@@ -342,19 +312,6 @@ class _MyLearningScreenState extends State<MyLearningScreen> {
       });
 }
 
-class _AccountStat extends StatelessWidget {
-  const _AccountStat({required this.width, required this.value, required this.label});
-  final double width;
-  final String value, label;
-  @override
-  Widget build(BuildContext context) => SizedBox(width: width,
-      child: Panel(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-          child: Column(children: [
-            Text(value, style: Theme.of(context).textTheme.headlineMedium
-                ?.copyWith(color: SbdColors.cyan)),
-            const SizedBox(height: 6), Text(label, textAlign: TextAlign.center),
-          ])));
-}
 
 class _AccountGroup extends StatelessWidget {
   const _AccountGroup({required this.title, required this.children});
@@ -366,6 +323,7 @@ class _AccountGroup extends StatelessWidget {
     Text(title, style: Theme.of(context).textTheme.titleMedium),
     const SizedBox(height: 12),
     Panel(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        radius: 14,
         child: Column(children: [
           for (var i = 0; i < children.length; i++) ...[
             if (i > 0) const Divider(height: 1), children[i],

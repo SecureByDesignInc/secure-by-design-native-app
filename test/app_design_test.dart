@@ -78,7 +78,8 @@ void main() {
       await tester.ensureVisible(toggle);
       await tester.tap(toggle);
       await tester.pumpAndSettle();
-      expect(find.descendant(of: card, matching: find.text('Hide lessons')), findsOneWidget);
+      // The course opens beneath its row, as on the website.
+      expect(find.text('Close the course'), findsOneWidget);
       final lesson = publishedPaths.firstWhere((path) => path.id == 'identity-foundation').lessons.first;
       await tester.ensureVisible(find.text(lesson.title));
       await tester.pumpAndSettle();
@@ -91,7 +92,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('account hub opens saved materials and learning preferences at ${scale}x text',
+    testWidgets('account hub opens saved materials and app preferences at ${scale}x text',
         (tester) async {
       tester.view.physicalSize = Size(scale == 1 ? 390 : 320, 844);
       tester.view.devicePixelRatio = 1;
@@ -116,13 +117,13 @@ void main() {
       expect(find.text('Save a material from any course to find it here.'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Learning preferences'));
-      await tester.tap(find.text('Learning preferences'));
+      await tester.ensureVisible(find.text('App preferences'));
+      await tester.tap(find.text('App preferences'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Personalize my learning'));
-      await tester.tap(find.text('Personalize my learning'));
-      await tester.pumpAndSettle();
-      expect(find.text('Step 1 of 3'), findsOneWidget);
+      // The welcome quiz, daily goal and getting-started prompts were retired on 1 November 2026.
+      expect(find.text('Personalize my learning'), findsNothing);
+      expect(find.text('Daily learning goal'), findsNothing);
+      expect(find.textContaining('aptic feedback'), findsWidgets);
       expect(store.analytics.enabled, isFalse);
       expect(store.completed, isEmpty);
       expect(tester.takeException(), isNull);

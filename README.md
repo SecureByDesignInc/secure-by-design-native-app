@@ -1,35 +1,36 @@
 # Secure By Design — native app proof of concept
 
-Version 0.8.0 · October 7, 2026
+Version 0.9.0 · November 1, 2026
 
 A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux. Native apps come first. The web app is deferred.
 
 ## What works
 
-- Tabs in the website's navigation order with its navy/cyan design: Home, System Hub, Training Hub, Community & Careers Hub, and My Account (the Cyber Range tab was removed on 31 October 2026). Phones show short labels (Home · Systems · Training · Community · Account) that stay on one line at any text size; screen readers and the wide-screen sidebar use the full hub names.
+- The website's design and layout (owner direction, 1 November 2026): the hub pages' ground and panels, Geist and Geist Mono, the site's flat cyan buttons, its header branding and tagline, its navigation strip as the tab bar, and its footer (Follow along pills with the owner's icon art, the partner marks, © 2026, Privacy, Pass it on) beneath every tab. The tokens are read from the website's stylesheets and documented in `lib/theme.dart`.
+- Home is the website's homepage: the hero over an animated blue wave, then the Cyber Range battle, then the footer. The website's homepage shows a one-round taster of the battle; the website stays untouched (owner's choice, 1 November 2026), so the app shows the website's existing standalone Range page (`/range-app/`, the full seven-round battle) in a web view that the app sizes to the page itself. It loads when it scrolls into view. The support panel is not in the app yet (owner's choice, 1 November 2026).
+- Tabs in the website's navigation order: Home, System Hub, Training Hub, Community & Careers Hub, and My Account (the Cyber Range tab was removed on 31 October 2026). Phones show short labels (Home · Systems · Training · Community · Account) that stay on one line at any text size; screen readers and the wide-screen sidebar use the full hub names.
+- The website's Training Hub, laid out as the website lays it out: a greeting with search and Saved, the library's groups as a row of links, then Build the Network (all twelve courses in order, 1.9 and 1.10 as "Coming soon" tiles), the Tools (ATO Package Builder, System Hub) and the seven RMF steps, Logging & monitoring, Authorize the network, and the closing line to the System Hub. Tiles are the website's art tiles (`lib/widgets/tile_art.dart` draws the website's own SVG line art, one family per topic, with the course number ghosted and a mono chip); rows scroll sideways on phones; a tile opens its course beneath its row. A group link or a search shows a grid instead.
 - The website's Training Hub catalog: Build the Network 1.1–1.12 and Network Authorization 2.1 (11 courses, 107 lessons), in the website's two categories, with 1.9 (SBD-EPO01) and 1.10 (SBD-NESSUS01) shown in course order as "Coming soon" tiles that don't open.
 - Training updates without a new build: the app checks `securebydesigninc.com/app-content/v1/manifest.json` in the background, downloads a changed catalog, verifies its SHA-256 and that every course parses, and uses it from the next launch. Offline or on any error it keeps the catalog it shipped with (see Course content updates).
 - Lab mode on every Build the Network lesson: the phone as a second screen. One step at a time, the inspection commands with a copy button per command, then the lesson's checklist and observations from the website's course guide. For a signed-in learner, checks and notes sync with the website guide's own records, so ticking a check in the app ticks it on the website. The screen stays on while lab mode is open.
-- Practice comes round on a widening schedule (1, 3, 7, 21, then 60 days after each session); the most overdue lesson comes first.
+- A completed lesson leads to the next one; the website marks lessons complete and moves on, and so does the app. The quests and rewards (XP, streaks, badges, the daily goal and strip), the first-run welcome quiz, the Home checklist and the getting-started prompts were retired on 1 November 2026, as the website has none of them. The learning-activity records behind them remain in the store, so account sync and existing data are unchanged.
 - Overview, Lessons, and Materials views; lessons play their YouTube walkthrough (privacy-enhanced embed) once the website lists one, and are honestly labeled Video coming soon until then.
 - System Hub: Inside the Network — seven offline traffic processes, five what-ifs, the system references, and the policy register; the complete website 3D explorer opens in-app on iOS, Android, and macOS.
 - ATO Package Builder Hub: the seven RMF steps, each with its course 2.1 lessons (opened in the app), its templates, and the package builder (opened on the website, where it saves to the learner's account).
-- Community & Careers Hub: the Discord, LinkedIn, Book a call, all 51 state pages, what every state page holds, and what's coming soon to the hub.
+- Community & Careers Hub: the Discord, LinkedIn and Book a call logo pills, all 51 state pages, what every state page holds, and what's coming soon to the hub.
 - Resources & references and saved materials in My Account; native homepage sharing: Learn it. Share it. Pay it forward.
 - Optional website-account sign-in and shared progress/bookmarks. Choose Connect progress; Add my device-only progress is a separate, confirmed import. In-app account deletion.
 - Account-specific offline caches, durable pending changes, retry on resume, and untouched guest history on sign-out.
-- A skippable first-run welcome: goals, starting level, recommendations from the website's courses, and an optional note from Secure By Design. The Home checklist follows actual lesson and bookmark progress. The three app-only sample courses were retired on 20 October 2026; tests keep them as a fixture (`test/support/sample_paths.dart`).
-- Device-only onboarding choices, getting-started prompts, optional anonymous analytics, and existing feedback flow.
+- The three app-only sample courses were retired on 20 October 2026; tests keep them as a fixture (`test/support/sample_paths.dart`).
+- Optional anonymous analytics and the existing feedback flow (the About sheet and My Account).
 - Optional haptic feedback on supported iOS and Android devices. Use the info button → Haptic feedback to turn it off.
 - An app privacy manifest (`ios/Runner/PrivacyInfo.xcprivacy`): no tracking; optional analytics; email, progress and lab notes only for a signed-in learner. Keep it in step with the App Store privacy label.
 
-Course text and the network reference work offline. 3D, downloads, external resources, and account synchronization require a connection. Account sessions stay in memory and expire within 12 hours. Lab access remains request-based. This release does not add public store listings or recordings.
+Course text and the network reference work offline. 3D, the Cyber Range round, downloads, external resources, and account synchronization require a connection. Account sessions stay in memory and expire within 12 hours. Lab access remains request-based. This release does not add public store listings or recordings.
 
-## Onboarding design
+## Onboarding design (retired)
 
-The original welcome adapted the outcome-first presentation, useful personalization, founder note, and continuing checklist described in [Mobbin’s onboarding video](https://www.youtube.com/watch?v=Qsq-Sj_rojU), with [Tiimo’s flow](https://mobbin.com/explore/flows/817f5bfd-1701-4756-bcbc-dcdfc3597723) as a reference. Goals and starting level select existing lessons, with their real durations. Recommendations never claim a guaranteed result or completion date. The note is original Secure By Design copy. Sharing is voluntary; lesson access and optional sign-in keep their existing behavior.
-
-The new profile is stored under `sbd.onboarding.v1`, separate from account progress and analytics. Existing install markers prevent an intrusive first-run replay after upgrading. Finishing or skipping suppresses the old welcome card while retaining the existing learning-tip schedule. Disabling getting-started prompts hides the Home checklist.
+The first-run welcome, its profile under `sbd.onboarding.v1`, the getting-started prompts and the Home checklist were removed on 1 November 2026 so the app matches the website. An existing profile key is ignored; nothing reads or writes it.
 
 ## Start here
 
@@ -73,28 +74,33 @@ The preview images in `previews/` are rendered by Flutter's test engine at phone
 
 ## Design reference
 
-Read from [securebydesigninc.com](https://securebydesigninc.com) on October 3, 2026:
+Read from the website's stylesheets on November 1, 2026 (`app/videos/training-hub.css`, `app/videos/videos.css`, `app/template-shared.css`, `app/template-home.css` in SecureByDesignInc/secure-by-design-website); every value is named in `lib/theme.dart`:
 
 | Token | Value |
 | --- | --- |
-| Background | `#050B14` |
-| Card surface | `#102237` |
-| Main text | `#F3F7FF` |
-| Secondary text | `#AEBDD0` |
-| Cyan accent | `#83DCFA` |
-| Blue accent | `#378EFA` |
-| Border | `#2B3D53` |
-| Typeface | Geist |
+| Page ground (hubs) | `#071521` |
+| Header, footer and homepage stage | `#050B14` |
+| Panels and tiles | `#0B1D2C` on `#1D3A4F` hairlines |
+| Main text | `#EEF7FC` / `#F1F8FF` |
+| Secondary text | `#A9BFCE` (dim `#8FA9BA`) |
+| Cyan accent | `#8AE5EF` |
+| Primary button | `#91DFEB` with `#06283C` text |
+| Navigation strip | `#0C1828` on `#2A405B`, current item `#174675` → `#102A47` |
+| Topic accents | identity `#8AE5EF`, harden `#F7BD68`, logging `#9DB8FF`, endpoint `#8FE0B0`, ops `#F29B7C`, authorize `#C9B6FF` |
+| Typefaces | Geist; Geist Mono for kickers, chips and counts |
 
-The logo mark is the existing website asset's displayed viewport. It is reused for the header and launcher icons. Geist is distributed under the included SIL Open Font License in `assets/fonts/OFL.txt`.
+Corners follow the site: 12px tiles, 18–20px panels, 10px buttons. The logo mark is the existing website asset's displayed viewport, reused for the header and launcher icons. Geist and Geist Mono are distributed under the included SIL Open Font License in `assets/fonts/OFL.txt`; `assets/social` holds the owner's channel icon art and `assets/partners` the official partner marks (see their READMEs).
 
 ## Project map
 
 | File or folder | Purpose |
 | --- | --- |
 | `lib/main.dart` / `lib/bootstrap.dart` | Startup, local-state loading, retry state |
-| `lib/app.dart` | Application shell and adaptive navigation |
-| `lib/theme.dart` | Shared design tokens and component styles |
+| `lib/app.dart` | Application shell, the site header and its navigation |
+| `lib/theme.dart` | The website's design tokens and component styles |
+| `lib/widgets/tile_art.dart` | The Training Hub's tile art (the website's SVG, drawn in Flutter) |
+| `lib/widgets/site_footer.dart` | The site footer: Follow along pills, partner marks, Pass it on |
+| `lib/screens/home_screen.dart` | Home: the hero, the wave and the Cyber Range battle |
 | `lib/data/catalog.dart` | Sample lessons, questions, and reference links |
 | `lib/data/learning_store.dart` | Serialized local progress and bookmark writes |
 | `lib/screens/` | Home, learning paths, lessons, resources, and progress |

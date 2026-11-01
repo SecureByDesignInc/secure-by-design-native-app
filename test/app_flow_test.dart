@@ -12,8 +12,7 @@ import 'package:secure_by_design_app/app_tabs.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUp(() => SharedPreferences.setMockInitialValues(
-      {'sbd.guidance.started.v1': DateTime.now().toUtc().toIso8601String()}));
+  setUp(() => SharedPreferences.setMockInitialValues({}));
 
   setUpAll(() async {
     final font = FontLoader('Geist')
@@ -45,12 +44,21 @@ void main() {
       final store = await LearningStore.load();
       await tester.pumpWidget(SecureByDesignApp(store: store));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Start learning'));
-      await tester.tap(find.text('Start learning'));
+      // Home is the website's homepage (1 November 2026); courses open from the
+      // Training Hub's tiles, beneath their row, as on the website.
+      await tester.tap(find.byKey(const ValueKey('tab-training')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const ValueKey('expand-identity-foundation')));
+      await tester.tap(find.byKey(const ValueKey('expand-identity-foundation')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Open the course'));
+      await tester.tap(find.text('Open the course'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Start the first lesson'));
       await tester.tap(find.text('Start the first lesson'));
       await tester.pumpAndSettle();
+      // The tab change and the tile opening clicked too; the lesson's own pulses are counted from here.
+      pulses.clear();
       final complete = find.widgetWithText(FilledButton, 'Complete lesson');
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
       await tester.scrollUntilVisible(
@@ -84,7 +92,7 @@ void main() {
         'HapticFeedbackType.selectionClick',
         'HapticFeedbackType.successNotification',
       ]);
-      expect(find.text('1-day streak'), findsOneWidget);
+      expect(find.text('Lesson complete.'), findsOneWidget);
       await tester.ensureVisible(find.text('Continue'));
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -158,7 +166,7 @@ void main() {
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
           for (final tab in AppTab.values.skip(1)) {
-            // Seven hub names wrap at large text sizes and the sidebar scrolls.
+            // Hub names wrap at large text sizes and the sidebar scrolls.
             await tester.ensureVisible(find.byKey(ValueKey('tab-${tab.name}')));
             await tester.tap(find.byKey(ValueKey('tab-${tab.name}')));
             await tester.pumpAndSettle();

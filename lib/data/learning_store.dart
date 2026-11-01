@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'catalog.dart';
 import 'analytics.dart';
 import 'models.dart';
-import 'getting_started.dart';
 import 'account.dart';
 import 'haptics.dart';
 import 'learning_activity.dart';
@@ -15,18 +14,13 @@ class LearningStore extends ChangeNotifier {
       {AnalyticsTransport? transport, DateTime Function()? clock})
       : _clock = clock ?? DateTime.now,
         analytics = LearningAnalytics(_preferences, transport: transport),
-        haptics = AppHaptics(_preferences),
-        gettingStarted = GettingStartedStore(_preferences) {
-    gettingStarted.addListener(notifyListeners);
+        haptics = AppHaptics(_preferences) {
     _readLocal();
   }
   static Future<LearningStore> load(
-      {AnalyticsTransport? transport, DateTime Function()? clock}) async {
-    final store = LearningStore._(await SharedPreferences.getInstance(),
-        transport: transport, clock: clock);
-    await store.gettingStarted.initialize();
-    return store;
-  }
+      {AnalyticsTransport? transport, DateTime Function()? clock}) async =>
+      LearningStore._(await SharedPreferences.getInstance(),
+          transport: transport, clock: clock);
 
   final SharedPreferences _preferences;
   final DateTime Function() _clock;
@@ -107,7 +101,6 @@ class LearningStore extends ChangeNotifier {
 
   final LearningAnalytics analytics;
   final AppHaptics haptics;
-  final GettingStartedStore gettingStarted;
   Set<String> _completed = {}, _saved = {}, _started = {};
   Map<String, String> _pendingRecords = {};
   Map<String, bool> _pendingBookmarks = {};
@@ -255,9 +248,7 @@ class LearningStore extends ChangeNotifier {
       .fold(0, (n, l) => n + l.minutes);
   LearningPath get currentPath => learningPaths.firstWhere(
       (p) => p.id == _lastPath,
-      orElse: () => learningPaths.firstWhere(
-          (p) => p.id == gettingStarted.profile?.pathIds.first,
-          orElse: () => learningPaths.first));
+      orElse: () => learningPaths.first);
   Lesson? nextLesson(LearningPath path) {
     for (final lesson in path.lessons) {
       if (!isCompleted(lesson.id)) return lesson;
@@ -665,8 +656,6 @@ class LearningStore extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _epoch++;
-    gettingStarted.removeListener(notifyListeners);
-    gettingStarted.dispose();
     analytics.dispose();
     haptics.dispose();
     super.dispose();

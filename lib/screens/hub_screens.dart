@@ -8,11 +8,10 @@ import '../data/models.dart';
 import '../data/published_catalog.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/site_footer.dart';
 import 'network_screen.dart';
 import 'path_screen.dart';
 
-const discordUrl = 'https://discord.gg/MDrGbP4cAY';
-const linkedInUrl = 'https://www.linkedin.com/company/secure-by-design-inc/';
 const communityHubUrl = 'https://securebydesigninc.com/community';
 
 /// A row that opens something: an icon, a title and a line of detail.
@@ -35,7 +34,8 @@ class HubLink extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Panel(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
+          radius: 14,
           onTap: onTap,
           child: Row(children: [
             Icon(icon, color: SbdColors.cyan),
@@ -62,13 +62,16 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         decoration: BoxDecoration(
-          color: SbdColors.cyan.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: SbdColors.cyan.withValues(alpha: 0.35)),
+          color: SbdColors.amber,
+          borderRadius: BorderRadius.circular(6),
         ),
-        child: Text(text,
+        child: Text(text.toUpperCase(),
             style: const TextStyle(
-                color: SbdColors.cyan, fontSize: 12, fontWeight: FontWeight.w600)),
+                fontFamily: sbdMono,
+                color: SbdColors.amberInk,
+                fontSize: 10.5,
+                letterSpacing: 0.8,
+                fontWeight: FontWeight.w600)),
       );
 }
 
@@ -82,7 +85,9 @@ class SystemHubScreen extends StatelessWidget {
       context, MaterialPageRoute<void>(builder: (_) => const NetworkScreen()));
 
   @override
-  Widget build(BuildContext context) => PageContent(children: [
+  Widget build(BuildContext context) => PageContent(
+      footer: SiteFooter(analytics: store.analytics),
+      children: [
         const PageTitle('Inside the Network',
             'Every system you build, the segments they live on, and the paths the network permits between them.',
             kicker: 'System Hub'),
@@ -158,22 +163,25 @@ class AtoBuilderSection extends StatelessWidget {
     ];
     final done = lessons.where((l) => store.isCompleted(l.id)).length;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Panel(
+          radius: 14,
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Expanded(child: Kicker('Step ${index + 1} · ${step.moduleRange}')),
+          Expanded(child: Kicker('Step ${index + 1} · ${step.moduleRange}', color: SbdColors.dim)),
           if (lessons.isNotEmpty && done == lessons.length)
             const Icon(Icons.check_circle_rounded, color: SbdColors.success, size: 20),
         ]),
         const SizedBox(height: 10),
-        Text(step.title, style: Theme.of(context).textTheme.titleLarge),
+        Text(step.title, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 6),
+        Text(step.task, style: const TextStyle(color: SbdColors.muted, fontSize: 14, height: 1.55)),
         const SizedBox(height: 8),
-        Text(step.task, style: const TextStyle(color: SbdColors.muted, height: 1.6)),
-        const SizedBox(height: 14),
         for (final lesson in lessons)
           ListTile(
               contentPadding: EdgeInsets.zero,
+              minTileHeight: 44,
               leading: Icon(
                   store.isCompleted(lesson.id)
                       ? Icons.check_circle_rounded
@@ -204,60 +212,77 @@ class AtoBuilderSection extends StatelessWidget {
       animation: store,
       builder: (context, child) {
         final course = _course;
+        Widget kicker(IconData icon, String text) => Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 15, color: SbdColors.cyan),
+              const SizedBox(width: 7),
+              Flexible(child: Kicker(text)),
+            ]);
         return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Tools', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
+          const ShelfHeading('Tools'),
+          const SizedBox(height: 14),
           Panel(
               key: const ValueKey('tool-ato-builder'),
+              gradient: true,
+              radius: 20,
+              padding: const EdgeInsets.all(22),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Kicker('Tool · No account needed'),
+                kicker(Icons.fact_check_outlined, 'Tool · No account needed'),
                 const SizedBox(height: 10),
-                Text('ATO Package Builder', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
+                Text('ATO Package Builder', style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 10),
                 const Text(
                     'Take the Secure By Design enclave through all seven RMF steps, from naming its roles to the authorization decision. Sign in to save your work, or use it without an account for one visit.',
-                    style: TextStyle(color: SbdColors.muted, height: 1.6)),
-                const SizedBox(height: 14),
+                    style: TextStyle(color: Color(0xFFC9D9E3), fontSize: 15, height: 1.55)),
+                const SizedBox(height: 18),
                 Wrap(spacing: 12, runSpacing: 12, children: [
-                  FilledButton.icon(
+                  FilledButton(
                       onPressed: () => openResource(context, atoBuilderUrl),
-                      icon: const Icon(Icons.open_in_new, size: 18),
-                      label: const Text('Open the builder')),
+                      child: const Text('Open the builder')),
                   if (course != null)
-                    OutlinedButton.icon(
+                    OutlinedButton(
                         onPressed: () => openLearningPath(context, store, course),
-                        icon: const Icon(Icons.auto_stories_outlined, size: 18),
-                        label: const Text('Course 2.1')),
+                        child: const Text('Course 2.1')),
                 ]),
               ])),
           if (onSystemHub != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Panel(
                 key: const ValueKey('tool-system-hub'),
+                radius: 20,
+                padding: const EdgeInsets.all(22),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Kicker('Tool'),
+                  kicker(Icons.hub_outlined, 'Tool'),
                   const SizedBox(height: 10),
-                  Text('System Hub', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
+                  Text('System Hub', style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 10),
                   const Text('Explore every system in the lab network and follow the traffic between them.',
-                      style: TextStyle(color: SbdColors.muted, height: 1.6)),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                      onPressed: onSystemHub,
-                      icon: const Icon(Icons.arrow_forward, size: 17),
-                      label: const Text('Open the System Hub')),
+                      style: TextStyle(color: Color(0xFFC9D9E3), fontSize: 15, height: 1.55)),
+                  const SizedBox(height: 6),
+                  ArrowLink('Open the System Hub', onTap: onSystemHub!),
                 ])),
           ],
           const SizedBox(height: 28),
-          const Kicker('Network Authorization · Course 2.1 RMF to ATO'),
-          const SizedBox(height: 8),
-          Text('Seven RMF steps: learn it, do it, use its templates',
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 14),
-          for (var i = 0; i < rmfSteps.length; i++) _step(context, i, rmfSteps[i]),
-          const Text(
-              'The reviews and the decision are automated practice rules and carry no authority. Enter practice data only.',
-              style: TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.5)),
+          Container(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
+              decoration: BoxDecoration(
+                  color: SbdColors.surfaceLow,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: SbdColors.borderFeature)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                const Kicker('Network Authorization · Course 2.1 RMF to ATO'),
+                const SizedBox(height: 8),
+                Text('Seven RMF steps: learn it, do it, use its templates',
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 8),
+                const Text(
+                    'Each step links to its lesson in course 2.1, its task in the ATO Package Builder, and its section of the ATO Template Library.',
+                    style: TextStyle(color: SbdColors.muted, fontSize: 14, height: 1.55)),
+                const SizedBox(height: 16),
+                for (var i = 0; i < rmfSteps.length; i++) _step(context, i, rmfSteps[i]),
+                const Text(
+                    'The reviews and the decision are automated practice rules and carry no authority. Enter practice data only.',
+                    style: TextStyle(color: SbdColors.muted, fontSize: 13, height: 1.5)),
+              ])),
           const SizedBox(height: 28),
         ]);
       });
@@ -293,27 +318,25 @@ class CommunityHubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final booking = validBookingUrl(bookingPageUrl);
-    return PageContent(children: [
+    return PageContent(
+        footer: SiteFooter(analytics: store.analytics),
+        children: [
       const PageTitle('Find your people. Find your next role.',
           'Job openings, programs that can pay for your training, and places to meet people in the field, organized by state. Built for everyone learning with Secure By Design.',
           kicker: 'Community & Careers Hub'),
-      Wrap(spacing: 12, runSpacing: 12, children: [
-        FilledButton.icon(
-            onPressed: () => openResource(context, discordUrl),
-            icon: const Icon(Icons.forum_outlined, size: 18),
-            label: const Text('Join the Discord')),
-        OutlinedButton.icon(
-            onPressed: () => openResource(context, linkedInUrl),
-            icon: const Icon(Icons.work_outline, size: 18),
-            label: const Text('Follow on LinkedIn')),
+      // Every statement tied to a service with a logo is its logo pill (owner direction, 20 October 2026).
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        LogoPill(icon: 'discord', label: 'Join the Discord', onTap: () => openResource(context, discordUrl)),
+        LogoPill(icon: 'linkedin', label: 'Follow on LinkedIn', onTap: () => openResource(context, linkedInUrl)),
         if (booking != null)
-          OutlinedButton.icon(
-              onPressed: () => openResource(context, booking,
-                  onOpened: store.analytics.bookingOpened),
-              icon: const Icon(Icons.event_outlined, size: 18),
-              label: const Text(bookingLabel)),
+          LogoPill(
+              icon: 'book-a-call',
+              label: bookingLabel,
+              onTap: () => openResource(context, booking, onOpened: store.analytics.bookingOpened)),
       ]),
       const SizedBox(height: 28),
+      const Kicker('Your state'),
+      const SizedBox(height: 10),
       Panel(
           padding: EdgeInsets.zero,
           child: ExpansionTile(
@@ -333,8 +356,10 @@ class CommunityHubScreen extends StatelessWidget {
                       onTap: () => openResource(context, state.url)),
               ])),
       const SizedBox(height: 28),
-      Text('On every state page', style: Theme.of(context).textTheme.titleLarge),
-      const SizedBox(height: 12),
+      const Kicker('On every state page'),
+      const SizedBox(height: 8),
+      Text('What you’ll find.', style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height: 8),
       for (final (title, text) in _onEveryPage)
         ListTile(
             contentPadding: EdgeInsets.zero,
@@ -342,7 +367,9 @@ class CommunityHubScreen extends StatelessWidget {
             title: Text(title),
             subtitle: Text(text)),
       const SizedBox(height: 22),
-      Text('Coming soon to the hub', style: Theme.of(context).textTheme.titleLarge),
+      const Kicker('In the works'),
+      const SizedBox(height: 8),
+      Text('Coming soon to the hub.', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 12),
       for (final (title, text) in _inTheWorks)
         Padding(
@@ -355,7 +382,7 @@ class CommunityHubScreen extends StatelessWidget {
               Text(text, style: const TextStyle(color: SbdColors.muted, height: 1.5)),
             ])),
       const SizedBox(height: 18),
-      Text('Plan your next step', style: Theme.of(context).textTheme.titleLarge),
+      Text('Plan your next step.', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 12),
       HubLink(
           icon: Icons.flag_outlined,
