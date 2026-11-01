@@ -7,7 +7,7 @@ A shared Flutter application for iOS/iPadOS, Android, Windows, macOS, and Linux.
 ## What works
 
 - The website's design and layout (owner direction, 1 November 2026): the hub pages' ground and panels, Geist and Geist Mono, the site's flat cyan buttons, its header branding and tagline, its navigation strip as the tab bar, and its footer (Follow along pills with the owner's icon art, the partner marks, © 2026, Privacy, Pass it on) beneath every tab. The tokens are read from the website's stylesheets and documented in `lib/theme.dart`.
-- Home is the website's homepage: the hero over an animated blue wave, then the Cyber Range's one-round taster (the website's own Range core in taster mode, `/range-app/taster.html`, in a web view sized to its page; the round starts when it scrolls into view), then the footer. The support panel is not in the app yet (owner's choice, 1 November 2026).
+- Home is the website's homepage: the hero over an animated blue wave, then the Cyber Range battle, then the footer. The website's homepage shows a one-round taster of the battle; the website stays untouched (owner's choice, 1 November 2026), so the app shows the website's existing standalone Range page (`/range-app/`, the full seven-round battle) in a web view that the app sizes to the page itself. It loads when it scrolls into view. The support panel is not in the app yet (owner's choice, 1 November 2026).
 - Tabs in the website's navigation order: Home, System Hub, Training Hub, Community & Careers Hub, and My Account (the Cyber Range tab was removed on 31 October 2026). Phones show short labels (Home · Systems · Training · Community · Account) that stay on one line at any text size; screen readers and the wide-screen sidebar use the full hub names.
 - The website's Training Hub, laid out as the website lays it out: a greeting with search and Saved, the library's groups as a row of links, then Build the Network (all twelve courses in order, 1.9 and 1.10 as "Coming soon" tiles), the Tools (ATO Package Builder, System Hub) and the seven RMF steps, Logging & monitoring, Authorize the network, and the closing line to the System Hub. Tiles are the website's art tiles (`lib/widgets/tile_art.dart` draws the website's own SVG line art, one family per topic, with the course number ghosted and a mono chip); rows scroll sideways on phones; a tile opens its course beneath its row. A group link or a search shows a grid instead.
 - The website's Training Hub catalog: Build the Network 1.1–1.12 and Network Authorization 2.1 (11 courses, 107 lessons), in the website's two categories, with 1.9 (SBD-EPO01) and 1.10 (SBD-NESSUS01) shown in course order as "Coming soon" tiles that don't open.
@@ -100,7 +100,7 @@ Corners follow the site: 12px tiles, 18–20px panels, 10px buttons. The logo ma
 | `lib/theme.dart` | The website's design tokens and component styles |
 | `lib/widgets/tile_art.dart` | The Training Hub's tile art (the website's SVG, drawn in Flutter) |
 | `lib/widgets/site_footer.dart` | The site footer: Follow along pills, partner marks, Pass it on |
-| `lib/screens/home_screen.dart` | Home: the hero, the wave and the Cyber Range taster |
+| `lib/screens/home_screen.dart` | Home: the hero, the wave and the Cyber Range battle |
 | `lib/data/catalog.dart` | Sample lessons, questions, and reference links |
 | `lib/data/learning_store.dart` | Serialized local progress and bookmark writes |
 | `lib/screens/` | Home, learning paths, lessons, resources, and progress |

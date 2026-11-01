@@ -12,8 +12,11 @@ import '../widgets/site_footer.dart';
 
 /// The app's Home, the way the website's homepage is (owner direction,
 /// 31 October 2026, and 1 November 2026 for the app): the hero over the blue
-/// wave, the Cyber Range's one-round taster, then the footer. The support
-/// panel is not in the app yet (owner's choice, 1 November 2026).
+/// wave, the Cyber Range battle, then the footer. The website's homepage shows
+/// a one-round taster of the battle; the website stays untouched (owner's
+/// choice, 1 November 2026), so the app shows the website's existing Range
+/// page, the full battle, in its place. The support panel is not in the app
+/// yet (owner's choice, 1 November 2026).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.store});
   final LearningStore store;
@@ -40,8 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// The round's clock starts when the arena comes into view, as on the
-  /// website: the taster loads once its top is inside the screen.
+  /// The battle's clock starts when the arena comes into view, as on the
+  /// website: the page loads once its top is inside the screen.
   void _check() {
     if (_armed || !mounted) return;
     final box = _taster.currentContext?.findRenderObject() as RenderBox?;
@@ -211,9 +214,11 @@ class HomeHero extends StatelessWidget {
   }
 }
 
-/// The Cyber Range's one-round taster: the website's own Range core in taster
-/// mode (public/range-app/taster.html), sized to its page. Where a web view
-/// can't run, the round is a tap away on the website.
+/// The Cyber Range battle: the website's own standalone Range page
+/// (public/range-app/, the page the app's Range tab opened until 31 October
+/// 2026), in a web view sized to the page. The app reads the page's height
+/// itself, so the website needs nothing added. Where a web view can't run, the
+/// battle is a tap away on the website.
 class RangeTaster extends StatefulWidget {
   const RangeTaster({super.key, required this.load});
   final bool load;
@@ -222,7 +227,22 @@ class RangeTaster extends StatefulWidget {
 }
 
 class _RangeTasterState extends State<RangeTaster> {
-  static final _url = Uri.parse('https://securebydesigninc.com/range-app/taster.html');
+  static final _url = Uri.parse('https://securebydesigninc.com/range-app/');
+
+  /// Reports the page's height to the SbdRange channel whenever it changes, so
+  /// the web view fits the battle without the page's help.
+  static const _measure = '''(function () {
+  if (window.__sbdMeasure) return;
+  window.__sbdMeasure = true;
+  var report = function () {
+    var height = Math.ceil(Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0));
+    if (window.SbdRange && window.SbdRange.postMessage) window.SbdRange.postMessage(String(height));
+  };
+  if (typeof ResizeObserver === 'function') new ResizeObserver(report).observe(document.documentElement);
+  if (document.body && typeof ResizeObserver === 'function') new ResizeObserver(report).observe(document.body);
+  window.addEventListener('load', report);
+  report();
+})();''';
   WebViewController? _controller;
   bool _error = false, _tried = false, _ready = false;
   double _height = 560;
@@ -249,7 +269,7 @@ class _RangeTasterState extends State<RangeTaster> {
     try {
       final controller = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(SbdColors.stage)
+        ..setBackgroundColor(SbdColors.background)
         ..addJavaScriptChannel('SbdRange', onMessageReceived: (message) {
           final height = double.tryParse(message.message);
           if (height != null && height > 120 && mounted) {
@@ -257,7 +277,9 @@ class _RangeTasterState extends State<RangeTaster> {
           }
         })
         ..setNavigationDelegate(NavigationDelegate(onPageFinished: (_) {
-          if (mounted) setState(() => _ready = true);
+          if (!mounted) return;
+          setState(() => _ready = true);
+          unawaited(_controller?.runJavaScript(_measure).catchError((Object _) {}));
         }, onWebResourceError: (e) {
           if (e.isForMainFrame == true && mounted) setState(() => _error = true);
         }, onNavigationRequest: (request) {
@@ -297,17 +319,17 @@ class _RangeTasterState extends State<RangeTaster> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Kicker('Cyber Range'),
               const SizedBox(height: 10),
-              Text('Try one round.', style: Theme.of(context).textTheme.headlineSmall),
+              Text('Prove what you built.', style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 8),
               Text(
                   _error
-                      ? 'The round could not load. Check your connection, or play it on the website.'
-                      : 'One question from the lab network, on the clock. Play it on the website.',
+                      ? 'The battle could not load. Check your connection, or play it on the website.'
+                      : 'Battle the computer in seven rounds of multiple choice from the lab network. Play it on the website.',
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 16),
               FilledButton(
                   onPressed: () => openResource(context, '$siteUrl/#try-the-range'),
-                  child: const Text('Play a round on the website')),
+                  child: const Text('Play on the website')),
             ])),
           ),
         ),
@@ -327,7 +349,7 @@ class _RangeTasterState extends State<RangeTaster> {
                   padding: EdgeInsets.fromLTRB(gutter, 24, gutter, 0),
                   child: const Align(
                       alignment: Alignment.topLeft,
-                      child: Text('Loading a round…',
+                      child: Text('Loading the Range…',
                           style: TextStyle(color: Color(0xFFADC3D2), fontSize: 14))))
               : Stack(children: [
                   WebViewWidget(controller: _controller!),
@@ -336,7 +358,7 @@ class _RangeTasterState extends State<RangeTaster> {
                         padding: EdgeInsets.fromLTRB(gutter, 24, gutter, 0),
                         child: const Align(
                             alignment: Alignment.topLeft,
-                            child: Text('Loading a round…',
+                            child: Text('Loading the Range…',
                                 style: TextStyle(color: Color(0xFFADC3D2), fontSize: 14)))),
                 ]),
         ),
