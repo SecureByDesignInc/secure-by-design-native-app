@@ -63,12 +63,13 @@ class LogoPill extends StatelessWidget {
                 Image.asset('assets/social/$icon.png',
                     width: 22, height: 22, fit: BoxFit.contain),
                 const SizedBox(width: 8),
-                Text(label,
-                    style: const TextStyle(
-                        color: SbdColors.pillInk,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        height: 1.2)),
+                Flexible(
+                    child: Text(label,
+                        style: const TextStyle(
+                            color: SbdColors.pillInk,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2))),
               ]),
             ),
           ),
@@ -166,9 +167,10 @@ class SiteFooter extends StatelessWidget {
                       child: Image.asset('assets/partners/$id.png',
                           width: width, height: height, fit: BoxFit.contain, semanticLabel: name)),
                   const SizedBox(width: 10),
-                  Text(name,
-                      style: const TextStyle(
-                          color: Color(0xFFD1E1F2), fontSize: 14, fontWeight: FontWeight.w600)),
+                  Flexible(
+                      child: Text(name,
+                          style: const TextStyle(
+                              color: Color(0xFFD1E1F2), fontSize: 14, fontWeight: FontWeight.w600))),
                 ]),
             ]),
             Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [

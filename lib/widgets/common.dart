@@ -290,8 +290,9 @@ class HubFootnote extends StatelessWidget {
             const Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.hub_outlined, size: 20, color: SbdColors.cyan),
               SizedBox(width: 10),
-              Text('Every build is part of a bigger network.',
-                  style: TextStyle(color: SbdColors.ink, fontSize: 15)),
+              Flexible(
+                  child: Text('Every build is part of a bigger network.',
+                      style: TextStyle(color: SbdColors.ink, fontSize: 15))),
             ]),
             ArrowLink('Step inside the complete network in the System Hub',
                 onTap: onSystemHub),

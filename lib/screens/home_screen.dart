@@ -178,6 +178,10 @@ class HomeHero extends StatelessWidget {
           height: 1.05,
           color: Colors.white,
         );
+    // The gradient word is a foreground shader on its span, so the heading
+    // wraps like any text at large text sizes.
+    final shader = const LinearGradient(colors: [Color(0xFF378EFA), Color(0xFF7BE4F5)])
+        .createShader(const Rect.fromLTWH(0, 0, 360, 72));
     return Container(
       constraints: BoxConstraints(minHeight: narrow ? 420 : 520),
       padding: EdgeInsets.symmetric(horizontal: pageGutter(context), vertical: narrow ? 44 : 60),
@@ -189,19 +193,16 @@ class HomeHero extends StatelessWidget {
             header: true,
             label: 'Cybersecurity starts with curiosity.',
             excludeSemantics: true,
-            child: Column(children: [
-              Text('Cybersecurity starts', textAlign: TextAlign.center, style: title),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('with ', style: title),
-                ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFF378EFA), Color(0xFF7BE4F5)],
-                  ).createShader(bounds),
-                  child: Text('curiosity.', style: title),
-                ),
+            child: Text.rich(
+              TextSpan(children: [
+                const TextSpan(text: 'Cybersecurity starts\nwith '),
+                TextSpan(
+                    text: 'curiosity.',
+                    style: TextStyle(foreground: Paint()..shader = shader)),
               ]),
-            ]),
+              textAlign: TextAlign.center,
+              style: title,
+            ),
           ),
           const SizedBox(height: 22),
           const Text(
