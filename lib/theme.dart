@@ -90,7 +90,7 @@ abstract final class SbdColors {
     colors: [Color(0xFFB8F0F6), primary],
   );
 
-  /// The topic families' accent colors (training-hub.css .th-art-<family>).
+  /// The topic families' accent colors (training-hub.css `.th-art-<family>`).
   static Color family(String family) => switch (family) {
         'harden' => amber,
         'logging' => const Color(0xFF9DB8FF),

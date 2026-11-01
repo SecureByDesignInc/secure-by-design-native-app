@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../data/catalog.dart';
 import '../data/learning_store.dart';
-import '../data/models.dart';
 import '../data/training_categories.dart';
 import '../theme.dart';
 import '../widgets/account_navigation.dart';

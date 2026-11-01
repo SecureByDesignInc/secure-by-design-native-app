@@ -212,7 +212,7 @@ class AtoBuilderSection extends StatelessWidget {
       animation: store,
       builder: (context, child) {
         final course = _course;
-        final kicker = (IconData icon, String text) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Widget kicker(IconData icon, String text) => Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(icon, size: 15, color: SbdColors.cyan),
               const SizedBox(width: 7),
               Flexible(child: Kicker(text)),
