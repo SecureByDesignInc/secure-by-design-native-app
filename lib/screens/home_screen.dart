@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -92,17 +93,23 @@ class _HeroWaveState extends State<HeroWave> with SingleTickerProviderStateMixin
   late final AnimationController _controller =
       AnimationController(vsync: this, duration: const Duration(seconds: 14));
 
+  /// A wave that never stops never lets a widget test settle, so under
+  /// `flutter test` it holds still (the same check the framework uses for
+  /// defaultTargetPlatform).
+  static final _inTest = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+  bool get _animate => widget.animate && !_inTest;
+
   @override
   void initState() {
     super.initState();
-    if (widget.animate) _controller.repeat();
+    if (_animate) _controller.repeat();
   }
 
   @override
   void didUpdateWidget(HeroWave old) {
     super.didUpdateWidget(old);
-    if (widget.animate && !_controller.isAnimating) _controller.repeat();
-    if (!widget.animate && _controller.isAnimating) _controller.stop();
+    if (_animate && !_controller.isAnimating) _controller.repeat();
+    if (!_animate && _controller.isAnimating) _controller.stop();
   }
 
   @override
