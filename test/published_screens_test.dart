@@ -136,7 +136,8 @@ void main() {
     await tester.tap(complete);
     await tester.pumpAndSettle();
     expect(store.isCompleted(lesson.id), isTrue);
-    expect(find.text('+30 XP'), findsOneWidget);
+    expect(find.text('Lesson complete.'), findsOneWidget);
+    expect(find.textContaining('XP'), findsNothing); // the XP screen was retired on 1 November 2026
     expect(store.stats.quests.last.complete, isFalse);
   });
 
@@ -170,7 +171,12 @@ void main() {
     await tester.pumpWidget(MaterialApp(
         theme: buildTheme(),
         home: Scaffold(
-            body: TrainingCard(path: publishedPaths.first, store: store))));
+            body: SingleChildScrollView(
+                child: TrainingCard(path: publishedPaths.first, store: store)))));
+    // The tile opens its course first (its materials button sits in the opened course).
+    await tester.tap(find.byKey(ValueKey('expand-${publishedPaths.first.id}')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('View materials (${publishedPaths.first.materials.length})'));
     await tester.tap(find.text('View materials (${publishedPaths.first.materials.length})'));
     await tester.pumpAndSettle();
     expect(find.text(publishedPaths.first.materials.first.title), findsOneWidget);

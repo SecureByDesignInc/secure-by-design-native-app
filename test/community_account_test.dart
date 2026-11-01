@@ -7,8 +7,8 @@ import 'package:secure_by_design_app/app.dart';
 import 'package:secure_by_design_app/data/booking.dart';
 import 'package:secure_by_design_app/widgets/community_account.dart';
 import 'package:secure_by_design_app/data/learning_store.dart';
+import 'package:secure_by_design_app/screens/path_screen.dart';
 import 'package:secure_by_design_app/screens/training_screens.dart';
-import 'package:secure_by_design_app/widgets/learning_rewards.dart';
 
 // The old membership prompts. Course text can say "group membership", so the
 // checks look for these exact phrases rather than the word.
@@ -50,9 +50,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      SharedPreferences.setMockInitialValues({
-        'sbd.guidance.started.v1': DateTime.now().toUtc().toIso8601String(),
-      });
+      SharedPreferences.setMockInitialValues({});
       final store = await LearningStore.load();
       await tester.pumpWidget(SecureByDesignApp(store: store));
       await tester.pumpAndSettle();
@@ -76,14 +74,17 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    SharedPreferences.setMockInitialValues({
-      'sbd.guidance.started.v1': DateTime.now().toUtc().toIso8601String(),
-    });
+    SharedPreferences.setMockInitialValues({});
     final store = await LearningStore.load();
     await tester.pumpWidget(SecureByDesignApp(store: store));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Start learning'));
-    await tester.tap(find.text('Start learning'));
+    await tester.tap(find.byKey(const ValueKey('tab-training')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('expand-identity-foundation')));
+    await tester.tap(find.byKey(const ValueKey('expand-identity-foundation')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Open the course'));
+    await tester.tap(find.text('Open the course'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Start the first lesson'));
     await tester.tap(find.text('Start the first lesson'));
@@ -97,7 +98,7 @@ void main() {
     await tester.ensureVisible(find.text('Complete lesson'));
     await tester.tap(find.text('Complete lesson'));
     await tester.pumpAndSettle();
-    expect(find.byType(LessonCelebration), findsOneWidget);
+    expect(find.byType(LessonComplete), findsOneWidget);
     _expectNoMembershipPrompts();
     expect(store.completed, {'training:identity-foundation:dc-design'});
 

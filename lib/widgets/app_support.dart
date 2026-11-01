@@ -117,3 +117,31 @@ class AnalyticsSetting extends StatelessWidget {
         ),
       );
 }
+
+/// The note from Secure By Design, as the About sheet and My Account show it.
+class CreatorNote extends StatelessWidget {
+  const CreatorNote({super.key});
+
+  @override
+  Widget build(BuildContext context) => Panel(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Kicker('A note from Secure By Design'),
+          const SizedBox(height: 16),
+          Text('Hi, we’re Secure By Design.',
+              style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 14),
+          Text(
+              'We built Secure By Design to help you connect what you learn to the systems you build and protect.\n\n'
+              'You don’t need to know everything before you start. Pick one lesson, try the idea, and keep going at your own pace.\n\n'
+              'If something here helps you, help someone else find it — share it with someone who could use it.\n\n'
+              'We’re glad you’re here.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 15)),
+          const SizedBox(height: 18),
+          const Text('Secure By Design',
+              style: TextStyle(
+                  fontSize: 22,
+                  fontStyle: FontStyle.italic,
+                  color: SbdColors.cyan)),
+        ]),
+      );
+}

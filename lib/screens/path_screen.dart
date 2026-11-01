@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
-import '../data/catalog.dart';
 import '../data/learning_activity.dart';
-import '../widgets/learning_rewards.dart';
 import '../widgets/lesson_video.dart';
 import '../data/learning_store.dart';
 import '../theme.dart';
@@ -37,19 +35,6 @@ Future<void> openLearningPath(
   }
 }
 
-Future<void> openPractice(BuildContext context, LearningStore store) async {
-  final lesson = store.practiceLesson ??
-      store.nextLesson(store.currentPath) ??
-      store.currentPath.lessons.first;
-  final path =
-      learningPaths.firstWhere((p) => p.lessons.any((l) => l.id == lesson.id));
-  await Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => LessonScreen(
-          store: store,
-          lesson: lesson,
-          path: path,
-          practice: store.isCompleted(lesson.id))));
-}
 
 class PathScreen extends StatelessWidget {
   const PathScreen({super.key, required this.store, required this.path});
@@ -422,9 +407,12 @@ class _LessonScreenState extends State<LessonScreen> {
   Widget build(BuildContext context) {
     if (_reward != null) {
       return Scaffold(
-          appBar: AppBar(title: const Text('Session complete')),
-          body: LessonCelebration(
-              reward: _reward!,
+          appBar: AppBar(title: const Text('Lesson complete')),
+          body: LessonComplete(
+              lesson: widget.lesson,
+              path: widget.path,
+              store: widget.store,
+              review: _reward!.review,
               onContinue: () => Navigator.pop(context)));
     }
     final lesson = widget.lesson;
@@ -607,4 +595,64 @@ class _Bullet extends StatelessWidget {
           Expanded(child: Text(text, style: const TextStyle(height: 1.6))),
         ]),
       );
+}
+
+
+/// What follows a completed lesson: the next lesson in the course, or the
+/// course's end. The website marks lessons complete and moves on; so does
+/// the app (the XP, streak and badge screen was retired on 1 November 2026).
+class LessonComplete extends StatelessWidget {
+  const LessonComplete(
+      {super.key,
+      required this.lesson,
+      required this.path,
+      required this.store,
+      required this.review,
+      required this.onContinue});
+  final Lesson lesson;
+  final LearningPath path;
+  final LearningStore store;
+  final bool review;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final done = store.completedIn(path);
+    final next = store.nextLesson(path);
+    return PageContent(maxWidth: 620, children: [
+      const SizedBox(height: 8),
+      const Icon(Icons.check_circle_rounded, color: SbdColors.success, size: 56),
+      const SizedBox(height: 20),
+      Text(review ? 'Reviewed.' : 'Lesson complete.',
+          style: Theme.of(context).textTheme.headlineMedium),
+      const SizedBox(height: 10),
+      Text(lesson.title, style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 16),
+      ProgressLine(value: store.progressIn(path)),
+      const SizedBox(height: 8),
+      Text('$done of ${path.lessons.length} lessons complete in course ${path.number}',
+          style: const TextStyle(color: SbdColors.muted, fontSize: 13)),
+      const SizedBox(height: 24),
+      Panel(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Kicker(next == null ? 'Course complete' : 'Up next'),
+        const SizedBox(height: 10),
+        Text(next?.title ?? 'You finished every lesson in this course.',
+            style: Theme.of(context).textTheme.titleMedium),
+        if (next != null) ...[
+          const SizedBox(height: 6),
+          Text('${next.minutes} min', style: const TextStyle(color: SbdColors.muted, fontSize: 13)),
+        ],
+        const SizedBox(height: 16),
+        Wrap(spacing: 10, runSpacing: 10, children: [
+          if (next != null)
+            FilledButton(
+                onPressed: () => Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
+                    builder: (_) => LessonScreen(store: store, lesson: next, path: path))),
+                child: const Text('Next lesson')),
+          OutlinedButton(onPressed: onContinue, child: const Text('Continue')),
+        ]),
+      ])),
+    ]);
+  }
 }

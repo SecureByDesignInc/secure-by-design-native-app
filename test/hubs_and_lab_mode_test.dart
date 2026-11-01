@@ -15,8 +15,7 @@ import 'package:secure_by_design_app/theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  // Past the first-run welcome, as the other app tests are, so the tab bar is on screen.
-  setUp(() => SharedPreferences.setMockInitialValues({'sbd.guidance.enabled.v1': false}));
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   setUpAll(() async {
     await (FontLoader('Geist')..addFont(rootBundle.load('assets/fonts/Geist.ttf'))).load();
     await (FontLoader('MaterialIcons')
@@ -103,6 +102,10 @@ void main() {
         theme: buildTheme(), home: Scaffold(body: TrainingLibraryScreen(store: store))));
     await tester.pumpAndSettle();
     expect(find.byType(ComingSoonCard), findsNWidgets(currentCatalog.comingSoon.length));
+    // The Build the Network library group is a one-column grid on a phone (the hub's
+    // row scrolls sideways), so course order is top-to-bottom order there.
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Build the Network'));
+    await tester.pumpAndSettle();
     final y = {
       for (final number in ['1.8', '1.9', '1.10', '1.11'])
         number: tester.getTopLeft(find.textContaining('$number ·').first).dy,

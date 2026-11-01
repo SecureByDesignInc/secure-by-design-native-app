@@ -4,9 +4,8 @@ Validated with Flutter 3.47.6 / Dart 3.13.5 on October 5, 2026.
 
 - Flutter analysis: no issues.
 - Flutter tests: 49 passing.
-- Personalized onboarding: every goal/level maps to real lessons; a new learner completes a recommended lesson and the Home checklist reflects the result; skipping and reopening persist correctly.
-- Upgrade safety: existing progress, last path, prompt preferences, haptic preferences, and analytics defaults survive.
-- Onboarding at 390 pixels and at 320 pixels with 2× text, including the creator note and a complete lesson.
+- Upgrade safety: existing progress, last path, haptic preferences, and analytics defaults survive. (The onboarding, getting-started and rewards checks were retired with those features on 1 November 2026.)
+- Home (1 November 2026): the hero and the Cyber Range taster; where no web view can run (the test engine), the round's fallback card. The Training Hub: the group links, search and results, a tile opening its course beneath its row, the coming-soon tiles in course order in the Build the Network group, the Tools and the seven RMF steps.
 - Haptics: user actions, opt-out persistence, duplicate suppression, silent background/desktop behavior, and unavailable platform channels.
 - Actual Flutter screen previews: Home, Training, Explore, and My Progress at 390×844 logical pixels.
 - Adaptive navigation: 320, 390, 768, and 1280 logical pixels at 1× and 2× text size.
