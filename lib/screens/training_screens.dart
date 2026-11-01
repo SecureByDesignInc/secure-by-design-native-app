@@ -217,10 +217,6 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
       const SizedBox(height: 8),
       const Text('Build the network. Prepare it for authorization.'),
       const SizedBox(height: 18),
-      // The ATO Package Builder lives here, as on the website (27 October 2026):
-      // the Tools and the seven RMF steps, until a search or a filter is set.
-      if (query.trim().isEmpty && category.isEmpty)
-        AtoBuilderSection(store: widget.store, onSystemHub: widget.onSystemHub),
       TextField(
           decoration: const InputDecoration(
               labelText: 'Search training', prefixIcon: Icon(Icons.search)),
@@ -266,6 +262,14 @@ class _TrainingLibraryScreenState extends State<TrainingLibraryScreen> {
               card,
           ]),
           const SizedBox(height: 32),
+          // The ATO Package Builder lives here, as on the website (27 October 2026):
+          // the Tools and the seven RMF steps, until a search or a filter is set.
+          // Owner direction, 1 November 2026: the Training Hub opens on Build the
+          // Network, so the Tools and the steps follow that group, as on the website.
+          if (group.id == 'network-build' && query.trim().isEmpty && category.isEmpty) ...[
+            AtoBuilderSection(store: widget.store, onSystemHub: widget.onSystemHub),
+            const SizedBox(height: 4),
+          ],
         ],
     ]);
   }
