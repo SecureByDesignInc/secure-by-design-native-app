@@ -57,6 +57,8 @@ void main() {
       await tester.ensureVisible(find.text('Start the first lesson'));
       await tester.tap(find.text('Start the first lesson'));
       await tester.pumpAndSettle();
+      // The tab change and the tile opening clicked too; the lesson's own pulses are counted from here.
+      pulses.clear();
       final complete = find.widgetWithText(FilledButton, 'Complete lesson');
       expect(tester.widget<FilledButton>(complete).onPressed, isNull);
       await tester.scrollUntilVisible(
